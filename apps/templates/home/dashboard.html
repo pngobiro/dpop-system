@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="py-4">
+        <div class="dropdown">
+            <button class="btn btn-gray-800 d-inline-flex align-items-center me-2 dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <svg class="icon icon-xs me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                New Task
+            </button>
+        </div>
+    </div>
+    <div class="row">
+
+        <p> This is a chatbot that can help access Judgement and rulings from the Kenya Law Reports. </p>
+
+    </div>
+    <div class="row">
+        <div class="col-12 col-xl-6 mb-4">
+            <div class="card border-light shadow-sm">
+                <div class="card-header border-bottom border-light d-flex justify-content-between">
+                    <h2 class="h5 mb-0">Legal Chatbot</h2>
+
+                </div>
+                <div class="card-body">
+                    <div class="chat-box bg-white p-3" id="chat-box">
+                        <!-- Chat messages will go here -->
+                    </div>
+                    <div class="input-group mt-3">
+                        <input type="text" class="form-control" id="user-input" placeholder="Type your message here...">
+                        <button class="btn btn-gray-800" id="send-button" type="button">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        
+
+
+
+
+
+
+  
+
+   
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<!-- Add some script to handle the chatbot logic -->
+<script>
+    // Get the elements from the template
+    var chatBox = document.getElementById("chat-box");
+    var userInput = document.getElementById("user-input");
+    var sendButton = document.getElementById("send-button");
+
+    // Define a function to create a chat message element
+    function createChatMessage(text, sender) {
+        var message = document.createElement("div");
+        message.classList.add("chat-message");
+        message.classList.add(sender);
+        message.textContent = text;
+        return message;
+    }
+
+    // Define a function to send a user message to the chatbot
+    function sendUserMessage() {
+        var text = userInput.value;
+        if (text) {
+            // Create a user message element and append it to the chat box
+            var userMessage = createChatMessage(text, "user");
+            chatBox.appendChild(userMessage);
+            // Clear the user input field
+            userInput.value = "";
+            // Scroll to the bottom of the chat box
+            chatBox.scrollTop = chatBox.scrollHeight;
+            // Send a request to the chatbot API with the user message
+            fetch("/chatbot", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({message: text})
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Get the chatbot response from the data
+                var chatbotResponse = data.response;
+                // Create a chatbot message element and append it to the chat box
+                var chatbotMessage = createChatMessage(chatbotResponse, "chatbot");
+                chatBox.appendChild(chatbotMessage);
+                // Scroll to the bottom of the chat box
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(error => {
+                // Handle any errors
+                console.error(error);
+            });
+        }
+    }
+
+    // Add an event listener to the send button
+    sendButton.addEventListener("click", sendUserMessage);
+
+    // Add an event listener to the user input field
+    userInput.addEventListener("keyup", function(event) {
+        // Check if the enter key was pressed
+        if (event.keyCode === 13) {
+            // Trigger the send button
+            sendButton.click();
+        }
+    });
+</script>
+
+{% endblock javascripts %}
