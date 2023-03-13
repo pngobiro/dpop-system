@@ -16,6 +16,7 @@ import os
 
 
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,8 +47,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'apps.home', 
-    'apps.pastpapers',                                 
-    'apps.courses',
 ]
 
 MIDDLEWARE = [
@@ -97,11 +96,11 @@ DATABASES = {
  # postgres
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ewakili',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'transcribe_db_1',
-        'PORT': 5432,
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST'),
+        'PORT': os.getenv('POSTGRES_PORT'),
     }
 }
 
@@ -167,6 +166,10 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 8589934592
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
+
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 
 # coomand tto create new migrations using docker-compose

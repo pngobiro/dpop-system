@@ -17,6 +17,9 @@ django-q
 django-storages
 python-docx
 djangorestframework
+pinecone-client
+langchain
+
 
 
 
