@@ -7,44 +7,104 @@
 
 {% block content %}
 
-    <div class="py-4">
+<div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
+    <h2 class="mb-4">Dashboard</h2>
 
-        <h2> eWakili Chatbot </h2>
-     
-    </div>
-  
+    <p class="lead">Select court rank, court station, division (if applicable), financial year, and month below:</p>
+    <p class="lead">Then upload the excel file .</p>
+
     <div class="row">
-        <div class="col-12 col-xl-6 mb-4">
-            <div class="card border-light shadow-sm">
-                <div class="card-header border-bottom border-light d-flex justify-content-between">
-                    <h2 class="h5 mb-0">Legal Chatbot</h2>
-
-                </div>
-                <div class="card-body">
-                    <div class="chat-box bg-white p-3" id="chat-box">
-                        <!-- Chat messages will go here -->
-                    </div>
-                    <div class="input-group mt-3">
-                        <input type="text" class="form-control" id="user-input" placeholder="Type your message here...">
-                        <button class="btn btn-gray-800" id="send-button" type="button">Send</button>
-                    </div>
-                </div>
+        <div class="col-md-6">
+            <!-- Court Rank Selection -->
+            <div class="form-group">
+                <label for="court-rank">Court Rank</label>
+                <select class="form-select" id="court-rank">
+                    <option value="rank1">Rank 1</option>
+                    <option value="rank2">Rank 2</option>
+                    <option value="rank3">Rank 3</option>
+                    <!-- Add more options as needed -->
+                </select>
             </div>
         </div>
+        <div class="col-md-6">
+            <!-- Court Station Selection -->
+            <div class="form-group">
+                <label for="court-station">Court Station</label>
+                <select class="form-select" id="court-station">
+                    <option value="station1">Station 1</option>
+                    <option value="station2">Station 2</option>
+                    <option value="station3">Station 3</option>
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+        </div>
+    </div>
 
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Division Selection (conditional based on Court Station) -->
+            <div class="form-group" id="division-group">
+                <label for="division">Division</label>
+                <select class="form-select" id="division">
+                    <option value="division1">Division 1</option>
+                    <option value="division2">Division 2</option>
+                    <option value="division3">Division 3</option>
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <!-- Financial Year (FY) Selection -->
+            <div class="form-group">
+                <label for="financial-year">Financial Year</label>
+                <select class="form-select" id="financial-year">
+                    <option value="fy2022">FY 2022</option>
+                    <option value="fy2023">FY 2023</option>
+                    <option value="fy2024">FY 2024</option>
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+        </div>
+    </div>
 
-        
-
-
-
-
-
-
-  
-
-   
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Month Selection -->
+            <div class="form-group">
+                <label for="month">Month</label>
+                <select class="form-select" id="month">
+                    <option value="january">January</option>
+                    <option value="february">February</option>
+                    <option value="march">March</option>
+                    <option value="april">April</option>
+                    <option value="may">May</option>
+                    <option value="june">June</option>
+                    <option value="july">July</option>
+                    <option value="august">August</option>
+                    <option value="september">September</option>
+                    <option value="october">October</option>
+                    <option value="november">November</option>
+                    <option value="december">December</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <!-- File Upload Input -->
+            <div class="form-group">
+                <label for="file" class="form-label">Upload File</label>
+                <input type="file" class="form-control" id="file" name="file">
+            </div>
+        </div>
     </div>
 </div>
+
+
+    
+    
+
+</div>
+
+
 
 {% endblock content %}
 
@@ -52,67 +112,9 @@
 {% block javascripts %}
 
 <!-- Add some script to handle the chatbot logic -->
-<script>
-    // Get the elements from the template
-    var chatBox = document.getElementById("chat-box");
-    var userInput = document.getElementById("user-input");
-    var sendButton = document.getElementById("send-button");
-
-    // Define a function to create a chat message element
-    function createChatMessage(text, sender) {
-        var message = document.createElement("div");
-        message.classList.add("chat-message");
-        message.classList.add(sender);
-        message.textContent = text;
-        return message;
-    }
-
-    // Define a function to send a user message to the chatbot
-    function sendUserMessage() {
-        var text = userInput.value;
-        if (text) {
-            // Create a user message element and append it to the chat box
-            var userMessage = createChatMessage(text, "user");
-            chatBox.appendChild(userMessage);
-            // Clear the user input field
-            userInput.value = "";
-            // Scroll to the bottom of the chat box
-            chatBox.scrollTop = chatBox.scrollHeight;
-            // Send a request to the chatbot API with the user message
-            fetch("/chatbot", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({message: text})
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Get the chatbot response from the data
-                var chatbotResponse = data.response;
-                // Create a chatbot message element and append it to the chat box
-                var chatbotMessage = createChatMessage(chatbotResponse, "chatbot");
-                chatBox.appendChild(chatbotMessage);
-                // Scroll to the bottom of the chat box
-                chatBox.scrollTop = chatBox.scrollHeight;
-            })
-            .catch(error => {
-                // Handle any errors
-                console.error(error);
-            });
-        }
-    }
-
-    // Add an event listener to the send button
-    sendButton.addEventListener("click", sendUserMessage);
-
-    // Add an event listener to the user input field
-    userInput.addEventListener("keyup", function(event) {
-        // Check if the enter key was pressed
-        if (event.keyCode === 13) {
-            // Trigger the send button
-            sendButton.click();
-        }
+<script type="text/javascript">
+    $(document).ready(function() {
+        //alert("Hello world!");
     });
 </script>
 
