@@ -10,11 +10,10 @@
 <div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
     <h2 class="mb-4">Dashboard</h2>
 
-    <form method="post" enctype="multipart/form-data" action="{% url 'proces_excel' %}">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         
-        <p class="lead">Select court rank, court station, division (if applicable), financial year, and month below:</p>
-        <p class="lead">Then upload the excel file .</p>
+        <p class="lead">Select court rank, financial year, and month below:</p>
 
         <div class="row">
             <div class="col-md-6">
@@ -29,33 +28,10 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-6">
-                <!-- Court Station Selection -->
-                <div class="form-group">
-                    <label for="court-station">Court Station</label>
-                    <select class="form-select" id="court-station" name="court-station">
-                        <option value="station1">Station 1</option>
-                        <option value="station2">Station 2</option>
-                        <option value="station3">Station 3</option>
-                        <!-- Add more options as needed -->
-                    </select>
-                </div>
-            </div>
+   
         </div>
 
         <div class="row">
-            <div class="col-md-6">
-                <!-- Division Selection (conditional based on Court Station) -->
-                <div class="form-group" id="division-group">
-                    <label for="division">Division</label>
-                    <select class="form-select" id="division" name="division">
-                        <option value="division1">Division 1</option>
-                        <option value="division2">Division 2</option>
-                        <option value="division3">Division 3</option>
-                        <!-- Add more options as needed -->
-                    </select>
-                </div>
-            </div>
             <div class="col-md-6">
                 <!-- Financial Year (FY) Selection -->
                 <div class="form-group">
@@ -64,7 +40,7 @@
                         <option value="fy2022">FY 2022</option>
                         <option value="fy2023">FY 2023</option>
                         <option value="fy2024">FY 2024</option>
-                        <!-- Add more options as needed -->
+                        <option value="fy2025">FY 2025</option>
                     </select>
                 </div>
             </div>
@@ -72,30 +48,14 @@
 
         <div class="row">
             <div class="col-md-6">
-                <!-- Month Selection -->
                 <div class="form-group">
-                    <label for="month">Month</label>
-                    <select class="form-select" id="month" name="month">
-                        <option value="january">January</option>
-                        <option value="february">February</option>
-                        <option value="march">March</option>
-                        <option value="april">April</option>
-                        <option value="may">May</option>
-                        <option value="june">June</option>
-                        <option value="july">July</option>
-                        <option value="august">August</option>
-                        <option value="september">September</option>
-                        <option value="october">October</option>
-                        <option value="november">November</option>
-                        <option value="december">December</option>
+                    <label for="financial-year">Financial Quarter</label>
+                    <select class="form-select" id="financial-year" name="financial-year">
+                        <option value="fyq1">Quarter 1</option>
+                        <option value="fyq2">Quarter 2</option>
+                        <option value="fyq3">Quarter 3</option>
+                        <option value="fyq4">Quarter 4</option>
                     </select>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <!-- File Upload Input -->
-                <div class="form-group">
-                    <label for="file" class="form-label">Upload File</label>
-                    <input type="file" class="form-control" id="file" name="file">
                 </div>
             </div>
         </div>
@@ -107,14 +67,4 @@
 
 {% endblock content %}
 
-<!-- Specific Page JS goes HERE  -->
-{% block javascripts %}
 
-<!-- Add some script to handle the chatbot logic -->
-<script type="text/javascript">
-    $(document).ready(function() {
-        //alert("Hello world!");
-    });
-</script>
-
-{% endblock javascripts %}
