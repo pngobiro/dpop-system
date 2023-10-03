@@ -19,6 +19,7 @@ python-docx
 djangorestframework
 pinecone-client
 langchain
+django-unicorn
 
 
 
