@@ -16,10 +16,13 @@
 
 -->
 <!DOCTYPE html>
+{% load unicorn %}
 <html lang="en">
 
 <head> 
+  {% unicorn_scripts %}
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
 <!-- Primary Meta Tags -->
 
 <title>
@@ -66,6 +69,7 @@
 
 </head>
 <body>
+  {% csrf_token %}
 
     {% include 'includes/sidebar.html' %}
     
