@@ -4,30 +4,22 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 
-
-
-
+app_name = "apps.core"
 
 urlpatterns = [
     path('admin/', admin.site.urls),          # Django admin route
     path("", include("apps.authentication.urls")), # Auth routes - login / register
-
-  
-
-    # Leave `Home.Urls` as last the last line
-    path("", include("apps.home.urls")),
-    path("statistics/", include("apps.statistics.urls")),
+    path("statistics/", include("apps.statistics.urls", namespace="statistics")),
     path("unicorn/", include("django_unicorn.urls")),
-
-
-
-
+    path("", include("apps.home.urls")), # UI Kits Html files
 
 ]
 
 
 if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    import debug_toolbar
+    urlpatterns = [
+        path("__debug__/", include(debug_toolbar.urls)),
+    ] + urlpatterns
 
 

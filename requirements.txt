@@ -20,6 +20,7 @@ djangorestframework
 pinecone-client
 langchain
 django-unicorn
+django-debug-toolbar
 
 
 

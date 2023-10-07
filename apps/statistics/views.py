@@ -1,20 +1,18 @@
 from django.shortcuts import render
+from django.http import HttpResponse
+import urllib.request
+from apps.statistics.models import UnitRank
 
 
 
 def home(request):
-    # Handle logic for dashboard view here
-    return render(request, 'statistics/dashboard.html')
-    
-
-def rank(request, id, financial_year_id, financial_quarter_id):
-    # Handle logic for rank view here
+    # show hello world string
+    #  UnitRank
     context = {
-        'id': id,
-        'financial_year_id': financial_year_id,
-        'financial_quarter_id': financial_quarter_id,
+        'unit_ranks': UnitRank.objects.all()
     }
-    return render(request, 'statistics/rank.html', context)
+    return render(request, 'statistics/home.html', context)
+    
 
 def rank_units(request, id, financial_year_id, financial_quarter_id):
     # Handle logic for rank units view here
