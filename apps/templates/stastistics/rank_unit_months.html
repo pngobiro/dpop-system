@@ -1,0 +1,51 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} List of Months {% endblock %}
+
+{% block stylesheets %}
+  <!-- Specific Page CSS goes HERE -->
+  <style>
+    /* Add your custom styles here */
+  </style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
+    <h2 class="mb-4">List of Months</h2>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Month ID</th>
+                                <th>Month Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for month in months %}
+                                <tr>
+                                    <td>{{ month.id }}</td>
+                                    <td>{{ month.name }}</td>
+                                    <td>
+                                        <a href="{% url 'rank_unit_month' month.id %}" class="btn btn-primary">Proceed</a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3">No months available.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

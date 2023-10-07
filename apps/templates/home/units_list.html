@@ -1,0 +1,64 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="py-4">
+
+    <div class="row">
+
+        <h1> {{ rank.name }} </h1>
+
+        <h1> {{ fy.name }} </h1>
+
+
+    </div>
+
+
+    <div class="row">
+
+        <!-- list of units table . unit name , upload excel button , and link to view excel file -->
+
+
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Unit Name</th>
+                    <th scope="col">Upload Excel</th>
+                    <th scope="col">View Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for unit in units %}
+                <tr>
+                    <td>{{ unit.name }}</td>
+                    <td>
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="unit_id" value="{{ unit.id }}">
+                            <input type="hidden" name="court_rank" value="{{ rank.name }}">
+                            <input type="hidden" name="financial_year" value="{{ fy.name }}">
+                            <input type="hidden" name="quarter" value="{{ quarter }}">
+                            <input type="file" name="excel_file" class="form-control-file" id="excel_file">
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="{{ unit.quarter_data.url }}" target="_blank">View Data</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+
+        </table>
+   
+    </div>
+</div>
+
+{% endblock content %}

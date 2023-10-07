@@ -15,7 +15,9 @@ urlpatterns = [
   
 
     # Leave `Home.Urls` as last the last line
-    path("", include("apps.home.urls"))
+    path("", include("apps.home.urls")),
+    path("statistics/", include("apps.statistics.urls")),
+    path("unicorn/", include("django_unicorn.urls")),
 
 
 

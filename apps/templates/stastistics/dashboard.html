@@ -1,0 +1,73 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+{% block stylesheets %}
+  <!-- Specific Page CSS goes HERE -->
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
+    <h2 class="mb-4"> Ranks </h2>
+
+    <form method="post" enctype="multipart/form-data"  >    
+        {% csrf_token %}
+        
+        <p class="lead">Select court rank, financial year, and quarter  to proceed.</p>
+
+        <!-- Using selection dropdowns for court rank, financial year, and quarter . court rank dropdown should be disabled if financial year is not selected  and fy dropdown should be disabled if court rank is not selected -->
+
+        <div class="form-group">
+            <label for="court_rank">Court Rank</label>
+            <select class="form-control" id="court_rank" name="court_rank" unicorn:change="changeCourtRank" unicorn:model="court_rank">
+                <option value="">Select Court Rank</option>
+                <option value="Supreme Court">Supreme Court</option>
+                <option value="High Court">High Court</option>
+                <option value="District Court">District Court</option>
+            </select>
+        </div>
+
+
+        <div class="form-group">
+            <label for="financial_year">Financial Year</label>
+            <select class="form-control" id="financial_year" name="financial_year" unicorn:change="changeFinancialYear" unicorn:model="financial_year" unicorn:disabled="!court_rank">
+                <option value="">Select Financial Year</option>
+                <option value="2019-2020">2019-2020</option>
+                <option value="2020-2021">2020-2021</option>
+                <option value="2021-2022">2021-2022</option>
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+            <label for="quarter">Quarter</label>
+            <select class="form-control" id="quarter" name="quarter" unicorn:model="quarter" unicorn:change="changeQuarter" unicorn:disabled="!financial_year">
+                <option value="">Select Quarter</option>
+                <option value="Q1">Q1</option>
+                <option value="Q2">Q2</option>
+                <option value="Q3">Q3</option>
+                <option value="Q4">Q4</option>
+            </select>
+
+        </div>
+
+
+        <!-- link as button to proceed to rank_units page -->
+
+
+        <a href="{% url 'rank_units' %}" class="btn btn-primary">Proceed</a>
+
+    </form>
+
+
+
+
+
+
+
+
+</div>
+
+{% endblock content %}
