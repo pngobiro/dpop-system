@@ -1,0 +1,43 @@
+<div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
+    <h2 class="mb-4"> Ranks </h2>
+
+
+
+        <p class="lead">Select court rank, financial year, and quarter to proceed.</p>
+
+        <div class="form-group">
+            <label for="court_rank">Unit Rank</label>
+            <select class="form-control" id="court_rank" name="court_rank" unicorn:change="changeCourtRank" unicorn:model="court_rank">
+                <option value="">Select Unit Rank</option>
+                {% for unit_rank in unit_ranks %}
+                    <option value="{{ unit_rank.id }}">{{ unit_rank.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="financial_year">Financial Year</label>
+            <select class="form-control" id="financial_year" name="financial_year" unicorn:change="changeFinancialYear" unicorn:model="financial_year" unicorn:disabled="!court_rank">
+                <option value="">Select Financial Year</option>
+                {% for financial_year in financial_years %}
+                    <option value="{{ financial_year.id }}">{{ financial_year.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="quarter">FY Quarter</label>
+            <select class="form-control" id="quarter" name="quarter" unicorn:model="quarter" unicorn:change="changeQuarter" unicorn:disabled="!financial_year">
+                <option value="">Select Quarter</option>
+                {% for quarter in financial_quarters %}
+                    <option value="{{ quarter.id }}">{{ quarter.get_quarter_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+    
+
+     
+
+
+</div>

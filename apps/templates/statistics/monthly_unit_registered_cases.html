@@ -1,0 +1,36 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+{% block stylesheets %}
+  <!-- Specific Page CSS goes HERE -->
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
+    <h2 class="mb-4"> Monthly Registered </h2>
+
+
+  {{ registered_cases }}
+
+    <h1>Registered Cases Grouped</h1>
+    
+   <!-- loop through the registered cases grouped by case type -->
+   {% for case_type, case_type_df in registered_cases_grouped %}
+    <h2>{{ case_type }}</h2>
+    {{ case_type_df }}
+   {% endfor %}
+
+
+
+    
+
+
+
+
+
+
+</div>
+
+{% endblock content %}

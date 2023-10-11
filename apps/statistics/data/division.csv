@@ -1,0 +1,97 @@
+"division_id","division_name","active","code","created_at","updated_at","deleted_at"
+1,"Supreme Court Petition",0,"SPC",NULL,NULL,NULL
+2,"Supreme Court Advisory Opinion/Reference",1,"SCAOR",NULL,NULL,NULL
+3,"Supreme Court ",1,"SC",NULL,NULL,NULL
+4,"Supreme Court Petition Application",0,NULL,NULL,NULL,NULL
+5,"Civil Division",1,"CC",NULL,NULL,NULL
+7,"Criminal  Division",0,"CRA",NULL,NULL,NULL
+9,"High Court Criminal",1,"Criminal",NULL,NULL,NULL
+10,"High Court Commercial and Tax",1," Commercial ",NULL,NULL,NULL
+11,"High Court Civil",0,"HCC",NULL,NULL,NULL
+12,"High Court Family",1,"Family",NULL,NULL,NULL
+13,"High Court Judicial Review",0,"HCJR",NULL,NULL,NULL
+14,"High Court Constitution and Human Rights",0,"CHR",NULL,NULL,NULL
+15,"Magistrate Court Civil Case ",0,NULL,NULL,NULL,NULL
+16,"Magistrate Court Civil Case Miscellaneous ",0,NULL,NULL,NULL,NULL
+18,"Magistrate Court Criminal",1,"MC - Criminal",NULL,NULL,NULL
+19,"Magistrate Court Criminal Case Miscellaneous ",0,NULL,NULL,NULL,NULL
+20,"Magistrate Court Traffic Case ",0,NULL,NULL,NULL,NULL
+21,"Magistrate Court Election Petitions ",0,NULL,NULL,NULL,NULL
+22,"Magistrate Court Succession Matter ",0,NULL,NULL,NULL,NULL
+24,"Magistrate Court Children",0,"Children",NULL,NULL,NULL
+27,"Kadhi Court",1,"KC",NULL,NULL,NULL
+28,"Magistrate Court Anti Corruption",1,"MCAC",NULL,NULL,NULL
+29,"High Court Anti Corruption and Economic Crimes",0,"ACEC",NULL,NULL,NULL
+30,"Environment and Land Court",1,"ELC",NULL,NULL,NULL
+31,"Environment and Land Appeal",0,NULL,NULL,NULL,NULL
+32,"Environment and Land Judiciary Review",0,NULL,NULL,NULL,NULL
+33,"Environment and Land Miscellaneous",0,NULL,NULL,NULL,NULL
+34,"Environment and Land Petitions",0,NULL,NULL,NULL,NULL
+35,"Employment and Labour Relations Court",1,"ELRC",NULL,NULL,NULL
+36,"Employment and Labour Relations Judicial Review",0,NULL,NULL,NULL,NULL
+37,"Employment and Labour Relations CBA",0,NULL,NULL,NULL,NULL
+38,"Employment and Labour Relations Petitions",0,NULL,NULL,NULL,NULL
+39,"Employment and Labour Relations Miscellaneous",0,NULL,NULL,NULL,NULL
+40,"Employment and Labour Relations Appeal",0,NULL,NULL,NULL,NULL
+41,"Supreme Court Presidential Election Petition",0,NULL,NULL,NULL,NULL
+42,"Magistrate Court Commercial",1,"MCC",NULL,NULL,NULL
+43,"Accused Division",0,NULL,NULL,NULL,NULL
+44,"Environment & Land Matters (OS)",0,NULL,NULL,NULL,NULL
+46,"xxxxxx1111111111111",0,"xxxx11",NULL,NULL,NULL
+47,"XXXXXXXXX",0,"x",NULL,NULL,NULL
+48,"High Court Criminal - deleted",0,"CRM",NULL,NULL,NULL
+49,"Magistrate Court Traffic",0,"MCTR",NULL,NULL,NULL
+50,"Magistrate Court Criminal",1,"MCCR",NULL,NULL,NULL
+51,"CHR and JR",1,"CHR.JR",NULL,NULL,NULL
+52,"Magistrate Court Civil",0,"MCCD",NULL,NULL,NULL
+53,"High Court Div",0,"HC.DIV",NULL,NULL,NULL
+54,"Magistrate Court",1,"MCD",NULL,NULL,NULL
+55,"Magistrate Court Family",1,"MC - Family",NULL,NULL,NULL
+56,"Nairobi",1,"NRB",NULL,NULL,NULL
+57,"Nairobi",1,"NRB",NULL,NULL,NULL
+58,"Court Annexed Mediation",1,"CAM",NULL,NULL,NULL
+59,"The National Environment Tribunal",1,"NET",NULL,NULL,NULL
+60,"Meru Environment and Land Court",1,"MERUELC",NULL,NULL,NULL
+61,"MERU HIGH COURT",1,"MERUHC",NULL,NULL,NULL
+62,"Meru Magistrate Court",1,"MERUMC",NULL,NULL,NULL
+63,"Sports Disputes Tribunal",1,"SDT",NULL,NULL,NULL
+64,"Court of Appeal",1,"COA",NULL,NULL,NULL
+65,"Tribunal",1,"TR",NULL,NULL,NULL
+66,"Transport Licensing Appeals Board",1,"TLAB",NULL,NULL,NULL
+67,"Advocates Disciplinary Tribunal",1,"ADT",NULL,NULL,NULL
+68,"Auctioneers Licensing Board",1,"ALB",NULL,NULL,NULL
+69,"Nairobi",1,"NBI",NULL,NULL,NULL
+70,"Communications and Multimedia Appeals Tribunal ",0,"CAMAT",NULL,NULL,NULL
+71,"Legal Education Appeals Tribunal ",0,"LEAT",NULL,NULL,NULL
+72,"Micro and Small Enterprise Tribunal ",1,"MASET",NULL,NULL,NULL
+73,"Competent Authority Tribunal ",0,"CAT",NULL,NULL,NULL
+74,"Kenya Institute of Supplies Management Elections Committee",1,"KISM",NULL,NULL,NULL
+75,"Education Appeals Tribunal",1,"EAT",NULL,NULL,NULL
+76,"HIV Tribunal",1,"HAT",NULL,NULL,NULL
+77,"Kajiado",1,"KJD",NULL,NULL,NULL
+78,"Mombasa",1,"MSA",NULL,NULL,NULL
+79,"Kakamega",1,"KKM",NULL,NULL,NULL
+80,"Nakuru",1,"NAK",NULL,NULL,NULL
+81,"Meru",1,"MER",NULL,NULL,NULL
+82,"Embu",1,"EMB",NULL,NULL,NULL
+83,"Muranga",1,"MUR",NULL,NULL,NULL
+84,"Thika",1,"TKA",NULL,NULL,NULL
+85,"Machakos",1,"MKS",NULL,NULL,NULL
+86,"Kiambu",1,"KMB",NULL,NULL,NULL
+87,"Nyahururu",1,"NYU",NULL,NULL,NULL
+88,"Kericho",1,"KER",NULL,NULL,NULL
+89,"Eldoret",1,"ELD",NULL,NULL,NULL
+90,"Kitale",1,"KIT",NULL,NULL,NULL
+91,"Bungoma",1,"BGM",NULL,NULL,NULL
+92,"Kisii",1,"KIS",NULL,NULL,NULL
+93,"Kisumu",1,"KSM",NULL,NULL,NULL
+94,"Nyeri",1,"NYR",NULL,NULL,NULL
+95,"Naivasha",1,"NAV",NULL,NULL,NULL
+96,"ENERGY AND PETROLEUM TRIBUNAL",0,"EPTBN",NULL,NULL,NULL
+97,"Commercial Suit Division",1,"MCCOMMSU",NULL,NULL,NULL
+98,"Small Claims Court",0,"SCC",NULL,NULL,NULL
+99,"Garissa",1,"GAR",NULL,NULL,NULL
+100,"Lamu",1,"LAM",NULL,NULL,NULL
+101,"Judiciary Training Institute",0,"JTI",NULL,NULL,NULL
+102,"Administration",0,"ADMIN",NULL,NULL,NULL
+103,"Judiciary Committee on Elections",1,"JCE",NULL,NULL,NULL

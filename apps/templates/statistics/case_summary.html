@@ -1,0 +1,31 @@
+{% extends "layouts/base.html" %}
+
+{% load unicorn %}
+
+{% block extra_head %}
+
+{% unicorn_scripts %}
+
+{% endblock extra_head %}
+
+{% block title %} DCRT SUMMARY {% endblock title %}
+
+
+{% block content %}
+
+<div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
+
+    <h3> {{ unit.name }} in the Month  {{ month.name }}</h3>
+
+    <h4> {{ unit_rank.name }} -  FY {{  financial_year.name }} - {{ financial_quarter.name }} </h4>
+
+
+    {% unicorn 'case_summary' unit_rank financial_year financial_quarter unit division month %}
+
+
+
+ 
+
+</div>
+
+{% endblock content %}
