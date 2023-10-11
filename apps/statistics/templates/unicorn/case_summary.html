@@ -1,7 +1,27 @@
 <div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
         <p class="lead">Select a column to view its summary</p>
 
+     <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="exampleFormControlSelect1">Select Dataset</label>
+                <select class="form-control" id="df_name" name="df_name" unicorn:change="changeDataset" unicorn:model="selected_dataset">
+                    <option value="">Select Dataset</option>
+                    {% for df in dfs %}
+                    <option value="{{ df }}">{{ df }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- shape is a tuple of (rows, columns) -->
+    <div class="row">
+        <h3>Shape</h3>
+        
         <h3>{{ shape }}</h3>
+    </div>
+
 
 
     <!-- drop down for columns . columns is df.columns -->
