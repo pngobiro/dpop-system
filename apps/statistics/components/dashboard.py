@@ -10,8 +10,8 @@ class DashboardView(UnicornView):
     financial_year = None
     quarter = None
     unit_ranks = None
-    financial_years = None
-    financial_quarters = None
+    financial_years = FinancialYear.objects.all()
+    financial_quarters = FinancialQuarter.objects.filter(financial_year=financial_year)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
