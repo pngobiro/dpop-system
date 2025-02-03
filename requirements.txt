@@ -16,13 +16,14 @@ django-sslserver
 django-q
 django-storages
 python-docx
-djangorestframework
 pinecone-client
 langchain
 django-unicorn
 django-debug-toolbar
 openpyxl
 django_pandas
+django-webpack-loader
+djangorestframework
 
 
 

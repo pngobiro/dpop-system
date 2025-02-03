@@ -8,12 +8,13 @@ from apps.statistics.models import UnitRank , FinancialYear , FinancialQuarter ,
 
 
 def home(request):
-    # show hello world string
-    #  UnitRank
     context = {
         'unit_ranks': UnitRank.objects.all(),
-        'financial_years': FinancialYear.objects.all(),
-        'financial_quarters': FinancialQuarter.objects.all(),
+        'total_units': Unit.objects.count(),
+        'active_divisions': Division.objects.filter(is_active=True).count(),
+        'court_units': Unit.objects.filter(is_court=True).count(),
+        'financial_year': FinancialYear.objects.first(),
+        'financial_quarter': FinancialQuarter.objects.first(),
     }
     return render(request, 'statistics/home.html', context)
     

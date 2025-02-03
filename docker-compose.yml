@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:14
@@ -17,6 +15,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8001
     volumes:
       - .:/code
+      - ./logs:/code/logs  # Add this line
     ports:
       - "8001:8001"
     env_file:

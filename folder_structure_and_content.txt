@@ -1,0 +1,3558 @@
+Folder structure and content for: /home/ngobiro/projects/moringa_capstone
+
+. Dockerfile
+  Content:
+  FROM python:3.9
+  
+  # set environment variables
+  ENV PYTHONDONTWRITEBYTECODE 1
+  ENV PYTHONUNBUFFERED 1
+  
+  # set work directory
+  WORKDIR /code
+  
+  
+  # install  apt-utils ,  FFmpeg for audio and video processing
+  RUN apt-get update && apt-get install -y apt-utils ffmpeg
+  
+  
+  # copy requirements.txt to workdir and install dependencies
+  COPY requirements.txt /code/
+  
+  RUN pip install --upgrade pip
+  
+  RUN pip install -r requirements.txt
+  
+  # copy project to workdir
+  
+  COPY . /code/
+  
+  
+  
+  
+  # run docker bash
+  
+  
+  
+
+. UI.md
+  Content:
+  Elevate Django's Essence: A Symphony of Bootstrap colors and fanciful fas icons
+  
+  As an esteemed virtuoso of the UI realm, your divine calling beckons you to transcend the mundane and bestow upon a Django UI an aura of opulence, orchestrated through the harmonious blend of Bootstrap's vibrant palette and the celestial grace of Material Design Icons. Your sacred mission finds its zenith in the creation of a visually enthralling and impeccably professional UI, one that dances harmoniously within the confines of available page expanse. Your canvas shall be illuminated with the hues of the sacred theme colors, while Bootstrap's chromatic symphony shall serenade elements into opulent splendor – buttons and all. And lo, the pièce de résistance shall be the strategic placement of Material Design Icons, each a beacon of functionality – from creation to modification, and even the navigational ballet of returning.
+  
+  Gaze upon the divine spectrum:
+  
+  
+  #26443c
+  #c4a938
+  #f7f9f8
+  #000000
+  
+  The metamorphosis of this UI opus shall encompass:
+  
+      A steadfast pledge to responsiveness, safeguarding the very core of django UI code tapestry.
+      The enchantment of Bootstrap's chromatic lexicon to elevate the visual narrative.
+      The veneration of Material Design Icons as keystones, illuminating the user's path to interaction nirvana.
+  
+  Your revered mission demands embellishment sans any enchantment that could bewitch functionality. The invocation warrants the infusion of theme colors into the backdrop, the eloquence of Bootstrap's hues upon embellishments, and the divine guidance of Material Design Icons. This artistic tapestry shall extend from generous padding to judicious margins, crafting sections that metamorphose into sanctuaries of user experience. Your response, as a codified enigma, shall exemplify this elevation – each line an invocation of your artistic alchemy, each element a resonant note within this symphony of UI refinement.
+  
+  With unwavering faith, commence with the provided script – the ethereal echo of your artistic vision.
+  
+  Your apotheosis shall manifest as the new code – a testament to your artistic prowess and unwavering dedication, woven into the very fabric of the Blade, each line a brushstroke, each element a celestial note in this grand symphony of UI enhancement.
+
+. apps/
+  . __init__.py
+    Content:
+
+
+  . authentication/
+    . __init__.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+
+    . admin.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.contrib import admin
+      
+      # Register your models here.
+
+    . config.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.apps import AppConfig
+      
+      
+      class AuthConfig(AppConfig):
+          name = 'apps.auth'
+          label = 'apps_auth'
+
+    . forms.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django import forms
+      from django.contrib.auth.forms import UserCreationForm
+      from django.contrib.auth.models import User
+      
+      
+      class LoginForm(forms.Form):
+          username = forms.CharField(
+              widget=forms.TextInput(
+                  attrs={
+                      "placeholder": "Username",
+                      "class": "form-control"
+                  }
+              ))
+          password = forms.CharField(
+              widget=forms.PasswordInput(
+                  attrs={
+                      "placeholder": "Password",
+                      "class": "form-control"
+                  }
+              ))
+      
+      
+      class SignUpForm(UserCreationForm):
+          username = forms.CharField(
+              widget=forms.TextInput(
+                  attrs={
+                      "placeholder": "Username",
+                      "class": "form-control"
+                  }
+              ))
+          email = forms.EmailField(
+              widget=forms.EmailInput(
+                  attrs={
+                      "placeholder": "Email",
+                      "class": "form-control"
+                  }
+              ))
+          password1 = forms.CharField(
+              widget=forms.PasswordInput(
+                  attrs={
+                      "placeholder": "Password",
+                      "class": "form-control"
+                  }
+              ))
+          password2 = forms.CharField(
+              widget=forms.PasswordInput(
+                  attrs={
+                      "placeholder": "Password check",
+                      "class": "form-control"
+                  }
+              ))
+      
+          class Meta:
+              model = User
+              fields = ('username', 'email', 'password1', 'password2')
+
+    . migrations/
+      . __init__.py
+        Content:
+        # -*- encoding: utf-8 -*-
+        """
+        Copyright (c) 2019 - present AppSeed.us
+        """
+
+    . models.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.db import models
+      
+      # Create your models here.
+
+    . tests.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . urls.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.urls import path, include
+      from .views import login_view, register_user
+      from django.contrib.auth.views import LogoutView
+      
+      urlpatterns = [
+          path('login/', login_view, name="login"),
+          path('register/', register_user, name="register"),
+          path("logout/", LogoutView.as_view(), name="logout"),
+      ]
+
+    . views.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      # Create your views here.
+      from django.shortcuts import render, redirect
+      from django.contrib.auth import authenticate, login
+      from .forms import LoginForm, SignUpForm
+      
+      
+      def login_view(request):
+          form = LoginForm(request.POST or None)
+      
+          msg = None
+      
+          if request.method == "POST":
+      
+              if form.is_valid():
+                  username = form.cleaned_data.get("username")
+                  password = form.cleaned_data.get("password")
+                  user = authenticate(username=username, password=password)
+                  if user is not None:
+                      login(request, user)
+                      return redirect("/")
+                  else:
+                      msg = 'Invalid credentials'
+              else:
+                  msg = 'Error validating the form'
+      
+          return render(request, "accounts/login.html", {"form": form, "msg": msg})
+      
+      
+      def register_user(request):
+          msg = None
+          success = False
+      
+          if request.method == "POST":
+              form = SignUpForm(request.POST)
+              if form.is_valid():
+                  form.save()
+                  username = form.cleaned_data.get("username")
+                  raw_password = form.cleaned_data.get("password1")
+                  user = authenticate(username=username, password=raw_password)
+      
+                  msg = 'Account created successfully.'
+                  success = True
+      
+                  # return redirect("/login/")
+      
+              else:
+                  msg = 'Form is not valid'
+          else:
+              form = SignUpForm()
+      
+          return render(request, "accounts/register.html", {"form": form, "msg": msg, "success": success})
+
+  . config.py
+    Content:
+    from django.apps import AppConfig
+    
+    
+    class AppsConfig(AppConfig):
+        default_auto_field = 'django.db.models.BigAutoField'
+        name = 'apps'
+        label = 'apps'
+
+  . context_processors.py
+    Content:
+    from django.conf import settings
+    
+    def cfg_assets_root(request):
+    
+        return { 'ASSETS_ROOT' : settings.ASSETS_ROOT }
+    
+
+  . home/
+    . __init__.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+
+    . admin.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.contrib import admin
+      
+      # Register your models here.
+
+    . components/
+      . __init__.py
+        Content:
+
+
+      . hello_magic.py
+        Content:
+        from django_unicorn.components import UnicornView
+        
+        
+        class HelloMagicView(UnicornView):
+            pass
+
+    . config.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.apps import AppConfig
+      
+      
+      class MyConfig(AppConfig):
+          name = 'apps.home'
+          label = 'apps_home'
+
+    . migrations/
+      . __init__.py
+        Content:
+        # -*- encoding: utf-8 -*-
+        """
+        Copyright (c) 2019 - present AppSeed.us
+        """
+
+    . models.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.db import models
+      from django.contrib.auth.models import User
+      
+      # Create your models here.
+      
+
+    . tests.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . urls.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.urls import path, re_path
+      from apps.home import views
+      from django.urls import path, include
+      
+      urlpatterns = [
+      
+          # The home page
+          path('', views.index, name='home'),
+      
+          # Matches any html file
+          re_path(r'^.*\.*', views.pages, name='pages'),
+      
+      
+          # path stastistics dashboard
+        
+      
+      
+      
+          
+      ]
+
+    . views.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django import template
+      from django.contrib.auth.decorators import login_required
+      from django.http import HttpResponse, HttpResponseRedirect
+      from django.template import loader
+      from django.urls import reverse
+      
+      
+      @login_required(login_url="/login/")
+      def index(request):
+          context = {'segment': 'index'}
+      
+          html_template = loader.get_template('home/index.html')
+          return HttpResponse(html_template.render(context, request))
+      
+      def dashboard(request):
+          context = {'segment': 'dashboard'}
+      
+          html_template = loader.get_template('home/dashboard.html')
+          return HttpResponse(html_template.render(context, request))    
+      
+      
+      @login_required(login_url="/login/")
+      def pages(request):
+          context = {}
+          # All resource paths end in .html.
+          # Pick out the html file name from the url. And load that template.
+          try:
+      
+              load_template = request.path.split('/')[-1]
+      
+              if load_template == 'admin':
+                  return HttpResponseRedirect(reverse('admin:index'))
+              context['segment'] = load_template
+      
+              html_template = loader.get_template('home/' + load_template)
+              return HttpResponse(html_template.render(context, request))
+      
+          except template.TemplateDoesNotExist:
+      
+              html_template = loader.get_template('home/page-404.html')
+              return HttpResponse(html_template.render(context, request))
+      
+          except:
+              html_template = loader.get_template('home/page-500.html')
+              return HttpResponse(html_template.render(context, request))
+
+  . statistics/
+    . __init__.py
+      Content:
+
+
+    . admin.py
+      Content:
+      from django.contrib import admin
+      
+      # Register your models here.
+
+    . apps.py
+      Content:
+      from django.apps import AppConfig
+      
+      
+      class StastisticsConfig(AppConfig):
+          default_auto_field = 'django.db.models.BigAutoField'
+          name = 'apps.statistics'
+          label = 'statistics'
+
+    . components/
+      . __init__.py
+        Content:
+
+
+      . case_summary.py
+        Content:
+        # views.py
+        from django_unicorn.components import UnicornView
+        from apps.statistics.models import DcrtData
+        from django_pandas.io import read_frame
+        from django.utils.html import format_html
+        
+        class CaseSummaryView(UnicornView):
+            selected_column = None
+            queryset = None
+            columns = None 
+            summary = {}
+            shape = None
+            df = None
+        
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.queryset = DcrtData.objects.all()
+                if self.queryset:
+                    df = read_frame(self.queryset)
+                    self.columns = df.columns.tolist()
+                    self.shape = df.shape
+        
+            def changeColumn(self):
+                if self.selected_column and self.queryset:
+                    df = read_frame(self.queryset)
+                    self.summary = df[self.selected_column].describe().to_dict()
+                    self.shape = df.shape
+                    
+
+      . dashboard.py
+        Content:
+        # views.py
+        from django_unicorn.components import UnicornView
+        from django.shortcuts import redirect
+        
+        # import models
+        from apps.statistics.models import UnitRank, FinancialYear, FinancialQuarter
+        
+        class DashboardView(UnicornView):
+            court_rank = None
+            financial_year = None
+            quarter = None
+            unit_ranks = None
+            financial_years = None
+            financial_quarters = None
+        
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.unit_ranks =  UnitRank.objects.all()
+                
+        
+            def changeCourtRank(self):
+                if self.court_rank:
+                    self.financial_years = FinancialYear.objects.all()
+                    self.financial_year = None
+                    self.quarter = None
+                    self.financial_quarters = None
+           
+        
+            def changeFinancialYear(self):
+                if self.financial_year:
+                    self.financial_quarters = FinancialQuarter.objects.filter(financial_year=self.financial_year)
+                    self.quarter = None
+        
+            def changeQuarter(self):
+                print(self.quarter)
+                if self.quarter:
+                    return redirect('statistics:rank_units', self.court_rank, self.financial_year, self.quarter)
+
+      . hello_magic.py
+        Content:
+        from django_unicorn.components import UnicornView
+        
+        
+        class HelloMagicView(UnicornView):
+            pass
+
+      . hello_world.py
+        Content:
+        # hello_world.py
+        from django_unicorn.components import UnicornView
+        
+        class HelloWorldView(UnicornView):
+            name = "World"
+
+    . data/
+      . division.csv
+        Content:
+        "division_id","division_name","active","code","created_at","updated_at","deleted_at"
+        1,"Supreme Court Petition",0,"SPC",NULL,NULL,NULL
+        2,"Supreme Court Advisory Opinion/Reference",1,"SCAOR",NULL,NULL,NULL
+        3,"Supreme Court ",1,"SC",NULL,NULL,NULL
+        4,"Supreme Court Petition Application",0,NULL,NULL,NULL,NULL
+        5,"Civil Division",1,"CC",NULL,NULL,NULL
+        7,"Criminal  Division",0,"CRA",NULL,NULL,NULL
+        9,"High Court Criminal",1,"Criminal",NULL,NULL,NULL
+        10,"High Court Commercial and Tax",1," Commercial ",NULL,NULL,NULL
+        11,"High Court Civil",0,"HCC",NULL,NULL,NULL
+        12,"High Court Family",1,"Family",NULL,NULL,NULL
+        13,"High Court Judicial Review",0,"HCJR",NULL,NULL,NULL
+        14,"High Court Constitution and Human Rights",0,"CHR",NULL,NULL,NULL
+        15,"Magistrate Court Civil Case ",0,NULL,NULL,NULL,NULL
+        16,"Magistrate Court Civil Case Miscellaneous ",0,NULL,NULL,NULL,NULL
+        18,"Magistrate Court Criminal",1,"MC - Criminal",NULL,NULL,NULL
+        19,"Magistrate Court Criminal Case Miscellaneous ",0,NULL,NULL,NULL,NULL
+        20,"Magistrate Court Traffic Case ",0,NULL,NULL,NULL,NULL
+        21,"Magistrate Court Election Petitions ",0,NULL,NULL,NULL,NULL
+        22,"Magistrate Court Succession Matter ",0,NULL,NULL,NULL,NULL
+        24,"Magistrate Court Children",0,"Children",NULL,NULL,NULL
+        27,"Kadhi Court",1,"KC",NULL,NULL,NULL
+        28,"Magistrate Court Anti Corruption",1,"MCAC",NULL,NULL,NULL
+        29,"High Court Anti Corruption and Economic Crimes",0,"ACEC",NULL,NULL,NULL
+        30,"Environment and Land Court",1,"ELC",NULL,NULL,NULL
+        31,"Environment and Land Appeal",0,NULL,NULL,NULL,NULL
+        32,"Environment and Land Judiciary Review",0,NULL,NULL,NULL,NULL
+        33,"Environment and Land Miscellaneous",0,NULL,NULL,NULL,NULL
+        34,"Environment and Land Petitions",0,NULL,NULL,NULL,NULL
+        35,"Employment and Labour Relations Court",1,"ELRC",NULL,NULL,NULL
+        36,"Employment and Labour Relations Judicial Review",0,NULL,NULL,NULL,NULL
+        37,"Employment and Labour Relations CBA",0,NULL,NULL,NULL,NULL
+        38,"Employment and Labour Relations Petitions",0,NULL,NULL,NULL,NULL
+        39,"Employment and Labour Relations Miscellaneous",0,NULL,NULL,NULL,NULL
+        40,"Employment and Labour Relations Appeal",0,NULL,NULL,NULL,NULL
+        41,"Supreme Court Presidential Election Petition",0,NULL,NULL,NULL,NULL
+        42,"Magistrate Court Commercial",1,"MCC",NULL,NULL,NULL
+        43,"Accused Division",0,NULL,NULL,NULL,NULL
+        44,"Environment & Land Matters (OS)",0,NULL,NULL,NULL,NULL
+        46,"xxxxxx1111111111111",0,"xxxx11",NULL,NULL,NULL
+        47,"XXXXXXXXX",0,"x",NULL,NULL,NULL
+        48,"High Court Criminal - deleted",0,"CRM",NULL,NULL,NULL
+        49,"Magistrate Court Traffic",0,"MCTR",NULL,NULL,NULL
+        50,"Magistrate Court Criminal",1,"MCCR",NULL,NULL,NULL
+        51,"CHR and JR",1,"CHR.JR",NULL,NULL,NULL
+        52,"Magistrate Court Civil",0,"MCCD",NULL,NULL,NULL
+        53,"High Court Div",0,"HC.DIV",NULL,NULL,NULL
+        54,"Magistrate Court",1,"MCD",NULL,NULL,NULL
+        55,"Magistrate Court Family",1,"MC - Family",NULL,NULL,NULL
+        56,"Nairobi",1,"NRB",NULL,NULL,NULL
+        57,"Nairobi",1,"NRB",NULL,NULL,NULL
+        58,"Court Annexed Mediation",1,"CAM",NULL,NULL,NULL
+        59,"The National Environment Tribunal",1,"NET",NULL,NULL,NULL
+        60,"Meru Environment and Land Court",1,"MERUELC",NULL,NULL,NULL
+        61,"MERU HIGH COURT",1,"MERUHC",NULL,NULL,NULL
+        62,"Meru Magistrate Court",1,"MERUMC",NULL,NULL,NULL
+        63,"Sports Disputes Tribunal",1,"SDT",NULL,NULL,NULL
+        64,"Court of Appeal",1,"COA",NULL,NULL,NULL
+        65,"Tribunal",1,"TR",NULL,NULL,NULL
+        66,"Transport Licensing Appeals Board",1,"TLAB",NULL,NULL,NULL
+        67,"Advocates Disciplinary Tribunal",1,"ADT",NULL,NULL,NULL
+        68,"Auctioneers Licensing Board",1,"ALB",NULL,NULL,NULL
+        69,"Nairobi",1,"NBI",NULL,NULL,NULL
+        70,"Communications and Multimedia Appeals Tribunal ",0,"CAMAT",NULL,NULL,NULL
+        71,"Legal Education Appeals Tribunal ",0,"LEAT",NULL,NULL,NULL
+        72,"Micro and Small Enterprise Tribunal ",1,"MASET",NULL,NULL,NULL
+        73,"Competent Authority Tribunal ",0,"CAT",NULL,NULL,NULL
+        74,"Kenya Institute of Supplies Management Elections Committee",1,"KISM",NULL,NULL,NULL
+        75,"Education Appeals Tribunal",1,"EAT",NULL,NULL,NULL
+        76,"HIV Tribunal",1,"HAT",NULL,NULL,NULL
+        77,"Kajiado",1,"KJD",NULL,NULL,NULL
+        78,"Mombasa",1,"MSA",NULL,NULL,NULL
+        79,"Kakamega",1,"KKM",NULL,NULL,NULL
+        80,"Nakuru",1,"NAK",NULL,NULL,NULL
+        81,"Meru",1,"MER",NULL,NULL,NULL
+        82,"Embu",1,"EMB",NULL,NULL,NULL
+        83,"Muranga",1,"MUR",NULL,NULL,NULL
+        84,"Thika",1,"TKA",NULL,NULL,NULL
+        85,"Machakos",1,"MKS",NULL,NULL,NULL
+        86,"Kiambu",1,"KMB",NULL,NULL,NULL
+        87,"Nyahururu",1,"NYU",NULL,NULL,NULL
+        88,"Kericho",1,"KER",NULL,NULL,NULL
+        89,"Eldoret",1,"ELD",NULL,NULL,NULL
+        90,"Kitale",1,"KIT",NULL,NULL,NULL
+        91,"Bungoma",1,"BGM",NULL,NULL,NULL
+        92,"Kisii",1,"KIS",NULL,NULL,NULL
+        93,"Kisumu",1,"KSM",NULL,NULL,NULL
+        94,"Nyeri",1,"NYR",NULL,NULL,NULL
+        95,"Naivasha",1,"NAV",NULL,NULL,NULL
+        96,"ENERGY AND PETROLEUM TRIBUNAL",0,"EPTBN",NULL,NULL,NULL
+        97,"Commercial Suit Division",1,"MCCOMMSU",NULL,NULL,NULL
+        98,"Small Claims Court",0,"SCC",NULL,NULL,NULL
+        99,"Garissa",1,"GAR",NULL,NULL,NULL
+        100,"Lamu",1,"LAM",NULL,NULL,NULL
+        101,"Judiciary Training Institute",0,"JTI",NULL,NULL,NULL
+        102,"Administration",0,"ADMIN",NULL,NULL,NULL
+        103,"Judiciary Committee on Elections",1,"JCE",NULL,NULL,NULL
+
+      . unit.csv
+        Content:
+        1,Mombasa High Court,MSAHGC,MSAHGC,3,3,32
+        2,Mombasa ELRC,MSAERC,MSAERC,4,4,32
+        3,Mombasa Environment and Land Court,MSAELC,MSAELC,5,5,32
+        4,Kaloleni Magistrate Court,KLNMGC,KLNMGC,6,6,59
+        5,Mariakani Magistrate Court,MRKMGC,MRKMGC,6,6,84
+        6,Mombasa Magistrate Court,MSAMGC,MSAMGC,6,6,32
+        7,Shanzu Magistrate Court,SNZMGC,SNZMGC,6,6,107
+        8,Tononoka Magistrate Court,TNKMGC,TNKMGC,6,6,115
+        9,Mombasa Kadhi Court,MSAKDC,MSAKDC,7,7,32
+        10,Mariakani Kadhi Court,MRKKDC,MRKKDC,7,7,84
+        11,Kwale Magistrate Court,KWLMGC,KWLMGC,6,6,75
+        12,Kwale Kadhi Court,KWLKDC,KWLKDC,7,7,75
+        13,Msambweni Kadhi Court,MWNKDC,MWNKDC,7,7,133
+        14,Malindi Court of Appeal,MLDCOA,MLDCOA,2,2,5
+        15,Malindi High Court,MLDHGC,MLDHGC,3,3,5
+        16,Malindi Environment and Land Court,MLDELC,MLDELC,5,5,5
+        17,Kilifi Magistrate Court,KLFMGC,KLFMGC,6,6,71
+        18,Malindi Magistrate Court,MLDMGC,MLDMGC,6,6,5
+        19,Kilifi Kadhi Court,KLFKDC,KLFKDC,7,7,71
+        20,Malindi Kadhi Court,MLDKDC,MLDKDC,7,7,5
+        21,Garsen High Court,GSNHGC,GSNHGC,3,3,14
+        23,Garsen Magistrate Court,GSNMGC,GSNMGC,6,6,14
+        24,Hola Magistrate Court,HLAMGC,HLAMGC,6,6,54
+        25,Garsen Kadhi Court,GSNKDC,GSNKDC,7,7,14
+        26,Hola Kadhi Court,HLAKDC,HLAKDC,7,7,54
+        28,Lamu Magistrate Court,LMUMGC,LMUMGC,6,6,77
+        29,Mpeketoni Magistrate Court,MPKMGC,MPKMGC,6,6,92
+        30,Lamu Kadhi Court,LMUKDC,LMUKDC,7,7,77
+        31,Voi High Court,VOIHGC,VOIHGC,3,3,41
+        32,Taveta Magistrate Court,TVTMGC,TVTMGC,6,6,112
+        33,Voi Magistrate Court,VOIMGC,VOIMGC,6,6,41
+        34,Wundanyi Magistrate Court,WDYMGC,WDYMGC,6,6,122
+        35,Voi Kadhi Court,VOIKDC,VOIKDC,7,7,41
+        36,Garissa High Court,GRSHGC,GRSHGC,3,3,13
+        37,Garissa Environment and Land Court,GRSELC,GRSELC,5,5,13
+        38,Modogashe Kadhi Court,MDGMGC,MDGMGC,7,7,144
+        41,Garissa Magistrate Court,GRSMGC,GRSMGC,6,6,13
+        42,Garissa Kadhi Court,GRSKDC,GRSKDC,7,7,13
+        43,Dadaab Kadhi Court,DDBKDC,DDBKDC,7,7,125
+        44,Ijara Kadhi Court,IJRKDC,IJRKDC,7,7,131
+        45,Balambala Kadhi Court,BLMKDC,BLMKDC,7,7,123
+        46,Wajir Magistrate Court,WJRMGC,WJRMGC,6,6,118
+        47,Wajir Kadhi Court,WJRKDC,WJRKDC,7,7,118
+        48,Habaswein Kadhi Court,HBSKDC,HBSKDC,7,7,130
+        49,Bute Kadhi Court,BTEKDC,BTEKDC,7,7,124
+        50,Eldas Kadhi Court,EDSKDC,EDSKDC,7,7,126
+        51,Mandera Magistrate Court,MNDMGC,MNDMGC,6,6,82
+        52,Mandera Kadhi Court,MNDKDC,MNDKDC,7,7,82
+        53,Elwak Kadhi Court,EWKKDC,EWKKDC,7,7,127
+        54,Takaba Kadhi Court,TKBKDC,TKBKDC,7,7,134
+        55,Marsabit High Court,MSBHGC,MSBHGC,3,3,29
+        57,Moyale Magistrate Court,MYLMGC,MYLMGC,6,6,91
+        58,Marsabit Magistrate Court,MSBMGC,MSBMGC,6,6,29
+        59,Marsabit Kadhi Court,MSBKDC,MSBKDC,7,7,29
+        60,Moyale Kadhi Court,MYLKDC,MYLKDC,7,7,91
+        63,Isiolo Magistrate Court,ISLMGC,ISLMGC,6,6,55
+        64,Isiolo Kadhi Court,ISLKDC,ISLKDC,7,7,55
+        65,Garbatulla Kadhi Court,GBTKDC,GBTKDC,7,7,129
+        66,Merti Kadhi Court,MRTKDC,MRTKDC,7,7,132
+        22,Kipini under Garsen Magistrate Court,KPNMGC,KPNMGC,6,6,14
+        56,Laisamis/Loyangalani Magistrate Court under Marsabit Law Court,LSMMGC,LSMMGC,6,6,29
+        61,Sereolipi Kadhi Court,SERKDC,SERKDC,7,7,55
+        67,Meru High Court,MRUHGC,MRUHGC,3,3,30
+        68,Meru Environment and Land Court,MRUELC,MRUELC,5,5,30
+        69,Maua Magistrate Court,MUAMGC,MUAMGC,6,6,87
+        70,Meru Magistrate Court,MRUMGC,MRUMGC,6,6,30
+        71,Nkubu Magistrate Court,NKBMGC,NKBMGC,6,6,99
+        72,Tigania Magistrate Court,TGAMGC,TGAMGC,6,6,114
+        73,Githongo Magistrate Court,GTGMGC,GTGMGC,6,6,51
+        74,Chuka High Court,CKAHGC,CKAHGC,3,3,10
+        75,Chuka Environment and Land Court,CKAELC,CKAELC,5,5,10
+        76,Chuka Magistrate Court,CKAMGC,CKAMGC,6,6,10
+        77,Marimanti Magistrate Court,MRTMGC,MRTMGC,6,6,85
+        79,Embu High Court,EMBHGC,EMBHGC,3,3,12
+        80,Embu Environment and Land Court,EMBELC,EMBELC,5,5,12
+        81,Embu Magistrate Court,EMBMGC,EMBMGC,6,6,12
+        82,Runyenjes Magistrate Court,RNJGMC,RNJGMC,6,6,106
+        83,Siakago Magistrate Court,SKGMGC,SKGMGC,6,6,108
+        84,Kitui High Court,KTIHGC,KTIHGC,3,3,25
+        86,Kitui Magistrate Court,KTIMGC,KTIMGC,6,6,25
+        87,Kyuso Magistrate Court,KYSMGC,KYSMGC,6,6,76
+        88,Mutomo Magistrate Court,MTMMGC,MTMMGC,6,6,95
+        89,Mwingi Magistrate Court,MWGMGC,MWGMGC,6,6,96
+        90,Kitui Kadhi Court,KTIKDC,KTIKDC,7,7,25
+        92,Machakos High Court,MKSHGC,MKSHGC,3,3,27
+        93,Machakos Environment and Land Court ,MKSELC,MKSELC,5,5,27
+        94,Kangundo Magistrate Court,KGDMGC,KGDMGC,6,6,62
+        95,Machakos Magistrate Court,MKSMGC,MKSMGC,6,6,27
+        96,Mavoko Magistrate Court,MVKMGC,MVKMGC,6,6,88
+        97,Kithimani Magistrate Court,KTMMGC,KTMMGC,6,6,74
+        98,Machakos Kadhi Court,MKSKDC,MKSKDC,7,7,27
+        99,Makueni High Court,MKNHGC,MKNHGC,3,3,28
+        100,Makueni Environment and Land Court,MKNELC,MKNELC,5,5,28
+        101,Kilungu Magistrate Court,KGUMGC,KGUMGC,6,6,72
+        102,Makueni Magistrate Court,MKNMGC,MKNMGC,6,6,28
+        103,Makindu Magistrate Court,MDUMGC,MDUMGC,6,6,81
+        104,Tawa Magistrate Court,TWAMGC,TWAMGC,6,6,113
+        105,Engineer Magistrate Court,ENGMGC,ENGMGC,6,6,48
+        106,Nyeri Court of Appeal,NYRCOA,NYRCOA,2,2,6
+        107,Nyeri High Court,NYRHGC,NYRHGC,3,3,6
+        108,Nyeri ELRC,NYRERC,NYRERC,4,4,6
+        109,Nyeri Environment and Land Court,NYRELC,NYRELC,5,5,6
+        110,Karatina Magistrate Court,KTNMGC,KTNMGC,6,6,64
+        111,Mukurwe-ini Magistrate Court,MKWMGC,MKWMGC,6,6,93
+        112,Nyeri Magistrate Court,NYRMGC,NYRMGC,6,6,6
+        113,Othaya Magistrate Court,OTYMGC,OTYMGC,6,6,103
+        114,Nyeri Kadhi Court,NYRKDC,NYRKDC,7,7,6
+        115,Kerugoya High Court,KRGHGC,KRGHGC,3,3,21
+        116,Kerugoya Environment and Land Court,KRGELC,KRGELC,5,5,21
+        118,Baricho Magistrate Court,BRCMGC,BRCMGC,6,6,43
+        119,Gichugu Magistrate Court,GCGMGC,GCGMGC,6,6,50
+        120,Kerugoya Magistrate Court,KRGMGC,KRGMGC,6,6,21
+        121,Wanguru Magistrate Court,WNGMGC,WNGMGC,6,6,119
+        122,Muranga High Court,MRGHGC,MRGHGC,3,3,33
+        123,Kandara Magistrate Court,KNDMGC,KNDMGC,6,6,60
+        124,Kangema Magistrate Court,KNGMGC,KNGMGC,6,6,61
+        125,Kigumo Magistrate Court,KGMMGC,KGMMGC,6,6,68
+        126,Muranga Magistrate Court,MRGMGC,MRGMGC,6,6,33
+        128,Kiambu High Court,KMBHGC,KMBHGC,3,3,22
+        117,Karaba under Wanguru Magistrate Court,KRBMGC,KRBMGC,6,6,119
+        78,Maua Kadhi court,MUAKDC,MUAKDC,7,7,87
+        127,Muranga Kadhi Court,MRGKDC,MRGKDC,7,7,33
+        91,Mwingi Kadhi Court ,MWGKDC,MWGKDC,7,7,96
+        129,Kiambu Magistrate Court,KMBMGC,KMBMGC,6,6,22
+        130,Kikuyu Magistrate Court,KYKMGC,KYKMGC,6,6,69
+        132,Gatundu Magistrate Court,GTDMGC,GTDMGC,6,6,49
+        133,Githunguri Magistrate Court,GTNMGC,GTNMGC,6,6,52
+        134,Thika Magistrate Court,TKAMGC,TKAMGC,6,6,42
+        136,Lodwar High Court,LDWHGC,LDWHGC,3,3,26
+        139,Lodwar Magistrate Court,LDWMGC,LDWMGC,6,6,26
+        140,Kakuma Magistrate Court,KKMMGC,KKMMGC,6,6,58
+        142,Kapenguria High Court,KPGHGC,KPGHGC,3,3,19
+        143,Kapenguria Magistrate Court,KPGMGC,KPGMGC,6,6,19
+        145,Maralal Magistrate Court,MRLMGC,MRLMGC,6,6,83
+        146,Kitale High Court,KTLHGC,KTLHGC,3,3,24
+        147,Kitale Environment and Land Court,KTGELC,KTGELC,5,5,24
+        148,Kitale Magistrate Court,KTGMGC,KTGMGC,6,6,24
+        150,Eldoret Court of Appeal,ELDCOA,ELDCOA,2,2,11
+        151,Eldoret High Court,ELDHGC,ELDHGC,3,3,11
+        152,Eldoret Environment and Land Court,ELDELC,ELDELC,5,5,11
+        153,Eldoret Magistrate Court,ELDMGC,ELDMGC,6,6,11
+        154,Eldoret Kadhi Court,ELDKDC,ELDKDC,7,7,11
+        155,Iten Magistrate Court,ITNMGC,ITNMGC,6,6,56
+        157,Kapsabet Magistrate Court,KPBMGC,KPBMGC,6,6,63
+        158,Kabarnet High Court,KBTHGC,KBTHGC,3,3,16
+        160,Kabarnet Magistrate Court,KBTMGC,KBTMGC,6,6,16
+        161,Nanyuki High Court,NYKHGC,NYKHGC,3,3,36
+        162,Nanyuki Magistrate Court,NYKMGC,NYKMGC,6,6,36
+        163,Nyahururu Magistrate Court,NYHMGC,NYHMGC,6,6,100
+        164,Naivasha High Court,NSHHGC,NSHHGC,3,3,34
+        165,Nakuru High Court,NKRHGC,NKRHGC,3,3,35
+        166,Nakuru ELRC,NKRERC,NKRERC,4,4,35
+        167,Nakuru Environment and Land Court,NKRELC,NKRELC,5,5,35
+        168,Eldama Ravine Magistrate Court,ERVMGC,ERVMGC,6,6,47
+        169,Molo Magistrate Court,MOLMGC,MOLMGC,6,6,90
+        170,Naivasha Magistrate Court,NSHMGC,NSHMGC,6,6,34
+        171,Nakuru Magistrate Court,NKRMGC,NKRMGC,6,6,35
+        172,Nakuru Kadhi Court,NKRKDC,NKRKDC,7,7,35
+        173,Narok High Court,NRKHGC,NRKHGC,3,3,37
+        174,Narok Magistrate Court,NRKMGC,NRKMGC,6,6,37
+        175,Kajiado High Court,KJDHGC,KJDHGC,3,3,17
+        176,Ngong Magistrate Court,NGNMGC,NGNMGC,6,6,98
+        177,Kajiado Magistrate Court,KJDMGC,KJDMGC,6,6,17
+        178,Loitoktok Magistrate Court,LTKMGC,LTKMGC,6,6,79
+        179,Kajiado Kadhi Court,KJDKDC,KJDKDC,7,7,17
+        180,Kericho High Court,KRCHGC,KRCHGC,3,3,20
+        181,Kericho ELRC,KRCERC,KRCERC,4,4,20
+        182,Kericho Environment and Land Court,KRCELC,KRCELC,5,5,20
+        183,Kericho Magistrate Court,KRCMGC,KRCMGC,6,6,20
+        184,Kericho Kadhi Court,KRCKDC,KRCKDC,7,7,20
+        185,Bomet High Court,BMTHGC,BMTHGC,3,3,7
+        186,Bomet Magistrate Court,BMTMGC,BMTMGC,6,6,7
+        187,Sotik Magistrate Court,STKMGC,STKMGC,6,6,110
+        188,Kakamega High Court,KKGHGC,KKGHGC,3,3,18
+        189,Kakamega Environment and Land Court,KKGELC,KKGELC,5,5,18
+        190,Butali Magistrate Court,BTLMGC,BTLMGC,6,6,45
+        191,Butere Magistrate Court,BTRMGC,BTRMGC,6,6,46
+        144,Wamba under Maralal Magistrate Court,WMBMGC,WMBMGC,6,6,83
+        156,Songhor under Kapsabet Magistrate Court,SNGMGC,SNGMGC,6,6,63
+        137,Lokichar under Lodwar Magistrate Court,LKCMGC,LKCMGC,6,6,26
+        138,Lokitaung under Lodwar Magistrate Court,LKTMGC,LKTMGC,6,6,26
+        149,Kitale Kadhi Court,KTGKDC,KTGKDC,7,7,24
+        141,Lodwar Kadhi Court,LDWKDC,LDWKDC,7,7,26
+        135,Thika Kadhi Court,TKAKDC,TKAKDC,7,7,42
+        192,Kakamega Magistrate Court,KKGMGC,KKGMGC,6,6,18
+        193,Mumias Magistrate Court,MMSMGC,MMSMGC,6,6,94
+        194,Kakamega Kadhi Court,KKGKDC,KKGKDC,7,7,18
+        195,Vihiga Magistrate Court,VGHMGC,VGHMGC,6,6,117
+        196,Hamisi Magistrate Court,HMSMGC,HMSMGC,6,6,53
+        197,Bungoma High Court,BNGHGC,BNGHGC,3,3,8
+        198,Bungoma  Environment and Land Court,BNGELC,BNGELC,5,5,8
+        200,Bungoma Magistrate Court,BNGMGC,BNGMGC,6,6,8
+        201,Kimilili Magistrate Court,KMLMGC,KMLMGC,6,6,73
+        202,Sirisia Magistrate Court,SRSMGC,SRSMGC,6,6,109
+        203,Webuye Magistrate Court,WBYMGC,WBYMGC,6,6,120
+        204,Bungoma Kadhi Court,BNGKDC,BNGKDC,7,7,8
+        205,Busia High Court,BSAHGC,BSAHGC,3,3,9
+        206,Busia Environment and Land Court,BSAELC,BSAELC,5,5,9
+        207,Busia Magistrate Court,BSAMGC,BSAMGC,6,6,9
+        208,Siaya High Court,SYAHGC,SYAHGC,3,3,40
+        209,Bondo Magistrate Court,BNDMGC,BNDMGC,6,6,44
+        210,Siaya Magistrate Court,SYAMGC,SYAMGC,6,6,40
+        211,Ukwala Magistrate Court,UKLMGC,UKLMGC,6,6,116
+        212,Kisumu Court of Appeal,KSMCOA,KSMCOA,2,2,4
+        213,Kisumu High Court,KSMHGC,KSMHGC,3,3,4
+        214,Kisumu ELRC,KSMERC,KSMERC,4,4,4
+        215,Kisumu Environment and Land Court,KSMELC,KSMELC,5,5,4
+        216,Kisumu Magistrate Court,KSMMGC,KSMMGC,6,6,4
+        217,Maseno Magistrate Court,MSNMGC,MSNMGC,6,6,86
+        218,Winam Magistrate Court,WNMMGC,WNMMGC,6,6,121
+        219,Nyando Magistrate Court,NYDMGC,NYDMGC,6,6,101
+        220,Tamu Magistrate Court,TAMMGC,TAMMGC,6,6,111
+        221,Kisumu Kadhi Court,KSMKDC,KSMKDC,7,7,4
+        222,Homabay High Court,HMBHGC,HMBHGC,3,3,15
+        224,Homabay Magistrate Court,HMBMGC,HMBMGC,6,6,15
+        225,Ndhiwa Magistrate Court,NDWMGC,NDWMGC,6,6,97
+        226,Oyugis Magistrate Court,OYGMGC,OYGMGC,6,6,104
+        227,Mbita Magistrate Court,MBTMGC,MBTMGC,6,6,89
+        228,Homabay Kadhi Court,HMBKDC,HMBKDC,7,7,15
+        229,Migori High Court,MGRHGC,MGRHGC,3,3,31
+        230,Kehancha Magistrate Court,KHCMGC,KHCMGC,6,6,65
+        231,Migori Magistrate Court,MGRMGC,MGRMGC,6,6,31
+        232,Rongo Magistrate Court,RNGMGC,RNGMGC,6,6,105
+        234,Kisii High Court,KISHGC,KISHGC,3,3,23
+        235,Kisii Environment and Land Court,KISELC,KISELC,5,5,23
+        236,Kisii Magistrate Court,KISMGC,KISMGC,6,6,23
+        237,Ogembo Magistrate Court,OGBMGC,OGBMGC,6,6,102
+        238,Nyamira High Court,NYMHGC,NYMHGC,3,3,38
+        239,Keroka Magistrate Court,KRKMGC,KRKMGC,6,6,66
+        240,Kilgoris Magistrate Court,KLGMGC,KLGMGC,6,6,70
+        241,Nyamira Magistrate Court,NYMMGC,NYMMGC,6,6,38
+        242,Supreme Court,NRBSPC,NRBSPC,1,1,1
+        245,Nairobi Employment and Labour Relations Court,NRBERC,NRBERC,4,4,3
+        246,Milimani Environment and Land Court,MILELC,MILELC,5,5,2
+        247,Milimani Commercial Magistrate Court,MILCMC,MILCMC,6,6,3
+        250,Nairobi City Court,NRBCTC,NRBCTC,6,6,2
+        251,Makadara Magistrate Court,MKDMGC,MKDMGC,6,6,80
+        252,Kibera Magistrate Court,KBRMGC,KBRMGC,6,6,67
+        254,JKIA Magistrate Court,JKAMGC,JKAMGC,6,6,57
+        255,Nairobi Kadhi Court,NRBKDC,NRBKDC,7,7,2
+        256,Kibera Kadhi Court,KBRKDC,KBRKDC,7,7,67
+        223,Kendu Bay under Oyugis Magistrate Court,KDBMGC,KDBMGC,6,6,104
+        199,Kapsokwony under Kimilili Magistrate Court,KKWMGC,KKWMGC,6,6,73
+        249,Milimani Magistrate Court,MILMGC,MILMGC,6,6,2
+        233,Migori Kadhi Court,MGRKDC,MGRKDC,7,7,31
+        258,Political Parties Disputes Tribunal (PPDT),PPDTBN,PPDTBN,8,8,136
+        259,The National Environment Tribunal,NETTBN,NETTBN,8,8,136
+        260,Sports Disputes Tribunal,SPDTBN,SPDTBN,8,8,136
+        261,Co-operative Tribunal,COPTBN,COPTBN,8,8,136
+        264,HIV and AIDS Tribunal,HIVTBN,HIVTBN,8,8,136
+        266,Rent Restriction Tribunal,RRTTBN,RRTTBN,8,8,136
+        267,Business Premises Rent Tribunal,BPRTBN,BPRTBN,8,8,136
+        281,Industrial Property Tribunal,IPT,IPT,8,8,136
+        284,Ruiru Magistrate Court,RURMGC,RURMGC,6,6,139
+        286,Eldoret ELRC,ELDELRC,ELDELRC,4,4,11
+        287,Migori ELC,MGRELC,MGRELC,5,5,31
+        288,Kajiado ELC,KJDELC,KJDELC,5,5,17
+        289,Muranga ELC,MRGELC,MRGELC,5,5,33
+        290,Bungoma ELRC,BNGERC,BNGERC,4,4,8
+        291,Malindi ELRC,MLDERC,MLDERC,4,4,5
+        292,Busia Kadhi Court,BSAKDC,BSAKDC,7,7,9
+        294,Thika Environment and Land Court,TKAELC,TKAELC,5,5,42
+        296,Msambweni Magistrate Court,MWNMGC,MWNMGC,6,6,133
+        301,Nyahururu ELC,NYHELC,NYHELC,5,5,100
+        302,Nyahururu High Court,NYHHGC,NYHHGC,3,3,100
+        307,Transport Licensing Appeals Board Tribunal,TLBTBN,TLBTBN,8,8,136
+        309,Communications and Multimedia Appeals Tribunal ,CAMAT,CAMAT,8,8,136
+        310,Legal Education Appeals Tribunal ,LEAT,LEAT,8,8,136
+        311,Micro and Small Enterprise Tribunal ,MSET,MSET,8,8,136
+        315,Kenya Institute of Supplies Management Elections Committee,KISM,KISM,9,9,141
+        317,Narok ELC,NRKELC,NRKELC,5,5,37
+        321,Limuru Magistrate Court,LMRMGC,LMRMGC,6,6,78
+        322,Nakuru Court of Appeal,NKRCOA,NKRCOA,2,2,35
+        323,Mombasa Court of Appeal,MSACOA,MSACOA,2,2,32
+        324,Dadaab Magistrate Court,DDBMGC,DDBMGC,6,6,125
+        325,Kahawa Magistrate Court,KHWMGC,KHWMGC,6,6,142
+        326,Bura/Fafi Kadhis Court,BAFKDC,BAFKDC,7,7,143
+        327,Witu Kadhi Court,WITKDC,WITKDC,7,7,135
+        328,Kakuma Kadhi Court,KKMKDC,KKMKDC,7,7,58
+        331,Baragoi Mobile Court (under Maralal Magistrate Court),BRGMGC,BRGMGC,6,6,83
+        329,Gaitu Mobile Court,GMC,GMC,6,6,51
+        299,Wamunyu Mobile Court under Machakos Law Court,WAYMGC,WAYMGC,6,6,27
+        313,Training Law Court,TLC,TLC,6,6,140
+        300,Migwani Mobile Court Under Mwingi Law Court,MGWMGC,MGWMGC,6,6,96
+        332,Mikinduri Mobile Court Under Tigania,MIKMGC,MIKMGC,6,6,114
+        319,Olokurto Mobile Court,OLOKMGC,OLOKMGC,6,6,37
+        278,Thika High Court,TKAHGC,TKAHGC,3,3,42
+        257,Wajir High Court,WJRHGC,WJRHGC,3,3,118
+        285,Meru Employment and Labour Relations Court,MRUERC,MRUERC,4,4,30
+        303,Laisamis/Loyangalani Kadhi Court under Marsabit Law Court,LSMKDC,LSMKDC,7,7,29
+        318,Narok Kadhi Court,NRKKC,NRKKC,7,7,37
+        305,Northhorr/Illeret Kadhi Court Under Marsabit Law Court,NTHKDC,NTHKDC,7,7,29
+        263,Water Appeals Board,WAB,ALBTBN,8,8,136
+        282,State Corporations Appeal Tribunal,SCAT,SCAT,8,8,136
+        277,Standards Tribunal,STDTBN,STDTBN,8,8,136
+        283,Registrar of Trademark Tribunal,RTT,RTT,8,8,136
+        265,Public Private Partnership Petition Committee,PPPPC,PPPPC,8,8,136
+        280,National Civil Aviation Administrative Review Tribunal,NAART,NAART,8,8,136
+        293,Land Dispute Tribunal,LDT,LDT,8,8,136
+        330,Copyright Tribunal,COPT,COPT,8,8,156
+        276,Competition Tribunal,CPTTBN,CPTTBN,8,8,136
+        262,Auctioneers Licensing Board,ALB,ALB,8,8,136
+        308,Advocates Disciplinary Tribunal,ADT,ADT,8,8,136
+        336,Meru Kadhi Court,MRUKDC,MRUKDC,7,7,30
+        341,Vihiga High Court,VHGHGC,VHGHGC,3,3,117
+        347,Kilgoris ELC,KILELC,KILELC,5,5,70
+        353,Milimani Small Claims Court,MSCC,MSCC,13,13,3
+        356,Office of the Registrar Magistrate Court (ORMC),ORMC,ORMC,12,12,1
+        357,Office of Registrar Supreme Court (ORSC),ORSC,ORSC,12,12,1
+        358,Office of Registrar Court of Appeal (ORCOA),ORCOA,ORCOA,12,12,1
+        359,Office of Registrar High Court (ORHC),ORHC,ORHC,12,12,2
+        361,Office of Registrar Employment and Labour Relations Court (ORELRC),ORELRC,ORELRC,12,12,3
+        362,Office of Registrar Environment and Land Court (ORELC),ORELC,ORELC,12,12,2
+        363,Office of Registrar Tribunals (ORTR),ORTR,ORTR,12,12,1
+        364,Office of Registrar Small Claims Court (ORSCC),ORSCC,ORSCC,12,12,3
+        368,Office of The Chief Registrar Judiciary (OCRJ),OCRJ,OCRJ,12,12,1
+        371,Siaya ELC,SYAELC,SYAELC,5,5,40
+        372,Nyamira Environment and Land Court,NYMELC,NYMELC,5,5,38
+        374,Nanyuki Environment and Land Court,NYKELC,NYKELC,5,5,36
+        375,Kapsabet Environment and Land Court,KPBELC,KPBELC,5,5,63
+        376,Kitui Environment and Land Court,KTIELC,KTIELC,5,5,25
+        377,Kwale Environment and Land Court,KWLELC,KWLELC,5,5,75
+        378,Vihiga Environment and Land Court,VHGELC,VHGELC,5,5,117
+        379,Homabay Environment and Land Court,HMBELC,HMBELC,5,5,15
+        384,Judiciary Committee on Elections,JCE,JCE,9,9,2
+        243,Nairobi Court of Appeal,NRBCOA,NRBCOA,2,2,1
+        355,Judiciary Training Institute,JTI,JTI,11,11,1
+        386,Directorate of Planning and Organisational Performance,DPOP,DPOP,11,11,2
+        387,Finance and Accounts,FA,FA,11,11,2
+        388,Supply Chain Management,SCM,SCM,11,11,2
+        389,Building Services,BS,BS,11,11,2
+        390,Public Affairs and Communication,PAC,PAC,11,11,2
+        391,Internal Audit and Risk Management,IAM,IAM,11,11,2
+        392,Information Communication Technology,ICT,ICT,11,11,2
+        342,Timau Mobile Court under Meru Law Courts,TIMMGC,TIMMGC,6,6,30
+        351,Merti Magistrate Mobile Court Under Isiolo,MERMGC,MERMGC,6,6,55
+        345,Kikima Magistrate Court Under Tawa Law Courts,KIKMGC,KIKMGC,6,6,113
+        335,Sololo Mobile Court Under Moyale,SOLMGC,SOLMGC,6,6,91
+        350,Sereolipi Magistrate Mobile Court Under Isiolo,SERMGC,SERMGC,6,6,55
+        380,Port Victoria Mobile Court,POVMGC,POVMGC,6,6,9
+        382,Butula Mobile Court,BUTMGC,BUTMGC,6,6,9
+        337,Kipkelion Mobile Court Under Kericho Law Courts,KIPMGC,KIPMGC,6,6,20
+        370,Marigat Mobile Court,MARMGC,MARMGC,6,6,16
+        381,Malaba Mobile Court,MALMGC,MALMGC,6,6,9
+        349,Kapsabet High Court,KAPHGC,KAPHGC,3,3,63
+        367,Office of The Judiciary Ombudsman (OJO),OJO,OJO,11,11,1
+        346,Kilgoris High Court,KILHGC,KILHGC,3,3,70
+        352,Garissa ELRC,GRSELRC,GRSELRC,4,4,13
+        354,Kitale ELRC,KTLERC,KTLERC,4,4,24
+        333,Machakos ELRC,MKSERC,MKSERC,4,4,27
+        373,Isiolo Environment and Land Court,ISLELC,ISLELC,5,5,55
+        338,Refugee Appeal Board,RABD,RABD,8,8,136
+        343,Insurance Appeals Tribunal ,IATT,IATT,8,8,136
+        340,HIV Tribunal,HAT,HAT,8,8,155
+        339,Education Appeals Tribunal - Nairobi,EATNAIROBI,EATNAIROBI,8,8,154
+        348,ENERGY AND PETROLEUM TRIBUNAL,EPTBN,EPTBN,8,8,136
+        369,Community Service Orders Co-ordinator (CSOC),CSOC,CSOC,12,12,1
+        360,Office of Principal Judge (OPJ),OPJ,OPJ,12,12,2
+        365,Office of Registrar Judicial Service Commission (ORJSC),ORJSC,ORJSC,12,12,1
+        366,Office of The Chief Justice (OCJ),OCJ,OCJ,12,12,1
+        393,Human Resource Management,HRM,HRM,11,11,2
+        394,Administration and Security Services,ASS,ASS,11,11,2
+        306,Vihiga Kadhi Court,VHGKDC,VHGKDC,7,6,117
+        244,Milimani High Court,MILHGC,MILHGC,3,3,2
+        159,East Pokot under Kabarnet Magistrate Court,EPKMGC,EPKMGC,6,6,16
+        334,Etago Mobile Court under Ogembo Court,ETGMGC,ETGMGC,6,6,102
+        27,Faza Islands under Lamu Magistrate Court,FZIMGC,FZIMGC,6,6,128
+        85,Zombe Mobile Court,ZMBMGC,ZMBMGC,6,6,25
+        304,Northhorr/Illeret Magistrate Court Under Marsabit Law Court,NTHMGC,NTHMGC,6,6,29
+        396,The National Council for the Administration of Justice,NCAJ,NCAJ,11,11,2
+        397,Library,Library,Library,11,11,2
+        383,Disciplinary & Ethics Committee of the Medical Practitioners and Dentists Council,DECMPDC,DECMPDC,8,8,136
+        312,Competent Authority Tribunal ,COMPTBN,COMPTBN,8,8,136
+
+      . unit_division.csv
+        Content:
+        "unit_division_id","unit_id_fk","division_id_fk","mayan_unit_division_ref_id","efiling_ready_unit","created_at","updated_at","deleted_at"
+        1,244,10,19241,True,NULL,NULL,NULL
+        2,244,11,1758,False,NULL,NULL,NULL
+        43,244,9,1728,False,NULL,NULL,NULL
+        45,244,12,1734,False,NULL,NULL,NULL
+        46,244,13,1754,False,NULL,NULL,NULL
+        47,244,14,1743,False,NULL,NULL,NULL
+        49,246,30,24004,False,NULL,NULL,NULL
+        50,249,18,24268,False,NULL,NULL,NULL
+        51,247,42,0,True,NULL,NULL,NULL
+        52,242,3,4,False,NULL,NULL,NULL
+        53,244,29,31747,False,NULL,NULL,NULL
+        55,249,24,23830,False,NULL,NULL,NULL
+        56,249,20,24393,False,NULL,NULL,NULL
+        57,249,28,24247,False,NULL,NULL,NULL
+        58,245,35,23566,False,NULL,NULL,NULL
+        59,243,7,24009,False,NULL,NULL,NULL
+        60,243,5,23339,False,NULL,NULL,NULL
+        63,1,12,40824,False,NULL,NULL,NULL
+        64,1,11,30666,False,NULL,NULL,NULL
+        65,1,10,0,False,NULL,NULL,NULL
+        66,1,9,43299,False,NULL,NULL,NULL
+        69,1,51,33018,False,NULL,NULL,NULL
+        70,3,30,33205,False,NULL,NULL,NULL
+        71,6,52,33075,False,NULL,NULL,NULL
+        72,6,50,42033,False,NULL,NULL,NULL
+        73,6,49,33186,False,NULL,NULL,NULL
+        80,164,53,0,False,NULL,NULL,NULL
+        81,170,50,0,False,NULL,NULL,NULL
+        82,170,52,33501,False,NULL,NULL,NULL
+        83,170,49,0,False,NULL,NULL,NULL
+        84,7,54,44276,False,NULL,NULL,NULL
+        85,8,54,45268,False,NULL,NULL,NULL
+        86,9,27,46706,False,NULL,NULL,NULL
+        87,6,55,41594,False,NULL,NULL,NULL
+        88,129,54,0,False,NULL,NULL,NULL
+        89,2,35,43798,False,NULL,NULL,NULL
+        90,261,56,33844,False,NULL,NULL,NULL
+        91,267,57,58997,False,NULL,NULL,NULL
+        96,128,53,0,False,NULL,NULL,NULL
+        100,259,59,116628,False,NULL,NULL,NULL
+        102,68,60,0,False,NULL,NULL,NULL
+        103,67,61,36873,False,NULL,NULL,NULL
+        104,70,62,36612,False,NULL,NULL,NULL
+        105,244,58,1726,False,NULL,NULL,NULL
+        112,251,50,42060,False,NULL,NULL,NULL
+        113,251,49,49535,False,NULL,NULL,NULL
+        114,260,63,54355,False,NULL,NULL,NULL
+        115,251,24,0,False,NULL,NULL,NULL
+        116,171,50,0,False,NULL,NULL,NULL
+        117,171,52,0,False,NULL,NULL,NULL
+        118,171,24,0,False,NULL,NULL,NULL
+        119,171,49,0,False,NULL,NULL,NULL
+        133,100,30,0,False,NULL,NULL,NULL
+        145,133,54,35177,False,NULL,NULL,NULL
+        147,284,54,39665,False,NULL,NULL,NULL
+        148,69,54,35678,False,NULL,NULL,NULL
+        168,285,35,0,False,NULL,NULL,NULL
+        169,153,50,36654,False,NULL,NULL,NULL
+        170,153,52,36753,False,NULL,NULL,NULL
+        171,153,24,0,False,NULL,NULL,NULL
+        172,153,55,0,False,NULL,NULL,NULL
+        173,255,27,29805,False,NULL,NULL,NULL
+        174,286,35,0,False,NULL,NULL,NULL
+        175,152,30,0,False,NULL,NULL,NULL
+        176,151,9,0,False,NULL,NULL,NULL
+        177,151,12,113270,False,NULL,NULL,NULL
+        178,151,11,106755,False,NULL,NULL,NULL
+        179,154,27,0,False,NULL,NULL,NULL
+        180,162,52,0,False,NULL,NULL,NULL
+        181,162,50,57967,False,NULL,NULL,NULL
+        182,161,53,0,False,NULL,NULL,NULL
+        183,145,54,40716,False,NULL,NULL,NULL
+        184,151,58,0,False,NULL,NULL,NULL
+        187,157,52,0,False,NULL,NULL,NULL
+        188,157,50,0,False,NULL,NULL,NULL
+        189,64,27,0,False,NULL,NULL,NULL
+        190,63,54,0,False,NULL,NULL,NULL
+        191,208,53,36882,False,NULL,NULL,NULL
+        193,214,35,41849,False,NULL,NULL,NULL
+        194,210,52,35309,False,NULL,NULL,NULL
+        195,210,50,90205,False,NULL,NULL,NULL
+        196,215,30,54193,False,NULL,NULL,NULL
+        197,206,30,0,False,NULL,NULL,NULL
+        198,287,30,0,False,NULL,NULL,NULL
+        199,167,30,0,False,NULL,NULL,NULL
+        200,109,30,35452,False,NULL,NULL,NULL
+        201,16,30,0,False,NULL,NULL,NULL
+        202,235,30,0,False,NULL,NULL,NULL
+        203,93,30,36518,False,NULL,NULL,NULL
+        204,205,9,0,False,NULL,NULL,NULL
+        205,205,11,0,False,NULL,NULL,NULL
+        206,207,50,0,False,NULL,NULL,NULL
+        207,207,52,0,False,NULL,NULL,NULL
+        208,207,24,0,False,NULL,NULL,NULL
+        209,216,50,54145,False,NULL,NULL,NULL
+        210,216,52,47619,False,NULL,NULL,NULL
+        211,216,49,80335,False,NULL,NULL,NULL
+        212,108,35,0,False,NULL,NULL,NULL
+        213,112,52,0,False,NULL,NULL,NULL
+        214,112,50,35537,False,NULL,NULL,NULL
+        215,112,24,0,False,NULL,NULL,NULL
+        216,112,55,0,False,NULL,NULL,NULL
+        217,107,9,0,False,NULL,NULL,NULL
+        218,107,11,0,False,NULL,NULL,NULL
+        219,107,12,0,False,NULL,NULL,NULL
+        220,166,35,0,False,NULL,NULL,NULL
+        221,213,9,102346,False,NULL,NULL,NULL
+        222,213,11,54179,False,NULL,NULL,NULL
+        223,213,12,54215,False,NULL,NULL,NULL
+        224,175,53,0,False,NULL,NULL,NULL
+        228,288,30,0,False,NULL,NULL,NULL
+        229,197,53,106810,False,NULL,NULL,NULL
+        230,204,27,0,False,NULL,NULL,NULL
+        231,200,18,0,False,NULL,NULL,NULL
+        232,200,52,0,False,NULL,NULL,NULL
+        233,198,30,0,False,NULL,NULL,NULL
+        234,55,53,0,False,NULL,NULL,NULL
+        235,58,54,37457,False,NULL,NULL,NULL
+        236,59,27,0,False,NULL,NULL,NULL
+        237,31,53,0,False,NULL,NULL,NULL
+        238,181,35,0,False,NULL,NULL,NULL
+        239,182,30,0,False,NULL,NULL,NULL
+        240,180,53,36082,False,NULL,NULL,NULL
+        241,183,52,0,False,NULL,NULL,NULL
+        242,183,50,35618,False,NULL,NULL,NULL
+        243,183,49,0,False,NULL,NULL,NULL
+        244,289,30,0,False,NULL,NULL,NULL
+        245,122,53,0,False,NULL,NULL,NULL
+        248,35,27,35771,False,NULL,NULL,NULL
+        249,33,54,0,False,NULL,NULL,NULL
+        250,222,53,0,False,NULL,NULL,NULL
+        251,224,50,37226,False,NULL,NULL,NULL
+        252,224,52,37398,False,NULL,NULL,NULL
+        253,224,55,0,False,NULL,NULL,NULL
+        254,84,53,0,False,NULL,NULL,NULL
+        255,86,50,0,False,NULL,NULL,NULL
+        256,86,52,34149,False,NULL,NULL,NULL
+        257,165,12,0,False,NULL,NULL,NULL
+        258,165,9,0,False,NULL,NULL,NULL
+        259,165,11,0,False,NULL,NULL,NULL
+        260,290,35,107167,False,NULL,NULL,NULL
+        261,36,53,0,False,NULL,NULL,NULL
+        262,37,30,0,False,NULL,NULL,NULL
+        263,42,27,0,False,NULL,NULL,NULL
+        264,41,54,0,False,NULL,NULL,NULL
+        265,92,53,0,False,NULL,NULL,NULL
+        266,98,27,0,False,NULL,NULL,NULL
+        267,95,54,35236,False,NULL,NULL,NULL
+        268,15,11,0,False,NULL,NULL,NULL
+        269,15,9,0,False,NULL,NULL,NULL
+        270,20,27,0,False,NULL,NULL,NULL
+        271,18,50,0,False,NULL,NULL,NULL
+        272,18,52,0,False,NULL,NULL,NULL
+        273,238,11,0,False,NULL,NULL,NULL
+        274,238,9,40302,False,NULL,NULL,NULL
+        275,241,52,0,False,NULL,NULL,NULL
+        276,241,50,0,False,NULL,NULL,NULL
+        277,234,9,0,False,NULL,NULL,NULL
+        279,234,11,0,False,NULL,NULL,NULL
+        280,236,52,0,False,NULL,NULL,NULL
+        281,236,50,0,False,NULL,NULL,NULL
+        282,116,30,35345,False,NULL,NULL,NULL
+        283,115,53,34839,False,NULL,NULL,NULL
+        284,120,52,34786,False,NULL,NULL,NULL
+        285,120,50,34880,False,NULL,NULL,NULL
+        286,195,50,0,False,NULL,NULL,NULL
+        287,195,52,0,False,NULL,NULL,NULL
+        288,80,30,0,False,NULL,NULL,NULL
+        289,79,53,34195,False,NULL,NULL,NULL
+        290,81,54,168482,False,NULL,NULL,NULL
+        291,252,49,38373,False,NULL,NULL,NULL
+        292,252,50,24259,False,NULL,NULL,NULL
+        293,256,27,43143,False,NULL,NULL,NULL
+        294,147,30,0,False,NULL,NULL,NULL
+        297,149,27,0,False,NULL,NULL,NULL
+        298,148,54,33447,False,NULL,NULL,NULL
+        299,146,53,36915,False,NULL,NULL,NULL
+        300,291,35,0,False,NULL,NULL,NULL
+        301,89,52,36505,False,NULL,NULL,NULL
+        302,89,50,0,False,NULL,NULL,NULL
+        303,211,54,35199,False,NULL,NULL,NULL
+        304,209,54,36802,False,NULL,NULL,NULL
+        305,189,30,0,False,NULL,NULL,NULL
+        306,188,12,0,False,NULL,NULL,NULL
+        307,188,11,0,False,NULL,NULL,NULL
+        308,188,9,0,False,NULL,NULL,NULL
+        309,192,52,0,False,NULL,NULL,NULL
+        310,192,50,0,False,NULL,NULL,NULL
+        311,123,54,34929,False,NULL,NULL,NULL
+        312,124,54,34290,False,NULL,NULL,NULL
+        314,250,54,30748,False,NULL,NULL,NULL
+        315,105,54,0,False,NULL,NULL,NULL
+        316,118,54,168927,False,NULL,NULL,NULL
+        317,121,54,0,False,NULL,NULL,NULL
+        318,119,54,0,False,NULL,NULL,NULL
+        319,34,54,0,False,NULL,NULL,NULL
+        320,32,54,0,False,NULL,NULL,NULL
+        321,212,64,52392,False,NULL,NULL,NULL
+        322,221,27,81248,False,NULL,NULL,NULL
+        323,250,5,0,False,NULL,NULL,NULL
+        324,14,64,37657,False,NULL,NULL,NULL
+        325,194,27,0,False,NULL,NULL,NULL
+        326,292,27,0,False,NULL,NULL,NULL
+        327,184,27,0,False,NULL,NULL,NULL
+        328,294,30,0,False,NULL,NULL,NULL
+        329,130,54,141280,False,NULL,NULL,NULL
+        330,169,52,0,False,NULL,NULL,NULL
+        331,169,50,0,False,NULL,NULL,NULL
+        332,179,27,0,False,NULL,NULL,NULL
+        333,90,27,0,False,NULL,NULL,NULL
+        334,228,27,0,False,NULL,NULL,NULL
+        335,135,27,0,False,NULL,NULL,NULL
+        336,172,27,0,False,NULL,NULL,NULL
+        337,106,64,0,False,NULL,NULL,NULL
+        338,127,27,0,False,NULL,NULL,NULL
+        339,91,27,0,False,NULL,NULL,NULL
+        342,13,27,0,False,NULL,NULL,NULL
+        343,296,54,37466,False,NULL,NULL,NULL
+        344,299,54,40212,False,NULL,NULL,NULL
+        345,300,54,0,False,NULL,NULL,NULL
+        348,163,50,0,False,NULL,NULL,NULL
+        349,163,52,0,False,NULL,NULL,NULL
+        350,301,30,0,False,NULL,NULL,NULL
+        351,302,53,0,False,NULL,NULL,NULL
+        353,258,65,40068,False,NULL,NULL,NULL
+        354,72,54,0,False,NULL,NULL,NULL
+        363,303,27,0,False,NULL,NULL,NULL
+        364,56,54,0,False,NULL,NULL,NULL
+        366,97,54,41631,False,NULL,NULL,NULL
+        367,237,54,0,False,NULL,NULL,NULL
+        368,94,54,39459,False,NULL,NULL,NULL
+        369,96,54,40062,False,NULL,NULL,NULL
+        370,240,54,0,False,NULL,NULL,NULL
+        371,196,54,0,False,NULL,NULL,NULL
+        372,190,54,34793,False,NULL,NULL,NULL
+        373,193,54,0,False,NULL,NULL,NULL
+        374,191,54,0,False,NULL,NULL,NULL
+        375,168,54,39332,False,NULL,NULL,NULL
+        376,57,54,37270,False,NULL,NULL,NULL
+        378,305,27,0,False,NULL,NULL,NULL
+        379,304,54,37114,False,NULL,NULL,NULL
+        380,47,27,0,False,NULL,NULL,NULL
+        381,46,54,0,False,NULL,NULL,NULL
+        382,52,27,0,False,NULL,NULL,NULL
+        383,51,54,51597,False,NULL,NULL,NULL
+        384,218,54,40086,False,NULL,NULL,NULL
+        385,74,53,0,False,NULL,NULL,NULL
+        386,75,30,0,False,NULL,NULL,NULL
+        398,88,54,129261,False,NULL,NULL,NULL
+        399,87,54,36634,False,NULL,NULL,NULL
+        400,239,54,0,False,NULL,NULL,NULL
+        401,17,54,0,False,NULL,NULL,NULL
+        402,5,54,99153,False,NULL,NULL,NULL
+        403,10,27,0,False,NULL,NULL,NULL
+        404,19,27,0,False,NULL,NULL,NULL
+        405,4,54,34256,False,NULL,NULL,NULL
+        406,254,54,33782,False,NULL,NULL,NULL
+        407,306,27,0,False,NULL,NULL,NULL
+        408,85,54,0,False,NULL,NULL,NULL
+        411,307,66,69325,False,NULL,NULL,NULL
+        412,185,53,0,False,NULL,NULL,NULL
+        413,78,27,0,False,NULL,NULL,NULL
+        414,233,27,0,False,NULL,NULL,NULL
+        415,229,53,0,False,NULL,NULL,NULL
+        416,142,53,37131,False,NULL,NULL,NULL
+        417,134,54,29377,False,NULL,NULL,NULL
+        421,110,50,0,False,NULL,NULL,NULL
+        422,110,52,0,False,NULL,NULL,NULL
+        423,114,27,0,False,NULL,NULL,NULL
+        427,308,67,0,False,NULL,NULL,NULL
+        428,262,68,0,False,NULL,NULL,NULL
+        430,231,54,0,False,NULL,NULL,NULL
+        432,71,54,0,False,NULL,NULL,NULL
+        433,60,27,0,False,NULL,NULL,NULL
+        435,266,69,49274,False,NULL,NULL,NULL
+        436,73,54,39469,False,NULL,NULL,NULL
+        437,225,54,0,False,NULL,NULL,NULL
+        438,226,54,130698,False,NULL,NULL,NULL
+        439,227,54,0,False,NULL,NULL,NULL
+        443,83,54,40834,False,NULL,NULL,NULL
+        444,82,54,182375,False,NULL,NULL,NULL
+        445,309,70,38391,False,NULL,NULL,NULL
+        446,310,71,39300,False,NULL,NULL,NULL
+        447,311,72,0,False,NULL,NULL,NULL
+        448,312,73,0,False,NULL,NULL,NULL
+        449,76,50,34936,False,NULL,NULL,NULL
+        450,76,52,129173,False,NULL,NULL,NULL
+        451,12,27,0,False,NULL,NULL,NULL
+        452,11,54,26593,False,NULL,NULL,NULL
+        453,281,65,78798,False,NULL,NULL,NULL
+        454,313,50,0,False,NULL,NULL,NULL
+        455,313,49,0,False,NULL,NULL,NULL
+        456,313,14,0,False,NULL,NULL,NULL
+        458,315,74,0,False,NULL,NULL,NULL
+        461,277,65,123773,False,NULL,NULL,NULL
+        462,125,54,34808,False,NULL,NULL,NULL
+        463,65,27,0,False,NULL,NULL,NULL
+        465,230,54,0,False,NULL,NULL,NULL
+        466,171,55,0,False,NULL,NULL,NULL
+        467,276,65,80113,False,NULL,NULL,NULL
+        468,173,53,39254,False,NULL,NULL,NULL
+        469,174,54,0,False,NULL,NULL,NULL
+        470,317,30,0,False,NULL,NULL,NULL
+        471,318,27,0,False,NULL,NULL,NULL
+        472,117,54,0,False,NULL,NULL,NULL
+        473,319,54,0,False,NULL,NULL,NULL
+        474,321,54,0,False,NULL,NULL,NULL
+        475,77,54,0,False,NULL,NULL,NULL
+        476,150,64,0,False,NULL,NULL,NULL
+        477,323,64,49464,False,NULL,NULL,NULL
+        478,322,64,39323,False,NULL,NULL,NULL
+        479,21,53,0,False,NULL,NULL,NULL
+        480,158,53,37294,False,NULL,NULL,NULL
+        481,136,53,0,False,NULL,NULL,NULL
+        482,99,53,0,False,NULL,NULL,NULL
+        483,23,54,0,False,NULL,NULL,NULL
+        484,22,54,0,False,NULL,NULL,NULL
+        485,24,54,0,False,NULL,NULL,NULL
+        486,28,54,0,False,NULL,NULL,NULL
+        487,27,54,0,False,NULL,NULL,NULL
+        488,29,54,39452,False,NULL,NULL,NULL
+        489,324,54,0,False,NULL,NULL,NULL
+        491,103,54,40841,False,NULL,NULL,NULL
+        492,101,54,39369,False,NULL,NULL,NULL
+        493,102,54,40587,False,NULL,NULL,NULL
+        494,104,54,0,False,NULL,NULL,NULL
+        495,325,54,0,False,NULL,NULL,NULL
+        496,139,54,0,False,NULL,NULL,NULL
+        497,137,54,0,False,NULL,NULL,NULL
+        498,138,54,0,False,NULL,NULL,NULL
+        499,140,54,0,False,NULL,NULL,NULL
+        500,143,54,37124,False,NULL,NULL,NULL
+        501,144,54,0,False,NULL,NULL,NULL
+        502,156,54,0,False,NULL,NULL,NULL
+        503,159,54,0,False,NULL,NULL,NULL
+        504,160,54,0,False,NULL,NULL,NULL
+        505,176,54,0,False,NULL,NULL,NULL
+        506,178,54,34352,False,NULL,NULL,NULL
+        507,186,54,34207,False,NULL,NULL,NULL
+        508,187,54,39313,False,NULL,NULL,NULL
+        509,201,54,0,False,NULL,NULL,NULL
+        510,199,54,0,False,NULL,NULL,NULL
+        511,202,54,39071,False,NULL,NULL,NULL
+        512,203,54,73683,False,NULL,NULL,NULL
+        513,223,54,0,False,NULL,NULL,NULL
+        514,232,54,0,False,NULL,NULL,NULL
+        515,111,54,37383,False,NULL,NULL,NULL
+        516,113,54,0,False,NULL,NULL,NULL
+        517,132,54,35605,False,NULL,NULL,NULL
+        518,155,54,36642,False,NULL,NULL,NULL
+        519,217,54,0,False,NULL,NULL,NULL
+        520,220,54,122600,False,NULL,NULL,NULL
+        521,219,54,144116,False,NULL,NULL,NULL
+        522,126,54,0,False,NULL,NULL,NULL
+        523,25,27,0,False,NULL,NULL,NULL
+        524,326,27,0,False,NULL,NULL,NULL
+        525,26,27,0,False,NULL,NULL,NULL
+        526,30,27,38090,False,NULL,NULL,NULL
+        527,327,27,0,False,NULL,NULL,NULL
+        528,45,27,0,False,NULL,NULL,NULL
+        529,43,27,0,False,NULL,NULL,NULL
+        530,44,27,0,False,NULL,NULL,NULL
+        531,38,27,0,False,NULL,NULL,NULL
+        532,50,27,0,False,NULL,NULL,NULL
+        533,48,27,0,False,NULL,NULL,NULL
+        534,49,27,0,False,NULL,NULL,NULL
+        535,53,27,0,False,NULL,NULL,NULL
+        536,54,27,0,False,NULL,NULL,NULL
+        537,66,27,0,False,NULL,NULL,NULL
+        538,328,27,0,False,NULL,NULL,NULL
+        539,113,15,0,False,NULL,NULL,NULL
+        540,113,50,0,False,NULL,NULL,NULL
+        541,329,54,0,False,NULL,NULL,NULL
+        542,280,65,67970,False,NULL,NULL,NULL
+        543,330,65,40892,False,NULL,NULL,NULL
+        544,257,53,0,False,NULL,NULL,NULL
+        547,332,54,0,False,NULL,NULL,NULL
+        548,333,35,0,False,NULL,NULL,NULL
+        549,334,54,0,False,NULL,NULL,NULL
+        550,335,54,0,False,NULL,NULL,NULL
+        551,177,54,0,False,NULL,NULL,NULL
+        552,265,65,45406,False,NULL,NULL,NULL
+        553,336,27,0,False,NULL,NULL,NULL
+        554,337,54,0,False,NULL,NULL,NULL
+        555,338,65,0,False,NULL,NULL,NULL
+        556,339,75,42179,False,NULL,NULL,NULL
+        557,340,65,106847,False,NULL,NULL,NULL
+        558,282,65,0,False,NULL,NULL,NULL
+        561,267,78,0,False,NULL,NULL,NULL
+        562,267,79,0,False,NULL,NULL,NULL
+        563,267,80,0,False,NULL,NULL,NULL
+        564,267,81,0,False,NULL,NULL,NULL
+        565,267,82,0,False,NULL,NULL,NULL
+        566,267,94,0,False,NULL,NULL,NULL
+        567,267,83,0,False,NULL,NULL,NULL
+        568,267,84,0,False,NULL,NULL,NULL
+        569,267,85,0,False,NULL,NULL,NULL
+        570,267,86,0,False,NULL,NULL,NULL
+        571,267,77,0,False,NULL,NULL,NULL
+        572,267,87,0,False,NULL,NULL,NULL
+        573,267,88,0,False,NULL,NULL,NULL
+        574,267,89,0,False,NULL,NULL,NULL
+        575,267,90,0,False,NULL,NULL,NULL
+        576,267,91,0,False,NULL,NULL,NULL
+        577,267,92,0,False,NULL,NULL,NULL
+        578,267,93,0,False,NULL,NULL,NULL
+        579,341,53,0,False,NULL,NULL,NULL
+        580,267,95,0,False,NULL,NULL,NULL
+        581,311,57,0,False,NULL,NULL,NULL
+        582,311,78,41004,False,NULL,NULL,NULL
+        583,311,80,109618,False,NULL,NULL,NULL
+        584,311,89,0,False,NULL,NULL,NULL
+        585,311,94,0,False,NULL,NULL,NULL
+        586,311,82,0,False,NULL,NULL,NULL
+        587,311,81,0,False,NULL,NULL,NULL
+        588,311,92,73790,False,NULL,NULL,NULL
+        589,311,93,0,False,NULL,NULL,NULL
+        590,311,91,115937,False,NULL,NULL,NULL
+        591,342,54,0,False,NULL,NULL,NULL
+        592,343,65,0,False,NULL,NULL,NULL
+        593,61,27,0,False,NULL,NULL,NULL
+        594,345,54,0,False,NULL,NULL,NULL
+        595,346,53,0,False,NULL,NULL,NULL
+        596,347,30,0,False,NULL,NULL,NULL
+        598,348,96,0,False,NULL,NULL,NULL
+        599,247,97,0,False,NULL,NULL,NULL
+        600,349,53,0,False,NULL,NULL,NULL
+        601,350,54,0,False,NULL,NULL,NULL
+        602,351,54,0,False,NULL,NULL,NULL
+        603,352,35,0,False,NULL,NULL,NULL
+        604,353,98,0,False,NULL,NULL,NULL
+        605,261,79,0,False,NULL,NULL,NULL
+        606,266,79,0,False,NULL,NULL,NULL
+        607,266,93,0,False,NULL,NULL,NULL
+        608,261,93,0,False,NULL,NULL,NULL
+        609,261,78,0,False,NULL,NULL,NULL
+        610,261,89,0,False,NULL,NULL,NULL
+        611,261,82,0,False,NULL,NULL,NULL
+        612,261,94,0,False,NULL,NULL,NULL
+        613,261,81,0,False,NULL,NULL,NULL
+        614,261,80,0,False,NULL,NULL,NULL
+        615,266,78,0,False,NULL,NULL,NULL
+        616,266,89,0,False,NULL,NULL,NULL
+        617,266,82,0,False,NULL,NULL,NULL
+        618,266,94,0,False,NULL,NULL,NULL
+        619,266,80,0,False,NULL,NULL,NULL
+        621,266,81,0,False,NULL,NULL,NULL
+        622,266,99,0,False,NULL,NULL,NULL
+        623,266,100,0,False,NULL,NULL,NULL
+        624,354,35,0,False,NULL,NULL,NULL
+        625,355,101,0,False,NULL,NULL,NULL
+        626,356,102,0,False,NULL,NULL,NULL
+        627,357,102,0,False,NULL,NULL,NULL
+        628,358,102,0,False,NULL,NULL,NULL
+        629,359,102,0,False,NULL,NULL,NULL
+        630,360,102,0,False,NULL,NULL,NULL
+        631,361,102,0,False,NULL,NULL,NULL
+        632,362,102,0,False,NULL,NULL,NULL
+        633,363,102,0,False,NULL,NULL,NULL
+        634,364,102,0,False,NULL,NULL,NULL
+        635,365,102,0,False,NULL,NULL,NULL
+        636,366,102,0,False,NULL,NULL,NULL
+        637,367,102,0,False,NULL,NULL,NULL
+        638,368,102,0,False,NULL,NULL,NULL
+        639,369,102,0,False,NULL,NULL,NULL
+        640,370,54,0,False,NULL,NULL,NULL
+        641,371,30,0,False,NULL,NULL,NULL
+        642,372,30,0,False,NULL,NULL,NULL
+        643,373,30,0,False,NULL,NULL,NULL
+        644,374,30,0,False,NULL,NULL,NULL
+        645,375,30,0,False,NULL,NULL,NULL
+        646,376,30,0,False,NULL,NULL,NULL
+        647,377,30,0,False,NULL,NULL,NULL
+        649,379,30,0,False,NULL,NULL,NULL
+        650,378,30,0,False,NULL,NULL,NULL
+        651,380,54,0,False,NULL,NULL,NULL
+        652,382,54,0,False,NULL,NULL,NULL
+        653,381,54,0,False,NULL,NULL,NULL
+        654,383,65,0,False,NULL,NULL,NULL
+        655,384,103,0,False,NULL,NULL,NULL
+
+    . management/
+      . commands/
+        . populate_unit_ranks.py
+          Content:
+          from django.core.management.base import BaseCommand
+          from apps.statistics.models import UnitRank
+          
+          class Command(BaseCommand):
+              help = 'Populates the unit ranks table'
+          
+              def handle(self, *args, **options):
+                  unit_ranks = [
+                      {'name': 'Supreme Court', 'is_court': True},
+                      {'name': 'Court of Appeal', 'is_court': True},
+                      {'name': 'High Court', 'is_court': True},
+                      {'name': 'Employment and Labour Relations Court', 'is_court': True},
+                      {'name': 'Environment and Land Court', 'is_court': True},
+                      {'name': 'Magistrate Court', 'is_court': True},
+                      {'name': 'Kadhi Court', 'is_court': True},
+                      {'name': 'Tribunal', 'is_court': True},
+                      {'name': 'Committee', 'is_court': False},
+                      {'name': 'Library', 'is_court': False},
+                      {'name': 'Directorate', 'is_court': False},
+                      {'name': 'Other Office', 'is_court': False},
+                      {'name': 'Small Claim', 'is_court': True},
+                  ]
+          
+                  for rank in unit_ranks:
+                      UnitRank.objects.create(name=rank['name'])
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully populated unit ranks.'))
+
+        . seed_months.py
+          Content:
+          from django.core.management.base import BaseCommand
+          from apps.statistics.models import Months
+          
+          class Command(BaseCommand):
+              help = 'Seed months data'
+          
+              def handle(self, *args, **options):
+                  months_data = [
+                      {'name': 'January', 'month_number': 31 ,"financial_quarter":3},
+                      {'name': 'February', 'month_number': 28 ,"financial_quarter":3},
+                      {'name': 'March', 'month_number': 31 ,"financial_quarter":3},
+                      {'name': 'April', 'month_number': 30,"financial_quarter":4},
+                      {'name': 'May', 'month_number': 31 ,"financial_quarter":4},
+                      {'name': 'June', 'month_number': 30 ,"financial_quarter":4},
+                      {'name': 'July', 'month_number': 31 ,"financial_quarter":1},
+                      {'name': 'August', 'month_number': 31 ,"financial_quarter":1},
+                      {'name': 'September', 'month_number': 30 ,"financial_quarter":1},
+                      {'name': 'October', 'month_number': 31 ,"financial_quarter":2},
+                      {'name': 'November', 'month_number': 30 ,"financial_quarter":2},
+                      {'name': 'December', 'month_number': 31 ,"financial_quarter":2},
+                  ]
+          
+                  for month_data in months_data:
+                      Months.objects.create(
+                          name=month_data['name'],
+                          month_number=month_data['month_number'],
+                          financial_quarter=month_data['financial_quarter']
+                      )
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded months data'))
+
+        . seeddivisions.py
+          Content:
+          import csv
+          from django.core.management.base import BaseCommand
+          from apps.statistics.models import Division
+          import os
+          
+          class Command(BaseCommand):
+              help = 'Seed divisions data'
+          
+              def handle(self, *args, **options):
+                  Division.objects.all().delete()
+                  base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+          
+                  with open(base + '/data/division.csv') as csvfile:
+                      divisions_data = csv.reader(csvfile)
+                      next(divisions_data)  # Skip header row
+          
+                      for data in divisions_data:
+                          Division.objects.create(
+                              name=data[1],
+                              is_active=bool(int(data[2])),
+                              code=data[3],
+                              deleted_at=None if data[4] == 'NULL' else data[4]
+                          )
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded divisions data'))
+
+        . seedfinancialdata.py
+          Content:
+          from django.core.management.base import BaseCommand
+          
+          from apps.statistics.seeder.financial_seeder import seed_financial_periods
+          
+          class Command(BaseCommand):
+              help = 'Seed financial data into the database.'
+          
+              def handle(self, *args, **options):
+                  seed_financial_periods()
+                  self.stdout.write(self.style.SUCCESS('Financial data seeded successfully.'))
+
+        . unit_division_seeder.py
+          Content:
+          import csv
+          from django.core.management.base import BaseCommand
+          import os 
+          from apps.statistics.models import UnitDivision
+          
+          class Command(BaseCommand):
+              help = 'Seed Unit Division data from CSV file'
+          
+              def handle(self, *args, **options):
+                  # id , unit_id , division_id .
+          
+                  UnitDivision.objects.all().delete()  # Optional: Truncate the UnitDivision table before seeding
+          
+                  base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+          
+                  with open(base_dir + '/data/unit_division.csv') as csv_file:
+                      csv_reader = csv.reader(csv_file)
+                      next(csv_reader)
+                      for row in csv_reader:
+                          UnitDivision.objects.create(
+                              id=row[0],
+                              unit_id=row[1],
+                              division_id=row[2],
+                          )
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded Unit Division.'))
+
+        . unit_seeder.py
+          Content:
+          from django.core.management.base import BaseCommand
+          from apps.statistics.models import Unit
+          import os
+          import csv
+          
+          class Command(BaseCommand):
+              help = 'Seed units from CSV file'
+          
+              def handle(self, *args, **options):
+                  Unit.objects.all().delete()  # Optional: Truncate the Unit table before seeding
+                  base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                  with open(base_dir + '/data/unit.csv') as csv_file:
+                      csv_reader = csv.reader(csv_file)
+                      next(csv_reader)  # Skip header row
+                      for row in csv_reader:
+                          Unit.objects.create(
+                              id=row[0],
+                              name=row[1],
+                              unique_id=row[2],
+                              unique_code=row[3],
+                              unit_rank_id=row[4],
+                              head_id_fk=row[5],
+                              subhead_id_fk=row[6],
+                          )
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded units.'))
+          
+          
+                   
+
+    . migrations/
+      . 0001_initial_squashed_0022_dcrtdata_unit_rank.py
+        Content:
+        # Generated by Django 3.2.21 on 2023-10-11 07:01
+        
+        from django.db import migrations, models
+        import django.db.models.deletion
+        
+        
+        class Migration(migrations.Migration):
+        
+            replaces = [('statistics', '0001_initial'), ('statistics', '0002_unitrank_is_court'), ('statistics', '0003_financialyear'), ('statistics', '0004_financialquarter'), ('statistics', '0005_unit'), ('statistics', '0006_unit_is_court'), ('statistics', '0007_months'), ('statistics', '0008_auto_20231009_1427'), ('statistics', '0009_dcrtdata_division'), ('statistics', '0010_alter_division_code'), ('statistics', '0011_auto_20231009_1510'), ('statistics', '0012_alter_dcrtdata_division'), ('statistics', '0013_alter_dcrtdata_division'), ('statistics', '0014_auto_20231009_1932'), ('statistics', '0015_auto_20231009_2005'), ('statistics', '0016_alter_dcrtdata_division'), ('statistics', '0017_dcrtdata_name_of_court'), ('statistics', '0018_auto_20231009_2106'), ('statistics', '0019_alter_dcrtdata_case_coming_for'), ('statistics', '0020_auto_20231009_2115'), ('statistics', '0021_alter_months_financial_quarter'), ('statistics', '0022_dcrtdata_unit_rank')]
+        
+            dependencies = [
+            ]
+        
+            operations = [
+                migrations.CreateModel(
+                    name='UnitRank',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('name', models.CharField(max_length=255)),
+                        ('is_court', models.BooleanField(default=False)),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name='FinancialYear',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('name', models.CharField(max_length=255)),
+                        ('start_date', models.DateTimeField()),
+                        ('end_date', models.DateTimeField()),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name='FinancialQuarter',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('name', models.CharField(max_length=255)),
+                        ('start_date', models.DateField()),
+                        ('end_date', models.DateField()),
+                        ('financial_year', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.financialyear')),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name='Months',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('name', models.CharField(max_length=255)),
+                        ('month_number', models.IntegerField(help_text='Number of days in the month')),
+                        ('financial_quarter', models.IntegerField(help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4')),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name='Unit',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('name', models.CharField(max_length=255)),
+                        ('unique_id', models.CharField(max_length=255)),
+                        ('unique_code', models.CharField(max_length=255)),
+                        ('head_id_fk', models.IntegerField()),
+                        ('subhead_id_fk', models.IntegerField()),
+                        ('has_division', models.BooleanField(default=False)),
+                        ('unit_rank', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.unitrank')),
+                        ('is_court', models.BooleanField(default=False)),
+                        ('latitude', models.FloatField(default=0)),
+                        ('longitude', models.FloatField(default=0)),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name='Division',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('name', models.CharField(max_length=255)),
+                        ('is_active', models.BooleanField(default=True)),
+                        ('code', models.CharField(max_length=50)),
+                        ('deleted_at', models.DateTimeField(blank=True, null=True)),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name='UnitDivision',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('division', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.division')),
+                        ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.unit')),
+                    ],
+                ),
+                migrations.CreateModel(
+                    name='DcrtData',
+                    fields=[
+                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                        ('financial_quarter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.financialquarter')),
+                        ('financial_year', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.financialyear')),
+                        ('month', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.months')),
+                        ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.unit')),
+                        ('division', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.division')),
+                        ('adjournment_reason', models.CharField(blank=True, max_length=255, null=True)),
+                        ('appeal_number_code', models.CharField(blank=True, max_length=255, null=True)),
+                        ('appeal_number_court_name', models.CharField(blank=True, max_length=255, null=True)),
+                        ('appeal_number_number', models.IntegerField(blank=True, null=True)),
+                        ('appeal_number_year', models.IntegerField(blank=True, null=True)),
+                        ('case_coming_for', models.CharField(blank=True, max_length=255, null=True)),
+                        ('case_number_code', models.CharField(blank=True, max_length=255, null=True)),
+                        ('case_number_day', models.IntegerField(blank=True, null=True)),
+                        ('case_number_month', models.CharField(blank=True, max_length=255, null=True)),
+                        ('case_number_number', models.IntegerField(blank=True, null=True)),
+                        ('case_number_year', models.IntegerField(blank=True, null=True)),
+                        ('case_outcome', models.CharField(blank=True, max_length=255, null=True)),
+                        ('date_of_next_activity_day', models.IntegerField(blank=True, null=True)),
+                        ('date_of_next_activity_month', models.CharField(blank=True, max_length=255, null=True)),
+                        ('date_of_next_activity_year', models.IntegerField(blank=True, null=True)),
+                        ('judicial_officer_1', models.CharField(blank=True, max_length=255, null=True)),
+                        ('judicial_officer_2', models.CharField(blank=True, max_length=255, null=True)),
+                        ('judicial_officer_3', models.CharField(blank=True, max_length=255, null=True)),
+                        ('judicial_officer_4', models.CharField(blank=True, max_length=255, null=True)),
+                        ('judicial_officer_5', models.CharField(blank=True, max_length=255, null=True)),
+                        ('judicial_officer_6', models.CharField(blank=True, max_length=255, null=True)),
+                        ('last_date_of_submission_of_case_file_day', models.CharField(blank=True, max_length=255, null=True)),
+                        ('last_date_of_submission_of_case_file_month', models.CharField(blank=True, max_length=255, null=True)),
+                        ('last_date_of_submission_of_case_file_year', models.CharField(blank=True, max_length=255, null=True)),
+                        ('no_of_accused_remanded', models.IntegerField(blank=True, null=True)),
+                        ('no_of_defendants_accused_female', models.IntegerField(blank=True, null=True)),
+                        ('no_of_defendants_accused_male', models.IntegerField(blank=True, null=True)),
+                        ('no_of_defendants_accused_organization', models.IntegerField(blank=True, null=True)),
+                        ('no_of_plaintiffs_or_appellants_female', models.IntegerField(blank=True, null=True)),
+                        ('no_of_plaintiffs_or_appellants_male', models.IntegerField(blank=True, null=True)),
+                        ('no_of_plaintiffs_or_appellants_organization', models.IntegerField(blank=True, null=True)),
+                        ('no_of_witnesses_in_court_d', models.IntegerField(blank=True, null=True)),
+                        ('no_of_witnesses_in_court_w', models.IntegerField(blank=True, null=True)),
+                        ('parties_have_legal_representation', models.CharField(blank=True, max_length=255, null=True)),
+                        ('remarks', models.CharField(blank=True, max_length=255, null=True)),
+                        ('specific_case_type', models.CharField(blank=True, max_length=255, null=True)),
+                        ('today_date_day', models.IntegerField(blank=True, null=True)),
+                        ('today_date_month', models.CharField(blank=True, max_length=255, null=True)),
+                        ('today_date_year', models.CharField(blank=True, max_length=255, null=True)),
+                        ('judicial_officer_7', models.CharField(blank=True, max_length=255, null=True)),
+                        ('judicial_officer_8', models.CharField(blank=True, max_length=255, null=True)),
+                        ('name_of_court', models.CharField(blank=True, max_length=255, null=True)),
+                        ('unit_rank', models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='statistics.unitrank')),
+                    ],
+                ),
+            ]
+
+      . 0002_remove_dcrtdata_unit_rank.py
+        Content:
+        # Generated by Django 3.2.21 on 2023-10-11 07:12
+        
+        from django.db import migrations
+        
+        
+        class Migration(migrations.Migration):
+        
+            dependencies = [
+                ('statistics', '0001_initial_squashed_0022_dcrtdata_unit_rank'),
+            ]
+        
+            operations = [
+                migrations.RemoveField(
+                    model_name='dcrtdata',
+                    name='unit_rank',
+                ),
+            ]
+
+      . 0003_financialquarter_quarter_number.py
+        Content:
+        # Generated by Django 3.2.21 on 2023-10-11 12:43
+        
+        from django.db import migrations, models
+        
+        
+        class Migration(migrations.Migration):
+        
+            dependencies = [
+                ('statistics', '0002_remove_dcrtdata_unit_rank'),
+            ]
+        
+            operations = [
+                migrations.AddField(
+                    model_name='financialquarter',
+                    name='quarter_number',
+                    field=models.IntegerField(default=1, help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4'),
+                    preserve_default=False,
+                ),
+            ]
+
+      . __init__.py
+        Content:
+
+
+    . models.py
+      Content:
+      from django.db import models
+      
+      # Create your models here.
+      
+      from django.db import models
+      
+      class UnitRank(models.Model):
+          name = models.CharField(max_length=255)
+          is_court = models.BooleanField(default=False)
+      
+      class FinancialYear(models.Model):
+          name = models.CharField(max_length=255)
+          start_date = models.DateTimeField()
+          end_date = models.DateTimeField()
+      
+      class FinancialQuarter(models.Model):
+          name = models.CharField(max_length=255)
+          start_date = models.DateField()
+          end_date = models.DateField()
+          financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE)
+          quarter_number = models.IntegerField(help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4')
+      
+          # show the name - start_date - end_date as get_quarter_name in date format dd/mm/yyyy
+      
+          def get_quarter_name(self):
+              return self.name + ' - ' + str(self.start_date.strftime('%d/%m/%Y')) + ' - ' + str(self.end_date.strftime('%d/%m/%Y'))
+          
+      class Unit(models.Model):
+          name = models.CharField(max_length=255)
+          unique_id = models.CharField(max_length=255)
+          unique_code = models.CharField(max_length=255)
+          unit_rank = models.ForeignKey(UnitRank, on_delete=models.CASCADE)
+          head_id_fk = models.IntegerField()
+          subhead_id_fk = models.IntegerField()
+          has_division = models.BooleanField(default=False)
+          is_court = models.BooleanField(default=False)
+          latitude = models.FloatField(default=0)
+          longitude = models.FloatField(default=0)
+      
+      class Months(models.Model):
+          name = models.CharField(max_length=255)
+          month_number = models.IntegerField(help_text='Number of days in the month')
+          # the financial quarter in which the month falls . it is either 1,2,3,4. 
+          financial_quarter = models.IntegerField( help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4')
+      
+      
+      
+          def __str__(self):
+              return self.name
+          
+      class Division(models.Model):
+          name = models.CharField(max_length=255)
+          is_active = models.BooleanField(default=True)
+          code = models.CharField(max_length=50)
+          deleted_at = models.DateTimeField(null=True, blank=True)
+      
+          def __str__(self):
+              return self.name
+          
+      # dcrt data Model
+      class DcrtData(models.Model):
+          # no constraints on foreign keys
+      
+          unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+          financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE)
+          financial_quarter = models.ForeignKey(FinancialQuarter, on_delete=models.CASCADE)
+          month = models.ForeignKey(Months, on_delete=models.CASCADE)
+          division = models.ForeignKey(Division, on_delete=models.CASCADE)
+          today_date_day = models.IntegerField(null=True, blank=True)
+          today_date_month = models.CharField(max_length=255, null=True, blank=True)
+          today_date_year = models.CharField(max_length=255, null=True, blank=True)
+          name_of_court = models.CharField(max_length=255, null=True, blank=True)
+          case_number_code = models.CharField(max_length=255, null=True, blank=True)
+          case_number_number = models.IntegerField(null=True, blank=True)
+          case_number_day = models.IntegerField(null=True, blank=True)
+          case_number_month = models.CharField(max_length=255, null=True, blank=True)
+          case_number_year = models.IntegerField(null=True, blank=True)
+          appeal_number_court_name = models.CharField(max_length=255, null=True, blank=True)
+          appeal_number_code = models.CharField(max_length=255, null=True, blank=True)
+          appeal_number_number = models.IntegerField(null=True, blank=True)
+          appeal_number_year = models.IntegerField(null=True, blank=True)
+          specific_case_type = models.CharField(max_length=255, null=True, blank=True)
+          judicial_officer_1 = models.CharField(max_length=255, null=True, blank=True)
+          judicial_officer_2 = models.CharField(max_length=255, null=True, blank=True)
+          judicial_officer_3 = models.CharField(max_length=255, null=True, blank=True)
+          judicial_officer_4 = models.CharField(max_length=255, null=True, blank=True)
+          judicial_officer_5 = models.CharField(max_length=255, null=True, blank=True)
+          judicial_officer_6 = models.CharField(max_length=255, null=True, blank=True)
+          judicial_officer_7 = models.CharField(max_length=255, null=True, blank=True)
+          judicial_officer_8 = models.CharField(max_length=255, null=True, blank=True)
+          case_coming_for = models.CharField(max_length=255 ,null=True, blank=True)
+          case_outcome = models.CharField(max_length=255, null=True, blank=True)
+          adjournment_reason = models.CharField(max_length=255, null=True, blank=True)
+          date_of_next_activity_day = models.IntegerField(null=True, blank=True)
+          date_of_next_activity_month = models.CharField(max_length=255, null=True, blank=True)
+          date_of_next_activity_year = models.IntegerField(null=True, blank=True)
+          no_of_plaintiffs_or_appellants_male = models.IntegerField(null=True, blank=True)
+          no_of_plaintiffs_or_appellants_female = models.IntegerField(null=True, blank=True)
+          no_of_plaintiffs_or_appellants_organization = models.IntegerField(null=True, blank=True)
+          no_of_defendants_accused_male = models.IntegerField(null=True, blank=True)
+          no_of_defendants_accused_female = models.IntegerField(null=True, blank=True)
+          no_of_defendants_accused_organization = models.IntegerField(null=True, blank=True)
+          parties_have_legal_representation = models.CharField(max_length=255,null=True, blank=True)
+          no_of_witnesses_in_court_d = models.IntegerField(null=True, blank=True)
+          no_of_witnesses_in_court_w = models.IntegerField(null=True, blank=True)
+          no_of_accused_remanded = models.IntegerField(null=True, blank=True)
+          last_date_of_submission_of_case_file_day = models.CharField(max_length=255, null=True, blank=True)
+          last_date_of_submission_of_case_file_month = models.CharField(max_length=255, null=True, blank=True)
+          last_date_of_submission_of_case_file_year = models.CharField(max_length=255, null=True, blank=True)
+          remarks = models.CharField(max_length=255, null=True, blank=True)
+          
+      class UnitDivision(models.Model):
+          unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+          division = models.ForeignKey(Division, on_delete=models.CASCADE)
+      
+      
+      
+
+    . seeder/
+      . financial_seeder.py
+        Content:
+        # seeds/financial.py
+        
+        from datetime import datetime
+        
+        from django.utils import timezone
+        
+        from apps.statistics.models import FinancialYear, FinancialQuarter
+        
+        
+        def seed_financial_periods():
+            financial_years = [
+                {'name': '2018/2019', 'start_date': '2018-07-01', 'end_date': '2019-06-30', 'id': 1},
+                {'name': '2019/2020', 'start_date': '2019-07-01', 'end_date': '2020-06-30', 'id': 2},
+                {'name': '2020/2021', 'start_date': '2020-07-01', 'end_date': '2021-06-30', 'id': 3},
+                {'name': '2021/2022', 'start_date': '2021-07-01', 'end_date': '2022-06-30', 'id': 4},
+                {'name': '2022/2023', 'start_date': '2022-07-01', 'end_date': '2023-06-30', 'id': 5},
+                {'name': '2023/2024', 'start_date': '2023-07-01', 'end_date': '2024-06-30', 'id': 6},
+                {'name': '2024/2025', 'start_date': '2024-07-01', 'end_date': '2025-06-30', 'id': 7},
+                {'name': '2025/2026', 'start_date': '2025-07-01', 'end_date': '2026-06-30', 'id': 8},
+                {'name': '2026/2027', 'start_date': '2026-07-01', 'end_date': '2027-06-30', 'id': 9},
+                {'name': '2027/2028', 'start_date': '2027-07-01', 'end_date': '2028-06-30', 'id': 10},
+                {'name': '2028/2029', 'start_date': '2028-07-01', 'end_date': '2029-06-30', 'id': 11},
+                {'name': '2029/2030', 'start_date': '2029-07-01', 'end_date': '2030-06-30', 'id': 12},
+                
+            ]
+            
+            for fy_data in financial_years:
+                financial_year = FinancialYear.objects.create(
+                    name=fy_data['name'],
+                    start_date=datetime.strptime(fy_data['start_date'], '%Y-%m-%d').date(), 
+                    end_date=datetime.strptime(fy_data['end_date'], '%Y-%m-%d').date()
+                )
+                
+                quarters = [
+                    {'name': 'Quarter 1', 'start_date': '07-01', 'end_date': '09-30','quarter_number':1}, # 'quarter_number':1
+                    {'name': 'Quarter 2', 'start_date': '10-01', 'end_date': '12-31','quarter_number':2}, # 'quarter_number':2
+                    {'name': 'Quarter 3', 'start_date': '01-01', 'end_date': '03-31','quarter_number':3}, # 'quarter_number':3
+                    {'name': 'Quarter 4', 'start_date': '04-01', 'end_date': '06-30','quarter_number':4}, # 'quarter_number':4
+                ]
+                
+                for quarter_data in quarters:
+                    start_date = datetime.strptime(f"{financial_year.start_date.year}-{quarter_data['start_date']}", '%Y-%m-%d').date()
+                    end_date = datetime.strptime(f"{financial_year.end_date.year}-{quarter_data['end_date']}", '%Y-%m-%d').date()
+                
+                    FinancialQuarter.objects.create(
+                        name=quarter_data['name'],
+                        start_date=start_date,
+                        end_date=end_date,
+                        financial_year=financial_year,
+                        quarter_number=quarter_data['quarter_number']
+                    )
+                    
+            print("Financial periods seeded.")
+
+    . templates/
+      . unicorn/
+    . tests.py
+      Content:
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . urls.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+      
+      from django.urls import path
+      from apps.statistics import views
+      
+      app_name = "apps.statistics"
+      
+      urlpatterns = [
+      
+          # The home page
+      
+          path('', views.home, name='home'),
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units', views.rank_units, name='rank_units'),
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months', views.rank_unit_division_months, name='unit_division_months'),
+          
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/cases/dcrt_summary', views.rank_unit_division_month_cases_summary, name='unit_division_month_cases_summary'),
+      
+          # upload unit_monthly_dcrt_excel
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/upload_unit_monthly_dcrt_excel', views.upload_unit_monthly_dcrt_excel, name='upload_unit_monthly_dcrt_excel'),
+      
+          # case summary
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/cases/case_summary', views.case_summary, name='monthly_unit_case_summary'),
+      
+      
+          # remove missing values from dataset
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/cases/monthly_unit_outliers', views.monthly_unit_outliers, name='monthly_unit_outliers'),
+      
+          # remove outliers from dataset
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/cases/monthly_unit_missing_data', views.monthly_unit_missing_data, name='monthly_unit_missing_data'),
+      
+          # monthly_unit_duplicate_data
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/cases/monthly_unit_duplicate_data', views.monthly_unit_duplicate_data, name='monthly_unit_duplicate_data'),
+      
+          # view missing values
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/cases/monthly_unit_registered_cases', views.monthly_unit_registered_cases, name='monthly_unit_registered_cases'),
+      
+          # view outliers
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/cases/monthly_unit_resolved_cases', views.monthly_unit_resolved_cases, name='monthly_unit_resolved_cases'),
+      
+          # unit_division_quarters
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>', views.unit_division_quarters, name='unit_division_quarters'),
+      
+      
+          # monthly_unit_matters_handled
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>', views.monthly_unit_matters_handled, name='monthly_unit_matters_handled'),
+      
+          #  monthly_unit_incomplete_data
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>/months/<int:month_id>/incomplete_data', views.monthly_unit_incomplete_data, name='monthly_unit_incomplete_data'),
+      
+      
+          # unit_division_fy
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>/division/<int:division_id>', views.unit_division_fy, name='unit_division_fy'),
+      
+      
+          # monthly_unit_duplicate_data
+      
+          path('rank/<int:id>/fy/<int:financial_year_id>/fq/<int:financial_quarter_id>/units/<int:unit_id>', views.monthly_unit_duplicate_data, name='monthly_unit_duplicate_data'),
+          
+      ]
+
+    . utils.py
+      Content:
+      import os
+      import openpyxl
+      from django.conf import settings
+      from openpyxl.utils import get_column_letter
+      from .models import DcrtData
+      
+      def handle_uploaded_file(excel_file, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          # Define the destination directory within MEDIA_ROOT where the file will be saved
+          destination = os.path.join(settings.MEDIA_ROOT, 'uploads', excel_file.name)
+      
+          # Open and save the file to the destination
+          with open(destination, 'wb+') as destination_file:
+              for chunk in excel_file.chunks():
+                  destination_file.write(chunk)
+      
+          # Load the uploaded Excel file
+          workbook = openpyxl.load_workbook(destination)
+          worksheet = workbook.active
+      
+          # Start reading data from row 6, column B
+          for row in worksheet.iter_rows(min_row=6, min_col=2, values_only=True):
+      
+              # if all values in the row are None, stop reading
+              if all([cell is None for cell in row]):
+                  break
+              else:
+              # Create a DcrtData object and populate its fields
+                  dcrt_data = DcrtData(
+                      unit_id=unit_id,
+                      financial_year_id=financial_year_id,
+                      financial_quarter_id=financial_quarter_id,
+                      month_id=month_id,
+                      division_id=25,
+                      today_date_day=row[0],
+                      today_date_month=row[1],
+                      today_date_year=row[2],
+                      case_number_code = row[3],
+                      case_number_number = row[4],
+                      case_number_day = row[5],
+                      case_number_month = row[6],
+                      case_number_year = row[7],
+                      appeal_number_court_name = row[8],
+                      appeal_number_code = row[9],
+                      appeal_number_number = row[10] if row[10] else None,
+                      appeal_number_year = row[11] if row[11] else None,
+                      specific_case_type = row[12],
+                      judicial_officer_1 = row[13],
+                      judicial_officer_2 = row[14],
+                      judicial_officer_3 = row[15],
+                      judicial_officer_4 = row[16],
+                      judicial_officer_5 = row[17],
+                      judicial_officer_6 = row[18],
+                      judicial_officer_7 = row[19],
+                      judicial_officer_8 = row[20],
+                      case_coming_for = row[21],
+                      case_outcome = row[22],
+                      adjournment_reason = row[23],
+                      date_of_next_activity_day = row[24] if row[24] else None,
+                      date_of_next_activity_month = row[25] if row[25] else None,
+                      date_of_next_activity_year = row[26] if row[26] else None,
+                      no_of_plaintiffs_or_appellants_male = row[27] if row[27] else None,
+                      no_of_plaintiffs_or_appellants_female = row[28] if row[28] else None,
+                      no_of_plaintiffs_or_appellants_organization = row[29] if row[29] else None,
+                      no_of_defendants_accused_male = row[30] if row[30] else None,
+                      no_of_defendants_accused_female = row[31] if row[31] else None,
+                      no_of_defendants_accused_organization = row[32] if row[32] else None,
+                      parties_have_legal_representation = row[33] if row[33] else None,
+                      no_of_witnesses_in_court_d = row[34] if row[34] else None,
+                      no_of_witnesses_in_court_w = row[35] if row[35] else None,
+                      no_of_accused_remanded = row[36] if row[36] else None,
+                      last_date_of_submission_of_case_file_day = row[37] if row[37] else None,
+                      last_date_of_submission_of_case_file_month = row[38] if row[38] else None,
+                      last_date_of_submission_of_case_file_year = row[39] if row[39] else None,
+                      remarks = row[40],
+                  )
+                  dcrt_data.save()
+      
+          # Return the path where the file was saved
+          return destination
+
+    . views.py
+      Content:
+      from django.shortcuts import render
+      from django.http import HttpResponse , HttpResponseRedirect
+      from django_pandas.io import read_frame
+      import urllib.request
+      from .utils import handle_uploaded_file
+      from apps.statistics.models import UnitRank , FinancialYear , FinancialQuarter , Unit , Months , DcrtData , Division
+      
+      
+      
+      def home(request):
+          # show hello world string
+          #  UnitRank
+          context = {
+              'unit_ranks': UnitRank.objects.all(),
+              'financial_years': FinancialYear.objects.all(),
+              'financial_quarters': FinancialQuarter.objects.all(),
+          }
+          return render(request, 'statistics/home.html', context)
+          
+      
+      def rank_units(request, id, financial_year_id, financial_quarter_id):
+          # Handle logic for rank units view here
+      
+          #  UnitRank
+      
+          unit_rank = UnitRank.objects.get(id=id)
+      
+          fy = FinancialYear.objects.get(id=financial_year_id)
+      
+          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+      
+      
+      
+          context = {
+              'units': Unit.objects.filter(unit_rank=id),
+              'unit_rank': unit_rank,
+              'financial_year': fy,
+              'financial_quarter': fq,
+          }
+          return render(request, 'statistics/rank_units.html', context)
+      
+      def rank_unit_division_months(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
+          # Handle logic for rank unit months view here
+      
+          #  UnitRank
+          unit_rank = UnitRank.objects.get(id=id)
+      
+          fy = FinancialYear.objects.get(id=financial_year_id)
+      
+          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+      
+          unit = Unit.objects.get(id=unit_id)
+      
+          division = Division.objects.get(id=25)
+           
+          context = {
+              'months': Months.objects.filter(financial_quarter=fq.quarter_number),
+              'unit_rank': unit_rank,
+              'financial_year': fy,
+              'financial_quarter': fq,
+              'unit': unit,
+              'division': division,
+              }
+            
+          return render(request, 'statistics/rank_unit_months.html', context)
+      
+      def rank_unit_month(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          #  months dictionary with e.g id 1 as key and January as value
+          unit_rank = UnitRank.objects.get(id=id)
+      
+          fy = FinancialYear.objects.get(id=financial_year_id)
+      
+          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+      
+          unit = Unit.objects.get(id=unit_id)
+      
+          division = Division.objects.get(id=25)
+      
+          month = Months.objects.get(id=month_id)
+      
+      
+        
+      
+          context = {
+              'unit_rank': unit_rank,
+              'financial_year': fy,
+              'financial_quarter': fq,
+              'unit': unit,
+              'division': division,
+              'month': month,
+          }
+          return render(request, 'statistics/rank_unit_month.html', context)
+      
+      def rank_unit_division_month_cases_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          #  unit_rank = UnitRank.objects.get(id=id)
+          unit_rank = UnitRank.objects.get(id=id)
+          fy = FinancialYear.objects.get(id=financial_year_id)
+          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+          unit = Unit.objects.get(id=unit_id)
+          division = Division.objects.get(id=25)
+          month = Months.objects.get(id=month_id)
+      
+          context = {
+              'unit_rank': unit_rank,
+              'financial_year': fy,
+              'financial_quarter': fq,
+              'unit': unit,
+              'division': division,
+              'month': month,
+          }
+          return render(request, 'statistics/rank_unit_division_month_cases_summary.html', context)
+      
+      def upload_unit_monthly_dcrt_excel(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          # Handle logic for upload unit monthly dcrt excel view here
+      
+          unit_rank = UnitRank.objects.get(id=id)
+          fy = FinancialYear.objects.get(id=financial_year_id)
+          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+          unit = Unit.objects.get(id=unit_id)
+          division = Division.objects.get(id=25)
+          month = Months.objects.get(id=month_id)
+      
+      
+          if request.method == 'POST':
+              excel_file = request.FILES.get("excelFile")  # Get the uploaded file
+      
+              if excel_file:
+                  handle_uploaded_file(excel_file, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id)  # Call the function to handle the uploaded file
+                  # go to statistics:case_summary path
+                  return HttpResponseRedirect('/statistics/rank/' + str(id) + '/fy/' + str(financial_year_id) + '/fq/' + str(financial_quarter_id) + '/units/' + str(unit_id) + '/division/' + str(division_id) + '/months/' + str(month_id) + '/cases/case_summary')
+                 
+              else:
+                  return HttpResponse("No file uploaded.")
+          
+          else:
+      
+              context = {
+              'unit_rank': unit_rank,
+              'financial_year': fy,
+              'financial_quarter': fq,
+              'unit': unit,
+              'division': division,
+              'month': month,
+          }
+              
+              return render(request, 'statistics/upload_unit_monthly_dcrt_excel.html', context)
+          
+      def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          unit_rank = UnitRank.objects.get(id=id)
+          fy = FinancialYear.objects.get(id=financial_year_id)
+          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+          unit = Unit.objects.get(id=unit_id)
+          division = Division.objects.get(id=25)
+          month = Months.objects.get(id=month_id)
+          queryset = DcrtData.objects.filter(financial_year=financial_year_id, financial_quarter=financial_quarter_id, unit=unit_id, division=division_id, month=month_id)
+      
+          context = {
+              'unit_rank': unit_rank,
+              'financial_year': fy,
+              'financial_quarter': fq,
+              'unit': unit,
+              'division': division,
+              'month': month,
+          }
+          return render(request, 'statistics/case_summary.html', context)
+      
+      
+      
+      
+      
+      def monthly_unit_outliers(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          # Handle logic for remove missing values view here
+          context = {
+              'id': id,
+              'financial_year_id': financial_year_id,
+              'financial_quarter_id': financial_quarter_id,
+              'unit_id': unit_id,
+              'division_id': division_id,
+              'month_id': month_id,
+          }
+          return render(request, 'statistics/monthly_unit_outliers.html', context)
+      
+      
+      def monthly_unit_missing_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          # Handle logic for remove outliers view here
+          context = {
+              'id': id,
+              'financial_year_id': financial_year_id,
+              'financial_quarter_id': financial_quarter_id,
+              'unit_id': unit_id,
+              'division_id': division_id,
+              'month_id': month_id,
+          }
+          return render(request, 'statistics/monthly_unit_missing_data.html', context)
+      
+      
+      def monthly_unit_registered_cases(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          queryset = DcrtData.objects.all()
+          df = read_frame(queryset)
+           # count of registered cases . look for case_outcome with phrase 'Case Registered/Filed' . count them, skip null values
+      
+          registered_cases = df[df['case_outcome'].str.contains('Case Registered/Filed', na=False)].shape[0]
+      
+          # registered_cases by case_number_code and count each case_number_code
+      
+          registered_cases_group = df.groupby('case_number_code').count()
+      
+          context = {
+              'id': id,
+              'financial_year_id': financial_year_id,
+              'financial_quarter_id': financial_quarter_id,
+              'unit_id': unit_id,
+              'division_id': division_id,
+              'month_id': month_id,
+              'registered_cases': registered_cases,
+              'registered_cases_group': registered_cases_group,
+          }
+          return render(request, 'statistics/monthly_unit_registered_cases.html', context)
+      
+      
+      # monthly_unit_duplicate_data
+      
+      def monthly_unit_duplicate_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          
+      
+          queryset = DcrtData.objects.all()
+          df = read_frame(queryset)
+          context = {
+              'id': id,
+              'financial_year_id': financial_year_id,
+              'financial_quarter_id': financial_quarter_id,
+              'unit_id': unit_id,
+              'division_id': division_id,
+              'month_id': month_id,
+              'duplicate_cases': duplicate_cases,
+              'duplicate_cases_group': duplicate_cases_group,
+          }
+      
+          return render(request, 'statistics/monthly_unit_duplicate_data.html', context)
+      
+      
+      
+      
+      def monthly_unit_resolved_cases(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+          # Handle logic for view outliers view here
+          context = {
+              'id': id,
+              'financial_year_id': financial_year_id,
+              'financial_quarter_id': financial_quarter_id,
+              'unit_id': unit_id,
+              'division_id': division_id,
+              'month_id': month_id,
+          }
+          return render(request, 'statistics/monthly_unit_resolved_cases.html', context)
+      
+      
+      # unit_division_quarters
+      
+      def unit_division_quarters(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
+          # Handle logic for unit division quarters view here
+          context = {
+              'financial_years': FinancialYear.objects.all(),
+              'financial_quarters': FinancialQuarter.objects.all(),
+              'id': id,
+              'unit_id': unit_id,
+              'division_id': division_id,
+          }
+          return render(request, 'statistics/unit_division_quarters.html', context)
+      
+      
+      # monthly_unit_matters_handled
+      
+      def monthly_unit_matters_handled(request, id, financial_year_id, financial_quarter_id, unit_id , division_id , month_id):
+          # Handle logic for monthly unit matters handled view here
+          context = {
+              'financial_years': FinancialYear.objects.all(),
+              'financial_quarters': FinancialQuarter.objects.all(),
+              'id': id,
+              'unit_id': unit_id,
+          }
+          return render(request, 'statistics/monthly_unit_matters_handled.html', context)
+      
+      # monthly_unit_incomplete_data
+      
+      def monthly_unit_incomplete_data(request, id, financial_year_id, financial_quarter_id, unit_id , division_id , month_id):
+          # Handle logic for monthly unit incomplete data view here
+          context = {
+              'financial_years': FinancialYear.objects.all(),
+              'financial_quarters': FinancialQuarter.objects.all(),
+              'id': id,
+              'unit_id': unit_id,
+          }
+          return render(request, 'statistics/monthly_unit_incomplete_data.html', context)
+      
+      
+      # unit_division_fy
+      
+      def unit_division_fy(request, id, financial_year_id, financial_quarter_id, unit_id , division_id):
+          # Handle logic for unit division fy view here
+          context = {
+              'financial_years': FinancialYear.objects.all(),
+              'financial_quarters': FinancialQuarter.objects.all(),
+              'id': id,
+              'unit_id': unit_id,
+          }
+          return render(request, 'statistics/unit_division_fy.html', context)
+      
+      
+      # monthly_unit_duplicate_data
+      
+      def monthly_unit_duplicate_data(request, id, financial_year_id, financial_quarter_id, unit_id , division_id , month_id):
+          # Handle logic for monthly unit duplicate data view here
+          context = {
+              'financial_years': FinancialYear.objects.all(),
+              'financial_quarters': FinancialQuarter.objects.all(),
+              'id': id,
+              'unit_id': unit_id,
+          }
+          return render(request, 'statistics/monthly_unit_duplicate_data.html', context)
+      
+
+  . templates/
+    . .gitkeep
+      Content:
+
+
+    . accounts/
+    . home/
+      . unicorn/
+    . includes/
+    . layouts/
+    . statistics/
+. authentication/
+  . __init__.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+
+  . admin.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    from django.contrib import admin
+    
+    # Register your models here.
+
+  . config.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    from django.apps import AppConfig
+    
+    
+    class AuthConfig(AppConfig):
+        name = 'apps.auth'
+        label = 'apps_auth'
+
+  . forms.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    from django import forms
+    from django.contrib.auth.forms import UserCreationForm
+    from django.contrib.auth.models import User
+    
+    
+    class LoginForm(forms.Form):
+        username = forms.CharField(
+            widget=forms.TextInput(
+                attrs={
+                    "placeholder": "Username",
+                    "class": "form-control"
+                }
+            ))
+        password = forms.CharField(
+            widget=forms.PasswordInput(
+                attrs={
+                    "placeholder": "Password",
+                    "class": "form-control"
+                }
+            ))
+    
+    
+    class SignUpForm(UserCreationForm):
+        username = forms.CharField(
+            widget=forms.TextInput(
+                attrs={
+                    "placeholder": "Username",
+                    "class": "form-control"
+                }
+            ))
+        email = forms.EmailField(
+            widget=forms.EmailInput(
+                attrs={
+                    "placeholder": "Email",
+                    "class": "form-control"
+                }
+            ))
+        password1 = forms.CharField(
+            widget=forms.PasswordInput(
+                attrs={
+                    "placeholder": "Password",
+                    "class": "form-control"
+                }
+            ))
+        password2 = forms.CharField(
+            widget=forms.PasswordInput(
+                attrs={
+                    "placeholder": "Password check",
+                    "class": "form-control"
+                }
+            ))
+    
+        class Meta:
+            model = User
+            fields = ('username', 'email', 'password1', 'password2')
+
+  . migrations/
+    . __init__.py
+      Content:
+      # -*- encoding: utf-8 -*-
+      """
+      Copyright (c) 2019 - present AppSeed.us
+      """
+
+  . models.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    from django.db import models
+    
+    # Create your models here.
+
+  . tests.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    from django.test import TestCase
+    
+    # Create your tests here.
+
+  . urls.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    from django.urls import path, include
+    from .views import login_view, register_user
+    from django.contrib.auth.views import LogoutView
+    
+    urlpatterns = [
+        path('login/', login_view, name="login"),
+        path('register/', register_user, name="register"),
+        path("logout/", LogoutView.as_view(), name="logout"),
+    ]
+
+  . views.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    # Create your views here.
+    from django.shortcuts import render, redirect
+    from django.contrib.auth import authenticate, login
+    from .forms import LoginForm, SignUpForm
+    
+    
+    
+    def login_view(request):
+        form = LoginForm(request.POST or None)
+    
+        msg = None
+    
+        if request.method == "POST":
+    
+            if form.is_valid():
+                username = form.cleaned_data.get("username")
+                password = form.cleaned_data.get("password")
+                user = authenticate(username=username, password=password)
+                if user is not None:
+                    login(request, user)
+                    return redirect("/")
+                else:
+                    msg = 'Invalid credentials'
+            else:
+                msg = 'Error validating the form'
+    
+        return render(request, "accounts/login.html", {"form": form, "msg": msg})
+    
+    
+    def register_user(request):
+        msg = None
+        success = False
+    
+        if request.method == "POST":
+            form = SignUpForm(request.POST)
+            if form.is_valid():
+                form.save()
+                username = form.cleaned_data.get("username")
+                raw_password = form.cleaned_data.get("password1")
+                user = authenticate(username=username, password=raw_password)
+    
+                msg = 'Account created successfully.'
+                success = True
+    
+                # return redirect("/login/")
+    
+            else:
+                msg = 'Form is not valid'
+        else:
+            form = SignUpForm()
+    
+        return render(request, "accounts/register.html", {"form": form, "msg": msg, "success": success})
+
+. core/
+  . __init__.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+
+  . asgi.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    import os
+    
+    from django.core.asgi import get_asgi_application
+    
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    
+    application = get_asgi_application()
+
+  . custom-auth-backend.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.backends import ModelBackend
+    
+    class CustomBackend(ModelBackend):
+        def authenticate(self, request, username=None, password=None, **kwargs):
+            UserModel = get_user_model()
+            try:
+                user = UserModel.objects.filter(username=username).first()
+                if user is None:
+                    user = UserModel.objects.get(email=username)
+            except UserModel.DoesNotExist:
+                return None
+            else:
+                if user.check_password(password):
+                    return user
+            return None
+
+  . settings.py
+    Content:
+    
+    
+    import os
+    
+    
+    
+    # Build paths inside the project like this: BASE_DIR / 'subdir'.
+    
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    
+    
+    # Quick-start development settings - unsuitable for production
+    # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+    
+    # SECURITY WARNING: keep the secret key used in production secret!
+    SECRET_KEY = 'django-insecure-x-7z@n$vgndj+lp*g98&*!#z2shsgah6jgt(%%k1f_%q4@nm9r'
+    
+    # SECURITY WARNING: don't run with debug turned on in production!
+    DEBUG = True 
+    
+    
+    # allow all hosts in development
+    ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
+    
+    
+    # Application definition
+    
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'apps.home', 
+        'django_unicorn',
+        'apps.statistics',
+        'debug_toolbar',
+    
+    ]
+    
+    
+    
+    MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
+    ]
+    
+    ROOT_URLCONF = 'core.urls'
+    LOGIN_REDIRECT_URL = "home"  # Route defined in home/urls.py
+    LOGOUT_REDIRECT_URL = "home"  # Route defined in home/urls.py
+    TEMPLATE_DIR = os.path.join(BASE_DIR, "apps/templates")  # ROOT dir for templates
+    
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [
+                # templates dir then apps 
+                TEMPLATE_DIR,
+                os.path.join(TEMPLATE_DIR, "apps"),
+            ],
+        
+            'APP_DIRS': True,
+            'OPTIONS': {
+                'context_processors': [
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                    'apps.context_processors.cfg_assets_root',
+                ],
+            },
+        },
+    ]
+    
+    WSGI_APPLICATION = 'core.wsgi.application'
+    
+    
+    # Database
+    # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+    
+    DATABASES = {
+     # postgres
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.getenv('POSTGRES_DB'),
+            'USER': os.getenv('POSTGRES_USER'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+            'HOST': os.getenv('POSTGRES_HOST'),
+            'PORT': os.getenv('POSTGRES_PORT'),
+        }
+    }
+    
+    
+    # Password validation
+    # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
+    
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        },
+    ]
+    
+    
+    # Internationalization
+    # https://docs.djangoproject.com/en/3.2/topics/i18n/
+    
+    LANGUAGE_CODE = 'en-us'
+    
+    TIME_ZONE = 'UTC'
+    
+    USE_I18N = True
+    
+    USE_L10N = True
+    
+    USE_TZ = True
+    
+    STATIC_URL = '/static/'
+    #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'static', 'media')
+    MEDIA_URL = '/media/'
+    
+    
+    # Extra places for collectstatic to find static files.
+    STATICFILES_DIRS = (
+        os.path.join(BASE_DIR, 'static'),
+    )
+    
+    
+    # Static files (CSS, JavaScript, Images)
+    # https://docs.djangoproject.com/en/3.2/howto/static-files/
+    
+    ASSETS_ROOT = '/static/assets'
+    
+    CSRF_TRUSTED_ORIGINS = ['*']
+    
+    # FILE_UPLOAD_MAX_MEMORY_SIZE 8GB
+    FILE_UPLOAD_MAX_MEMORY_SIZE = 8589934592
+    
+    
+    
+    # Default primary key field type
+    # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+    
+    DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+    
+    PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
+    
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+    
+    
+    # coomand tto create new migrations using docker-compose
+    # docker-compose run web python manage.py makemigrations
+    
+    
+    
+    # Enable logging in all environments
+    # https://docs.djangoproject.com/en/3.2/topics/logging/#configuring-logging
+    
+    import os
+    
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',  # Sends log messages to console
+            },
+            'file': {
+                'level': 'DEBUG',  # Set this to DEBUG or higher to log to a file
+                'class': 'logging.FileHandler',
+                'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'),
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console', 'file'],  # Include both console and file handlers
+                'level': 'ERROR',  # Set this to ERROR or higher to log to a file
+                'propagate': True,
+            },
+        },
+    }
+    
+    # Add this at the end of your settings.py file to enable detailed error pages
+    if DEBUG:
+        # Show detailed error pages during development
+        def show_toolbar(request):
+            return True
+    
+        DEBUG_TOOLBAR_CONFIG = {
+            "SHOW_TOOLBAR_CALLBACK": show_toolbar,
+        }
+    
+    
+
+  . staticfiles/
+    . .gitkeep
+      Content:
+
+
+  . urls.py
+    Content:
+    from django.contrib import admin
+    from django.urls import path, include
+    from django.conf import settings
+    from django.conf.urls.static import static
+    
+    
+    app_name = "apps.core"
+    
+    urlpatterns = [
+        path('admin/', admin.site.urls),          # Django admin route
+        path("", include("apps.authentication.urls")), # Auth routes - login / register
+        path("statistics/", include("apps.statistics.urls", namespace="statistics")),
+        path("unicorn/", include("django_unicorn.urls")),
+        path("", include("apps.home.urls")), # UI Kits Html files
+    
+    ]
+    
+    
+    if settings.DEBUG:
+        import debug_toolbar
+        urlpatterns = [
+            path("__debug__/", include(debug_toolbar.urls)),
+        ] + urlpatterns
+    
+    
+
+  . wsgi.py
+    Content:
+    # -*- encoding: utf-8 -*-
+    """
+    Copyright (c) 2019 - present AppSeed.us
+    """
+    
+    import os
+    
+    from django.core.wsgi import get_wsgi_application
+    
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    
+    application = get_wsgi_application()
+
+. data/
+  . db/
+    . PG_VERSION
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/PG_VERSION'
+
+    . base
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/base'
+
+    . global
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/global'
+
+    . pg_commit_ts
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_commit_ts'
+
+    . pg_dynshmem
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_dynshmem'
+
+    . pg_hba.conf
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_hba.conf'
+
+    . pg_ident.conf
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_ident.conf'
+
+    . pg_logical
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_logical'
+
+    . pg_multixact
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_multixact'
+
+    . pg_notify
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_notify'
+
+    . pg_replslot
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_replslot'
+
+    . pg_serial
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_serial'
+
+    . pg_snapshots
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_snapshots'
+
+    . pg_stat
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_stat'
+
+    . pg_stat_tmp
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_stat_tmp'
+
+    . pg_subtrans
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_subtrans'
+
+    . pg_tblspc
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_tblspc'
+
+    . pg_twophase
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_twophase'
+
+    . pg_wal
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_wal'
+
+    . pg_xact
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_xact'
+
+    . postgresql.auto.conf
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/postgresql.auto.conf'
+
+    . postgresql.conf
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/postgresql.conf'
+
+    . postmaster.opts
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/postmaster.opts'
+
+    . postmaster.pid
+      Content:
+      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/postmaster.pid'
+
+. docker-compose.yml
+  Content:
+  services:
+    db:
+      image: postgres:14
+      volumes:
+        - ./data/db:/var/lib/postgresql/data
+      env_file:
+        - .env
+      ports:
+        - "5432:5432"  
+      networks:
+        - my_network
+  
+    web:
+      build: .
+      command: python manage.py runserver 0.0.0.0:8001
+      volumes:
+        - .:/code
+      ports:
+        - "8001:8001"
+      env_file:
+        - .env
+      depends_on:
+        - db
+      mem_limit: 8g
+      networks:
+        - my_network
+  
+  networks:
+    my_network:
+      driver: bridge
+
+. env.sample
+  Content:
+  # True for development, False for production
+  DEBUG=True
+  
+  # Deployment SERVER address
+  SERVER=.appseed.us
+  
+  # Used for CDN (in production)
+  # No Slash at the end
+  ASSETS_ROOT=/static/assets
+  
+  # If present, the SignIN exposes the Github Login Button
+  # GITHUB_ID=<YOUR_GITHUB_ID>
+  # GITHUB_SECRET=<YOUR_GITHUB_SECRET>
+  
+  # For MySql Persistence
+  # DB_ENGINE=mysql
+  # DB_NAME=appseed_db
+  # DB_HOST=localhost
+  # DB_PORT=3306
+  # DB_USERNAME=appseed_db_usr
+  # DB_PASS=<STRONG_PASS>
+
+. ewakili
+  Content:
+  Unable to read file: 'utf-8' codec can't decode byte 0xf1 in position 106: invalid continuation byte
+
+. manage.py
+  Content:
+  #!/usr/bin/env python
+  """Django's command-line utility for administrative tasks."""
+  import os
+  import sys
+  
+  
+  def main():
+      """Run administrative tasks."""
+      os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+      try:
+          from django.core.management import execute_from_command_line
+      except ImportError as exc:
+          raise ImportError(
+              "Couldn't import Django. Are you sure it's installed and "
+              "available on your PYTHONPATH environment variable? Did you "
+              "forget to activate a virtual environment?"
+          ) from exc
+      execute_from_command_line(sys.argv)
+  
+  
+  if __name__ == '__main__':
+      main()
+
+. requirements.txt
+  Content:
+  Django>=3.0,<4.0
+  psycopg2>=2.8
+  asgiref==3.4.1
+  autopep8==1.6.0
+  dj-database-url==0.5.0
+  gunicorn==20.1.0
+  pycodestyle==2.8.0
+  pytz==2021.3
+  sqlparse==0.4.2
+  toml==0.10.2
+  Unipath==1.1
+  whitenoise==5.3.0
+  django-environ==0.8.1
+  django-allauth==0.51.0
+  django-sslserver
+  django-q
+  django-storages
+  python-docx
+  djangorestframework
+  pinecone-client
+  langchain
+  django-unicorn
+  django-debug-toolbar
+  openpyxl
+  django_pandas
+  
+  
+  
+  
+
+. staticfiles/
+  . admin/
+    . css/
+    . fonts/
+      . LICENSE.txt
+        Content:
+        
+                                         Apache License
+                                   Version 2.0, January 2004
+                                http://www.apache.org/licenses/
+        
+           TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+        
+           1. Definitions.
+        
+              "License" shall mean the terms and conditions for use, reproduction,
+              and distribution as defined by Sections 1 through 9 of this document.
+        
+              "Licensor" shall mean the copyright owner or entity authorized by
+              the copyright owner that is granting the License.
+        
+              "Legal Entity" shall mean the union of the acting entity and all
+              other entities that control, are controlled by, or are under common
+              control with that entity. For the purposes of this definition,
+              "control" means (i) the power, direct or indirect, to cause the
+              direction or management of such entity, whether by contract or
+              otherwise, or (ii) ownership of fifty percent (50%) or more of the
+              outstanding shares, or (iii) beneficial ownership of such entity.
+        
+              "You" (or "Your") shall mean an individual or Legal Entity
+              exercising permissions granted by this License.
+        
+              "Source" form shall mean the preferred form for making modifications,
+              including but not limited to software source code, documentation
+              source, and configuration files.
+        
+              "Object" form shall mean any form resulting from mechanical
+              transformation or translation of a Source form, including but
+              not limited to compiled object code, generated documentation,
+              and conversions to other media types.
+        
+              "Work" shall mean the work of authorship, whether in Source or
+              Object form, made available under the License, as indicated by a
+              copyright notice that is included in or attached to the work
+              (an example is provided in the Appendix below).
+        
+              "Derivative Works" shall mean any work, whether in Source or Object
+              form, that is based on (or derived from) the Work and for which the
+              editorial revisions, annotations, elaborations, or other modifications
+              represent, as a whole, an original work of authorship. For the purposes
+              of this License, Derivative Works shall not include works that remain
+              separable from, or merely link (or bind by name) to the interfaces of,
+              the Work and Derivative Works thereof.
+        
+              "Contribution" shall mean any work of authorship, including
+              the original version of the Work and any modifications or additions
+              to that Work or Derivative Works thereof, that is intentionally
+              submitted to Licensor for inclusion in the Work by the copyright owner
+              or by an individual or Legal Entity authorized to submit on behalf of
+              the copyright owner. For the purposes of this definition, "submitted"
+              means any form of electronic, verbal, or written communication sent
+              to the Licensor or its representatives, including but not limited to
+              communication on electronic mailing lists, source code control systems,
+              and issue tracking systems that are managed by, or on behalf of, the
+              Licensor for the purpose of discussing and improving the Work, but
+              excluding communication that is conspicuously marked or otherwise
+              designated in writing by the copyright owner as "Not a Contribution."
+        
+              "Contributor" shall mean Licensor and any individual or Legal Entity
+              on behalf of whom a Contribution has been received by Licensor and
+              subsequently incorporated within the Work.
+        
+           2. Grant of Copyright License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              copyright license to reproduce, prepare Derivative Works of,
+              publicly display, publicly perform, sublicense, and distribute the
+              Work and such Derivative Works in Source or Object form.
+        
+           3. Grant of Patent License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              (except as stated in this section) patent license to make, have made,
+              use, offer to sell, sell, import, and otherwise transfer the Work,
+              where such license applies only to those patent claims licensable
+              by such Contributor that are necessarily infringed by their
+              Contribution(s) alone or by combination of their Contribution(s)
+              with the Work to which such Contribution(s) was submitted. If You
+              institute patent litigation against any entity (including a
+              cross-claim or counterclaim in a lawsuit) alleging that the Work
+              or a Contribution incorporated within the Work constitutes direct
+              or contributory patent infringement, then any patent licenses
+              granted to You under this License for that Work shall terminate
+              as of the date such litigation is filed.
+        
+           4. Redistribution. You may reproduce and distribute copies of the
+              Work or Derivative Works thereof in any medium, with or without
+              modifications, and in Source or Object form, provided that You
+              meet the following conditions:
+        
+              (a) You must give any other recipients of the Work or
+                  Derivative Works a copy of this License; and
+        
+              (b) You must cause any modified files to carry prominent notices
+                  stating that You changed the files; and
+        
+              (c) You must retain, in the Source form of any Derivative Works
+                  that You distribute, all copyright, patent, trademark, and
+                  attribution notices from the Source form of the Work,
+                  excluding those notices that do not pertain to any part of
+                  the Derivative Works; and
+        
+              (d) If the Work includes a "NOTICE" text file as part of its
+                  distribution, then any Derivative Works that You distribute must
+                  include a readable copy of the attribution notices contained
+                  within such NOTICE file, excluding those notices that do not
+                  pertain to any part of the Derivative Works, in at least one
+                  of the following places: within a NOTICE text file distributed
+                  as part of the Derivative Works; within the Source form or
+                  documentation, if provided along with the Derivative Works; or,
+                  within a display generated by the Derivative Works, if and
+                  wherever such third-party notices normally appear. The contents
+                  of the NOTICE file are for informational purposes only and
+                  do not modify the License. You may add Your own attribution
+                  notices within Derivative Works that You distribute, alongside
+                  or as an addendum to the NOTICE text from the Work, provided
+                  that such additional attribution notices cannot be construed
+                  as modifying the License.
+        
+              You may add Your own copyright statement to Your modifications and
+              may provide additional or different license terms and conditions
+              for use, reproduction, or distribution of Your modifications, or
+              for any such Derivative Works as a whole, provided Your use,
+              reproduction, and distribution of the Work otherwise complies with
+              the conditions stated in this License.
+        
+           5. Submission of Contributions. Unless You explicitly state otherwise,
+              any Contribution intentionally submitted for inclusion in the Work
+              by You to the Licensor shall be under the terms and conditions of
+              this License, without any additional terms or conditions.
+              Notwithstanding the above, nothing herein shall supersede or modify
+              the terms of any separate license agreement you may have executed
+              with Licensor regarding such Contributions.
+        
+           6. Trademarks. This License does not grant permission to use the trade
+              names, trademarks, service marks, or product names of the Licensor,
+              except as required for reasonable and customary use in describing the
+              origin of the Work and reproducing the content of the NOTICE file.
+        
+           7. Disclaimer of Warranty. Unless required by applicable law or
+              agreed to in writing, Licensor provides the Work (and each
+              Contributor provides its Contributions) on an "AS IS" BASIS,
+              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+              implied, including, without limitation, any warranties or conditions
+              of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+              PARTICULAR PURPOSE. You are solely responsible for determining the
+              appropriateness of using or redistributing the Work and assume any
+              risks associated with Your exercise of permissions under this License.
+        
+           8. Limitation of Liability. In no event and under no legal theory,
+              whether in tort (including negligence), contract, or otherwise,
+              unless required by applicable law (such as deliberate and grossly
+              negligent acts) or agreed to in writing, shall any Contributor be
+              liable to You for damages, including any direct, indirect, special,
+              incidental, or consequential damages of any character arising as a
+              result of this License or out of the use or inability to use the
+              Work (including but not limited to damages for loss of goodwill,
+              work stoppage, computer failure or malfunction, or any and all
+              other commercial damages or losses), even if such Contributor
+              has been advised of the possibility of such damages.
+        
+           9. Accepting Warranty or Additional Liability. While redistributing
+              the Work or Derivative Works thereof, You may choose to offer,
+              and charge a fee for, acceptance of support, warranty, indemnity,
+              or other liability obligations and/or rights consistent with this
+              License. However, in accepting such obligations, You may act only
+              on Your own behalf and on Your sole responsibility, not on behalf
+              of any other Contributor, and only if You agree to indemnify,
+              defend, and hold each Contributor harmless for any liability
+              incurred by, or claims asserted against, such Contributor by reason
+              of your accepting any such warranty or additional liability.
+        
+           END OF TERMS AND CONDITIONS
+        
+           APPENDIX: How to apply the Apache License to your work.
+        
+              To apply the Apache License to your work, attach the following
+              boilerplate notice, with the fields enclosed by brackets "[]"
+              replaced with your own identifying information. (Don't include
+              the brackets!)  The text should be enclosed in the appropriate
+              comment syntax for the file format. We also recommend that a
+              file or class name and description of purpose be included on the
+              same "printed page" as the copyright notice for easier
+              identification within third-party archives.
+        
+           Copyright [yyyy] [name of copyright owner]
+        
+           Licensed under the Apache License, Version 2.0 (the "License");
+           you may not use this file except in compliance with the License.
+           You may obtain a copy of the License at
+        
+               http://www.apache.org/licenses/LICENSE-2.0
+        
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License.
+
+      . README.txt
+        Content:
+        Roboto webfont source: https://www.google.com/fonts/specimen/Roboto
+        WOFF files extracted using https://github.com/majodev/google-webfonts-helper
+        Weights used in this project: Light (300), Regular (400), Bold (700)
+
+    . img/
+      . LICENSE
+        Content:
+        The MIT License (MIT)
+        
+        Copyright (c) 2014 Code Charm Ltd
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy of
+        this software and associated documentation files (the "Software"), to deal in
+        the Software without restriction, including without limitation the rights to
+        use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+        the Software, and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+        FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+        COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+        IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+        CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+      . README.txt
+        Content:
+        All icons are taken from Font Awesome (http://fontawesome.io/) project.
+        The Font Awesome font is licensed under the SIL OFL 1.1:
+        - https://scripts.sil.org/OFL
+        
+        SVG icons source: https://github.com/encharm/Font-Awesome-SVG-PNG
+        Font-Awesome-SVG-PNG is licensed under the MIT license (see file license
+        in current folder).
+
+      . gis/
+    . js/
+      . admin/
+  . sitemap.xml
+    Content:
+    <?xml version="1.0" encoding="UTF-8"?>
+    <urlset
+          xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+                http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+    
+      <!-- Main links -->
+      <url>
+        <loc>https://django-dashboard-dattaable.appseed.us</loc>
+        <priority>1</priority>
+        <changefreq>monthly</changefreq>
+      </url>
+    
+    </urlset>
+    
+

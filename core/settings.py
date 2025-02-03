@@ -178,36 +178,28 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 import os
 
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOGS_DIR, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'class': 'logging.StreamHandler',  # Sends log messages to console
+            'class': 'logging.StreamHandler',
         },
         'file': {
-            'level': 'DEBUG',  # Set this to DEBUG or higher to log to a file
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'),
+            'filename': os.path.join(LOGS_DIR, 'debug.log'),
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],  # Include both console and file handlers
-            'level': 'ERROR',  # Set this to ERROR or higher to log to a file
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',
             'propagate': True,
         },
     },
 }
-
-# Add this at the end of your settings.py file to enable detailed error pages
-if DEBUG:
-    # Show detailed error pages during development
-    def show_toolbar(request):
-        return True
-
-    DEBUG_TOOLBAR_CONFIG = {
-        "SHOW_TOOLBAR_CALLBACK": show_toolbar,
-    }
-
 
