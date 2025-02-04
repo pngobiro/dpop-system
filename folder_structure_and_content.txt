@@ -287,6 +287,344 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         return { 'ASSETS_ROOT' : settings.ASSETS_ROOT }
     
 
+  . document_management/
+    . __init__.py
+      Content:
+
+
+    . admin.py
+      Content:
+      from django.contrib import admin
+      
+      # Register your models here.
+
+    . apps.py
+      Content:
+      from django.apps import AppConfig
+      
+      
+      class DocumentManagementConfig(AppConfig):
+          default_auto_field = "django.db.models.BigAutoField"
+          name = "apps.document_management"
+
+    . migrations/
+      . __init__.py
+        Content:
+
+
+    . models.py
+      Content:
+      # apps/document_management/models.py
+      from django.db import models
+      from django.contrib.auth.models import User
+      from django.contrib.contenttypes.fields import GenericForeignKey
+      from django.contrib.contenttypes.models import ContentType
+      
+      class DocumentCategory(models.Model):
+          name = models.CharField(max_length=100)
+          description = models.TextField(blank=True)
+          is_active = models.BooleanField(default=True)
+          created_at = models.DateTimeField(auto_now_add=True)
+          updated_at = models.DateTimeField(auto_now=True)
+      
+          class Meta:
+              verbose_name_plural = "Document Categories"
+              ordering = ['name']
+      
+          def __str__(self):
+              return self.name
+      
+      class Document(models.Model):
+          STORAGE_CHOICES = [
+              ('local', 'Local Storage'),
+              ('google_drive', 'Google Drive')
+          ]
+          
+          DOCUMENT_STATUS = [
+              ('draft', 'Draft'),
+              ('pending_review', 'Pending Review'),
+              ('approved', 'Approved'),
+              ('rejected', 'Rejected'),
+              ('archived', 'Archived')
+          ]
+      
+          # Basic fields
+          title = models.CharField(max_length=255)
+          description = models.TextField(blank=True)
+          file = models.FileField(upload_to='documents/%Y/%m/%d/')
+          file_type = models.CharField(max_length=50)  # e.g., pdf, doc, image
+          file_size = models.BigIntegerField()  # in bytes
+          
+          # Classification
+          category = models.ForeignKey(DocumentCategory, on_delete=models.SET_NULL, null=True)
+          tags = models.CharField(max_length=500, blank=True)  # Comma-separated tags
+          
+          # Storage information
+          storage_type = models.CharField(max_length=20, choices=STORAGE_CHOICES, default='local')
+          drive_file_id = models.CharField(max_length=100, blank=True, null=True)
+          drive_view_link = models.URLField(blank=True, null=True)
+          
+          # Security and access
+          is_confidential = models.BooleanField(default=False)
+          status = models.CharField(max_length=20, choices=DOCUMENT_STATUS, default='draft')
+          password_protected = models.BooleanField(default=False)
+          access_code = models.CharField(max_length=100, blank=True, null=True)
+          
+          # Source tracking (Generic relation to any model)
+          content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+          object_id = models.PositiveIntegerField(null=True, blank=True)
+          source_object = GenericForeignKey('content_type', 'object_id')
+          source_module = models.CharField(max_length=50, help_text="Name of the module this document belongs to")
+          
+          # Version control
+          version = models.CharField(max_length=50, default='1.0')
+          parent_document = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='versions')
+          
+          # Metadata
+          uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+          created_at = models.DateTimeField(auto_now_add=True)
+          updated_at = models.DateTimeField(auto_now=True)
+          last_accessed = models.DateTimeField(null=True, blank=True)
+          expiry_date = models.DateTimeField(null=True, blank=True)
+      
+          class Meta:
+              ordering = ['-created_at']
+      
+          def __str__(self):
+              return f"{self.title} (v{self.version})"
+      
+          def get_file_url(self):
+              if self.storage_type == 'google_drive' and self.drive_view_link:
+                  return self.drive_view_link
+              return self.file.url if self.file else None
+      
+      class DocumentAccess(models.Model):
+          """Track document access permissions and history"""
+          PERMISSION_CHOICES = [
+              ('view', 'View Only'),
+              ('edit', 'Edit'),
+              ('admin', 'Full Admin')
+          ]
+      
+          document = models.ForeignKey(Document, on_delete=models.CASCADE)
+          user = models.ForeignKey(User, on_delete=models.CASCADE)
+          permission_type = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
+          granted_by = models.ForeignKey(User, related_name='granted_permissions', on_delete=models.CASCADE)
+          granted_at = models.DateTimeField(auto_now_add=True)
+          expires_at = models.DateTimeField(null=True, blank=True)
+          is_active = models.BooleanField(default=True)
+      
+          class Meta:
+              unique_together = ['document', 'user']
+      
+      class DocumentActivity(models.Model):
+          """Track all document-related activities"""
+          ACTION_CHOICES = [
+              ('upload', 'Upload'),
+              ('view', 'View'),
+              ('edit', 'Edit'),
+              ('delete', 'Delete'),
+              ('share', 'Share'),
+              ('download', 'Download'),
+              ('print', 'Print'),
+              ('status_change', 'Status Change')
+          ]
+      
+          document = models.ForeignKey(Document, on_delete=models.CASCADE)
+          user = models.ForeignKey(User, on_delete=models.CASCADE)
+          action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+          action_details = models.TextField(blank=True)
+          ip_address = models.GenericIPAddressField(null=True, blank=True)
+          user_agent = models.CharField(max_length=500, blank=True)
+          timestamp = models.DateTimeField(auto_now_add=True)
+      
+          class Meta:
+              verbose_name_plural = "Document Activities"
+              ordering = ['-timestamp']
+
+    . tests.py
+      Content:
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . urls.py
+      Content:
+      from django.urls import path
+      from . import views
+      
+      app_name = 'document_management'
+      
+      urlpatterns = [
+          path('upload/', views.upload_document, name='upload_document'),
+          path('list/', views.document_list, name='document_list'),
+          path('google-auth/', views.google_auth, name='google_auth'),
+          path('google-auth-callback/', views.google_auth_callback, name='google_auth_callback'),
+          path('share/<int:document_id>/', views.share_document, name='share_document'),
+      ]
+
+    . utils/
+      . document_manager.py
+        Content:
+        # apps/document_management/utils/document_manager.py
+        from django.contrib.contenttypes.models import ContentType
+        from django.core.files.uploadedfile import UploadedFile
+        from django.utils import timezone
+        from ..models import Document, DocumentActivity, DocumentAccess
+        import os
+        import mimetypes
+        
+        class DocumentManager:
+            @staticmethod
+            def attach_document(file, source_object, uploaded_by, **kwargs):
+                """
+                Attach a document to any model instance
+                
+                Args:
+                    file: The file to upload (UploadedFile instance)
+                    source_object: The model instance this document belongs to
+                    uploaded_by: User instance who is uploading the document
+                    **kwargs: Additional document attributes
+                
+                Returns:
+                    Document instance
+                """
+                # Get content type for the source object
+                content_type = ContentType.objects.get_for_model(source_object)
+                
+                # Determine file type and size
+                file_type = mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
+                file_extension = os.path.splitext(file.name)[1].lower()
+                
+                # Create document instance
+                document = Document(
+                    title=kwargs.get('title', file.name),
+                    description=kwargs.get('description', ''),
+                    file=file,
+                    file_type=file_type,
+                    file_size=file.size,
+                    content_type=content_type,
+                    object_id=source_object.id,
+                    source_module=source_object._meta.app_label,
+                    uploaded_by=uploaded_by,
+                    category_id=kwargs.get('category_id'),
+                    is_confidential=kwargs.get('is_confidential', False),
+                    status=kwargs.get('status', 'draft'),
+                    storage_type=kwargs.get('storage_type', 'local'),
+                    version=kwargs.get('version', '1.0')
+                )
+                document.save()
+                
+                # Record the activity
+                DocumentActivity.objects.create(
+                    document=document,
+                    user=uploaded_by,
+                    action='upload',
+                    action_details=f"Document uploaded from {source_object._meta.model_name}"
+                )
+                
+                # Set up initial access
+                DocumentAccess.objects.create(
+                    document=document,
+                    user=uploaded_by,
+                    permission_type='admin',
+                    granted_by=uploaded_by
+                )
+                
+                return document
+        
+            @staticmethod
+            def get_module_documents(source_object):
+                """Get all documents attached to a specific model instance"""
+                content_type = ContentType.objects.get_for_model(source_object)
+                return Document.objects.filter(
+                    content_type=content_type,
+                    object_id=source_object.id
+                )
+        
+            @staticmethod
+            def get_user_accessible_documents(user, module_name=None):
+                """Get all documents a user has access to, optionally filtered by module"""
+                accessible_docs = Document.objects.filter(
+                    documentaccess__user=user,
+                    documentaccess__is_active=True
+                )
+                
+                if module_name:
+                    accessible_docs = accessible_docs.filter(source_module=module_name)
+                    
+                return accessible_docs
+        
+            @staticmethod
+            def record_document_access(document, user, action, **kwargs):
+                """Record document activity"""
+                DocumentActivity.objects.create(
+                    document=document,
+                    user=user,
+                    action=action,
+                    action_details=kwargs.get('details', ''),
+                    ip_address=kwargs.get('ip_address'),
+                    user_agent=kwargs.get('user_agent')
+                )
+                
+                # Update last accessed timestamp
+                document.last_accessed = timezone.now()
+                document.save(update_fields=['last_accessed'])
+        
+            @staticmethod
+            def grant_access(document, user, granted_by, permission_type='view', expires_at=None):
+                """Grant document access to a user"""
+                access, created = DocumentAccess.objects.get_or_create(
+                    document=document,
+                    user=user,
+                    defaults={
+                        'permission_type': permission_type,
+                        'granted_by': granted_by,
+                        'expires_at': expires_at,
+                        'is_active': True
+                    }
+                )
+                
+                if not created:
+                    access.permission_type = permission_type
+                    access.expires_at = expires_at
+                    access.is_active = True
+                    access.save()
+                    
+                DocumentActivity.objects.create(
+                    document=document,
+                    user=granted_by,
+                    action='share',
+                    action_details=f"Access granted to {user.email} with {permission_type} permissions"
+                )
+                
+                return access
+        
+            @staticmethod
+            def revoke_access(document, user, revoked_by):
+                """Revoke user's access to a document"""
+                try:
+                    access = DocumentAccess.objects.get(document=document, user=user)
+                    access.is_active = False
+                    access.save()
+                    
+                    DocumentActivity.objects.create(
+                        document=document,
+                        user=revoked_by,
+                        action='share',
+                        action_details=f"Access revoked for {user.email}"
+                    )
+                    
+                    return True
+                except DocumentAccess.DoesNotExist:
+                    return False
+
+    . views.py
+      Content:
+      from django.shortcuts import render
+      
+      # Create your views here.
+
   . home/
     . __init__.py
       Content:
@@ -372,79 +710,386 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       Copyright (c) 2019 - present AppSeed.us
       """
       
-      from django.urls import path, re_path
-      from apps.home import views
-      from django.urls import path, include
+      from django.urls import path
+      from . import views
+      
+      app_name = 'apps.home'
+      
+      
       
       urlpatterns = [
-      
-          # The home page
-          path('', views.index, name='home'),
-      
-          # Matches any html file
-          re_path(r'^.*\.*', views.pages, name='pages'),
-      
-      
-          # path stastistics dashboard
-        
-      
-      
-      
-          
+          path('', views.index, name='index'),
+          path('dashboard/', views.dashboard, name='dashboard'),
       ]
 
     . views.py
       Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
+      # apps/home/views.py
       from django import template
       from django.contrib.auth.decorators import login_required
       from django.http import HttpResponse, HttpResponseRedirect
       from django.template import loader
       from django.urls import reverse
+      from django.shortcuts import render
+      from apps.organization.models import Department
       
+      @login_required
+      def dashboard(request):
+          departments = Department.objects.prefetch_related('roles').filter(is_active=True)
+          return render(request, "home/dashboard.html", {'departments': departments})
       
       @login_required(login_url="/login/")
       def index(request):
           context = {'segment': 'index'}
-      
           html_template = loader.get_template('home/index.html')
           return HttpResponse(html_template.render(context, request))
-      
-      def dashboard(request):
-          context = {'segment': 'dashboard'}
-      
-          html_template = loader.get_template('home/dashboard.html')
-          return HttpResponse(html_template.render(context, request))    
-      
       
       @login_required(login_url="/login/")
       def pages(request):
           context = {}
-          # All resource paths end in .html.
-          # Pick out the html file name from the url. And load that template.
           try:
-      
               load_template = request.path.split('/')[-1]
-      
+              
               if load_template == 'admin':
                   return HttpResponseRedirect(reverse('admin:index'))
+                  
               context['segment'] = load_template
-      
               html_template = loader.get_template('home/' + load_template)
               return HttpResponse(html_template.render(context, request))
-      
+              
           except template.TemplateDoesNotExist:
-      
               html_template = loader.get_template('home/page-404.html')
               return HttpResponse(html_template.render(context, request))
-      
+              
           except:
               html_template = loader.get_template('home/page-500.html')
               return HttpResponse(html_template.render(context, request))
+
+  . organization/
+    . __init__.py
+      Content:
+
+
+    . admin.py
+      Content:
+      from django.contrib import admin
+      
+      # Register your models here.
+
+    . apps.py
+      Content:
+      from django.apps import AppConfig
+      
+      
+      class OrganizationConfig(AppConfig):
+          default_auto_field = "django.db.models.BigAutoField"
+          name = "apps.organization"
+
+    . management/
+      . commands/
+        . seed_organization.py
+          Content:
+          # apps/organization/management/commands/seed_organization.py
+          from django.core.management.base import BaseCommand
+          from apps.organization.models import Department, Role
+          
+          class Command(BaseCommand):
+              help = 'Seeds basic organizational structure'
+          
+              def handle(self, *args, **kwargs):
+                  self.stdout.write('Seeding organization data...')
+          
+                  # Create Departments
+                  departments_data = [
+                      {
+                          'name': "Director's Office",
+                          'description': "Overall leadership of strategy development, planning, research, performance improvement, and innovation"
+                      },
+                      {
+                          'name': "Organizational Productivity & Quality Assurance",
+                          'description': "Focuses on workflow optimization, performance standards, and quality management"
+                      },
+                      {
+                          'name': "Planning, Monitoring & Evaluation",
+                          'description': "Handles strategic planning, implementation, monitoring, and evaluation"
+                      },
+                      {
+                          'name': "Research & Data Analytics",
+                          'description': "Drives evidence-based decision making and manages judicial data and research"
+                      }
+                  ]
+          
+                  departments = {}
+                  for dept_data in departments_data:
+                      dept, created = Department.objects.get_or_create(
+                          name=dept_data['name'],
+                          defaults={'description': dept_data['description']}
+                      )
+                      departments[dept_data['name']] = dept
+                      if created:
+                          self.stdout.write(f'Created department: {dept.name}')
+          
+                  # Create Roles
+                  roles_data = [
+                      # Director's Office
+                      {
+                          'department': "Director's Office",
+                          'title': "Director of Strategy, Planning and Organizational Productivity",
+                          'job_group': 'JSG1',
+                          'description': "Overall leadership and reporting to top judiciary leadership"
+                      },
+                      # Organizational Productivity & QA
+                      {
+                          'department': "Organizational Productivity & Quality Assurance",
+                          'title': "Deputy Director - Organizational Productivity & QA",
+                          'job_group': 'JSG2',
+                          'description': "Leads workflow optimization and quality management"
+                      },
+                      {
+                          'department': "Organizational Productivity & Quality Assurance",
+                          'title': "Assistant Director - Organizational Productivity",
+                          'job_group': 'JSG3',
+                          'description': "Manages organizational productivity initiatives"
+                      },
+                      {
+                          'department': "Organizational Productivity & Quality Assurance",
+                          'title': "Assistant Director - Quality Assurance & Innovation",
+                          'job_group': 'JSG3',
+                          'description': "Manages quality assurance and innovation programs"
+                      },
+                      # Planning, M&E
+                      {
+                          'department': "Planning, Monitoring & Evaluation",
+                          'title': "Deputy Director - Planning, M&E",
+                          'job_group': 'JSG2',
+                          'description': "Leads strategic planning and evaluation"
+                      },
+                      {
+                          'department': "Planning, Monitoring & Evaluation",
+                          'title': "Assistant Director - Strategy and Planning",
+                          'job_group': 'JSG3',
+                          'description': "Manages strategic planning implementation"
+                      },
+                      # Research & Data Analytics
+                      {
+                          'department': "Research & Data Analytics",
+                          'title': "Deputy Director - Research & Data Analytics",
+                          'job_group': 'JSG2',
+                          'description': "Leads research and data analytics initiatives"
+                      },
+                      {
+                          'department': "Research & Data Analytics",
+                          'title': "Assistant Director - Data Analytics",
+                          'job_group': 'JSG3',
+                          'description': "Manages data analytics operations"
+                      },
+                      {
+                          'department': "Research & Data Analytics",
+                          'title': "Research Officer",
+                          'job_group': 'JSG4',
+                          'description': "Conducts research and analysis"
+                      }
+                  ]
+          
+                  for role_data in roles_data:
+                      role, created = Role.objects.get_or_create(
+                          title=role_data['title'],
+                          department=departments[role_data['department']],
+                          defaults={
+                              'job_group': role_data['job_group'],
+                              'description': role_data['description']
+                          }
+                      )
+                      if created:
+                          self.stdout.write(f'Created role: {role.title}')
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded organization data'))
+
+    . migrations/
+      . 0001_initial.py
+        Content:
+        # Generated by Django 4.2.13 on 2025-02-04 12:42
+        
+        from django.conf import settings
+        from django.db import migrations, models
+        import django.db.models.deletion
+        
+        
+        class Migration(migrations.Migration):
+        
+            initial = True
+        
+            dependencies = [
+                migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+            ]
+        
+            operations = [
+                migrations.CreateModel(
+                    name="Department",
+                    fields=[
+                        (
+                            "id",
+                            models.BigAutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("name", models.CharField(max_length=200)),
+                        ("description", models.TextField(blank=True)),
+                        ("created_at", models.DateTimeField(auto_now_add=True)),
+                        ("is_active", models.BooleanField(default=True)),
+                    ],
+                    options={
+                        "ordering": ["name"],
+                    },
+                ),
+                migrations.CreateModel(
+                    name="Role",
+                    fields=[
+                        (
+                            "id",
+                            models.BigAutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("title", models.CharField(max_length=200)),
+                        (
+                            "job_group",
+                            models.CharField(
+                                choices=[
+                                    ("JSG1", "JSG1"),
+                                    ("JSG2", "JSG2"),
+                                    ("JSG3", "JSG3"),
+                                    ("JSG4", "JSG4"),
+                                    ("JSG5", "JSG5"),
+                                ],
+                                max_length=4,
+                            ),
+                        ),
+                        ("description", models.TextField(blank=True)),
+                        ("is_active", models.BooleanField(default=True)),
+                        ("created_at", models.DateTimeField(auto_now_add=True)),
+                        (
+                            "department",
+                            models.ForeignKey(
+                                on_delete=django.db.models.deletion.CASCADE,
+                                related_name="roles",
+                                to="organization.department",
+                            ),
+                        ),
+                    ],
+                    options={
+                        "ordering": ["department", "job_group", "title"],
+                    },
+                ),
+                migrations.CreateModel(
+                    name="UserRole",
+                    fields=[
+                        (
+                            "id",
+                            models.BigAutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("assigned_at", models.DateTimeField(auto_now_add=True)),
+                        ("is_active", models.BooleanField(default=True)),
+                        (
+                            "role",
+                            models.ForeignKey(
+                                on_delete=django.db.models.deletion.CASCADE,
+                                to="organization.role",
+                            ),
+                        ),
+                        (
+                            "user",
+                            models.ForeignKey(
+                                on_delete=django.db.models.deletion.CASCADE,
+                                related_name="user_roles",
+                                to=settings.AUTH_USER_MODEL,
+                            ),
+                        ),
+                    ],
+                    options={
+                        "unique_together": {("user", "role")},
+                    },
+                ),
+            ]
+
+      . __init__.py
+        Content:
+
+
+    . models.py
+      Content:
+      # apps/organization/models.py
+      from django.db import models
+      from django.contrib.auth.models import User
+      
+      class Department(models.Model):
+          name = models.CharField(max_length=200)
+          description = models.TextField(blank=True)
+          created_at = models.DateTimeField(auto_now_add=True)
+          is_active = models.BooleanField(default=True)
+      
+          def __str__(self):
+              return self.name
+      
+          class Meta:
+              ordering = ['name']
+      
+      class Role(models.Model):
+          JOB_GROUPS = [
+              ('JSG1', 'JSG1'),
+              ('JSG2', 'JSG2'),
+              ('JSG3', 'JSG3'),
+              ('JSG4', 'JSG4'),
+              ('JSG5', 'JSG5'),
+          ]
+      
+          title = models.CharField(max_length=200)
+          department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='roles')
+          job_group = models.CharField(max_length=4, choices=JOB_GROUPS)
+          description = models.TextField(blank=True)
+          is_active = models.BooleanField(default=True)
+          created_at = models.DateTimeField(auto_now_add=True)
+      
+          def __str__(self):
+              return f"{self.title} ({self.department.name})"
+      
+          class Meta:
+              ordering = ['department', 'job_group', 'title']
+      
+      class UserRole(models.Model):
+          user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_roles')
+          role = models.ForeignKey(Role, on_delete=models.CASCADE)
+          assigned_at = models.DateTimeField(auto_now_add=True)
+          is_active = models.BooleanField(default=True)
+      
+          def __str__(self):
+              return f"{self.user.username} - {self.role.title}"
+      
+          class Meta:
+              unique_together = ['user', 'role']
+
+    . tests.py
+      Content:
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . views.py
+      Content:
+      from django.shortcuts import render
+      
+      # Create your views here.
 
   . statistics/
     . __init__.py
@@ -517,8 +1162,8 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
             financial_year = None
             quarter = None
             unit_ranks = None
-            financial_years = None
-            financial_quarters = None
+            financial_years = FinancialYear.objects.all()
+            financial_quarters = FinancialQuarter.objects.filter(financial_year=financial_year)
         
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
@@ -1522,6 +2167,27 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
     . management/
       . commands/
+        . check_data.py
+          Content:
+          # Create a new file: apps/statistics/management/commands/check_data.py
+          
+          from django.core.management.base import BaseCommand
+          from apps.statistics.models import Unit, Division, UnitDivision
+          
+          class Command(BaseCommand):
+              help = 'Check existing data in database'
+          
+              def handle(self, *args, **options):
+                  self.stdout.write("Checking existing data...")
+                  
+                  self.stdout.write("\nDivisions:")
+                  for division in Division.objects.all():
+                      self.stdout.write(f"ID: {division.id}, Name: {division.name}")
+                      
+                  self.stdout.write("\nUnits:")
+                  for unit in Unit.objects.all():
+                      self.stdout.write(f"ID: {unit.id}, Name: {unit.name}")
+
         . populate_unit_ranks.py
           Content:
           from django.core.management.base import BaseCommand
@@ -1628,32 +2294,76 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
         . unit_division_seeder.py
           Content:
-          import csv
           from django.core.management.base import BaseCommand
-          import os 
-          from apps.statistics.models import UnitDivision
+          import os
+          import csv
+          from apps.statistics.models import UnitDivision, Unit, Division
           
           class Command(BaseCommand):
               help = 'Seed Unit Division data from CSV file'
           
               def handle(self, *args, **options):
-                  # id , unit_id , division_id .
-          
-                  UnitDivision.objects.all().delete()  # Optional: Truncate the UnitDivision table before seeding
+                  self.stdout.write("Starting Unit Division seeding...")
+                  
+                  # Clear existing data
+                  UnitDivision.objects.all().delete()
+                  self.stdout.write("Cleared existing Unit Division data")
           
                   base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
           
+                  success_count = 0
+                  error_count = 0
+                  skipped_count = 0
+                  
                   with open(base_dir + '/data/unit_division.csv') as csv_file:
                       csv_reader = csv.reader(csv_file)
-                      next(csv_reader)
+                      header = next(csv_reader)  # Skip header row
+                      
                       for row in csv_reader:
-                          UnitDivision.objects.create(
-                              id=row[0],
-                              unit_id=row[1],
-                              division_id=row[2],
-                          )
+                          try:
+                              unit_id = int(row[1])
+                              division_id = int(row[2])
+                              
+                              # Check if Unit exists and can have divisions
+                              try:
+                                  unit = Unit.objects.get(id=unit_id)
+                                  
+                                  # Skip if unit cannot have divisions
+                                  if not unit.has_division:
+                                      self.stdout.write(f'Skipping unit {unit.name} (ID: {unit_id}) - Cannot have divisions')
+                                      skipped_count += 1
+                                      continue
+                                      
+                                  division = Division.objects.get(id=division_id)
+                                  
+                                  # Create UnitDivision
+                                  UnitDivision.objects.create(
+                                      id=int(row[0]),
+                                      unit=unit,
+                                      division=division,
+                                  )
+                                  success_count += 1
+                                  
+                              except Unit.DoesNotExist:
+                                  self.stdout.write(self.style.ERROR(f'Unit with id {unit_id} does not exist'))
+                                  error_count += 1
+                              except Division.DoesNotExist:
+                                  self.stdout.write(self.style.ERROR(f'Division with id {division_id} does not exist'))
+                                  error_count += 1
+                              except Exception as e:
+                                  self.stdout.write(self.style.ERROR(f'Error processing row {row}: {str(e)}'))
+                                  error_count += 1
+                                  
+                          except ValueError as e:
+                              self.stdout.write(self.style.ERROR(f'Invalid data in row {row}: {str(e)}'))
+                              error_count += 1
           
-                  self.stdout.write(self.style.SUCCESS('Successfully seeded Unit Division.'))
+                  self.stdout.write(self.style.SUCCESS(
+                      f'Finished seeding Unit Divisions.\n'
+                      f'Successfully processed: {success_count} records\n'
+                      f'Skipped (no divisions allowed): {skipped_count} records\n'
+                      f'Errors encountered: {error_count} records'
+                  ))
 
         . unit_seeder.py
           Content:
@@ -2233,12 +2943,13 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       
       
       def home(request):
-          # show hello world string
-          #  UnitRank
           context = {
               'unit_ranks': UnitRank.objects.all(),
-              'financial_years': FinancialYear.objects.all(),
-              'financial_quarters': FinancialQuarter.objects.all(),
+              'total_units': Unit.objects.count(),
+              'active_divisions': Division.objects.filter(is_active=True).count(),
+              'court_units': Unit.objects.filter(is_court=True).count(),
+              'financial_year': FinancialYear.objects.first(),
+              'financial_quarter': FinancialQuarter.objects.first(),
           }
           return render(request, 'statistics/home.html', context)
           
@@ -2845,6 +3556,8 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         'apps.home', 
         'django_unicorn',
         'apps.statistics',
+        'apps.document_management',
+        'apps.organization',
         'debug_toolbar',
     
     ]
@@ -2898,17 +3611,11 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
     
     DATABASES = {
-     # postgres
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.getenv('POSTGRES_DB'),
-            'USER': os.getenv('POSTGRES_USER'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-            'HOST': os.getenv('POSTGRES_HOST'),
-            'PORT': os.getenv('POSTGRES_PORT'),
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
-    
     
     # Password validation
     # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -2960,7 +3667,6 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     
     ASSETS_ROOT = '/static/assets'
     
-    CSRF_TRUSTED_ORIGINS = ['*']
     
     # FILE_UPLOAD_MAX_MEMORY_SIZE 8GB
     FILE_UPLOAD_MAX_MEMORY_SIZE = 8589934592
@@ -2987,38 +3693,30 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     
     import os
     
+    LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
         'handlers': {
             'console': {
-                'class': 'logging.StreamHandler',  # Sends log messages to console
+                'class': 'logging.StreamHandler',
             },
             'file': {
-                'level': 'DEBUG',  # Set this to DEBUG or higher to log to a file
+                'level': 'DEBUG',
                 'class': 'logging.FileHandler',
-                'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'),
+                'filename': os.path.join(LOGS_DIR, 'debug.log'),
             },
         },
         'loggers': {
             'django': {
-                'handlers': ['console', 'file'],  # Include both console and file handlers
-                'level': 'ERROR',  # Set this to ERROR or higher to log to a file
+                'handlers': ['console', 'file'],
+                'level': 'ERROR',
                 'propagate': True,
             },
         },
     }
-    
-    # Add this at the end of your settings.py file to enable detailed error pages
-    if DEBUG:
-        # Show detailed error pages during development
-        def show_toolbar(request):
-            return True
-    
-        DEBUG_TOOLBAR_CONFIG = {
-            "SHOW_TOOLBAR_CALLBACK": show_toolbar,
-        }
-    
     
 
   . staticfiles/
@@ -3071,488 +3769,3 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
 . data/
   . db/
-    . PG_VERSION
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/PG_VERSION'
-
-    . base
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/base'
-
-    . global
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/global'
-
-    . pg_commit_ts
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_commit_ts'
-
-    . pg_dynshmem
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_dynshmem'
-
-    . pg_hba.conf
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_hba.conf'
-
-    . pg_ident.conf
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_ident.conf'
-
-    . pg_logical
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_logical'
-
-    . pg_multixact
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_multixact'
-
-    . pg_notify
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_notify'
-
-    . pg_replslot
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_replslot'
-
-    . pg_serial
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_serial'
-
-    . pg_snapshots
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_snapshots'
-
-    . pg_stat
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_stat'
-
-    . pg_stat_tmp
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_stat_tmp'
-
-    . pg_subtrans
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_subtrans'
-
-    . pg_tblspc
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_tblspc'
-
-    . pg_twophase
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_twophase'
-
-    . pg_wal
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_wal'
-
-    . pg_xact
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/pg_xact'
-
-    . postgresql.auto.conf
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/postgresql.auto.conf'
-
-    . postgresql.conf
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/postgresql.conf'
-
-    . postmaster.opts
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/postmaster.opts'
-
-    . postmaster.pid
-      Content:
-      Unable to read file: [Errno 13] Permission denied: '/home/ngobiro/projects/moringa_capstone/data/db/postmaster.pid'
-
-. docker-compose.yml
-  Content:
-  services:
-    db:
-      image: postgres:14
-      volumes:
-        - ./data/db:/var/lib/postgresql/data
-      env_file:
-        - .env
-      ports:
-        - "5432:5432"  
-      networks:
-        - my_network
-  
-    web:
-      build: .
-      command: python manage.py runserver 0.0.0.0:8001
-      volumes:
-        - .:/code
-      ports:
-        - "8001:8001"
-      env_file:
-        - .env
-      depends_on:
-        - db
-      mem_limit: 8g
-      networks:
-        - my_network
-  
-  networks:
-    my_network:
-      driver: bridge
-
-. env.sample
-  Content:
-  # True for development, False for production
-  DEBUG=True
-  
-  # Deployment SERVER address
-  SERVER=.appseed.us
-  
-  # Used for CDN (in production)
-  # No Slash at the end
-  ASSETS_ROOT=/static/assets
-  
-  # If present, the SignIN exposes the Github Login Button
-  # GITHUB_ID=<YOUR_GITHUB_ID>
-  # GITHUB_SECRET=<YOUR_GITHUB_SECRET>
-  
-  # For MySql Persistence
-  # DB_ENGINE=mysql
-  # DB_NAME=appseed_db
-  # DB_HOST=localhost
-  # DB_PORT=3306
-  # DB_USERNAME=appseed_db_usr
-  # DB_PASS=<STRONG_PASS>
-
-. ewakili
-  Content:
-  Unable to read file: 'utf-8' codec can't decode byte 0xf1 in position 106: invalid continuation byte
-
-. manage.py
-  Content:
-  #!/usr/bin/env python
-  """Django's command-line utility for administrative tasks."""
-  import os
-  import sys
-  
-  
-  def main():
-      """Run administrative tasks."""
-      os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-      try:
-          from django.core.management import execute_from_command_line
-      except ImportError as exc:
-          raise ImportError(
-              "Couldn't import Django. Are you sure it's installed and "
-              "available on your PYTHONPATH environment variable? Did you "
-              "forget to activate a virtual environment?"
-          ) from exc
-      execute_from_command_line(sys.argv)
-  
-  
-  if __name__ == '__main__':
-      main()
-
-. requirements.txt
-  Content:
-  Django>=3.0,<4.0
-  psycopg2>=2.8
-  asgiref==3.4.1
-  autopep8==1.6.0
-  dj-database-url==0.5.0
-  gunicorn==20.1.0
-  pycodestyle==2.8.0
-  pytz==2021.3
-  sqlparse==0.4.2
-  toml==0.10.2
-  Unipath==1.1
-  whitenoise==5.3.0
-  django-environ==0.8.1
-  django-allauth==0.51.0
-  django-sslserver
-  django-q
-  django-storages
-  python-docx
-  djangorestframework
-  pinecone-client
-  langchain
-  django-unicorn
-  django-debug-toolbar
-  openpyxl
-  django_pandas
-  
-  
-  
-  
-
-. staticfiles/
-  . admin/
-    . css/
-    . fonts/
-      . LICENSE.txt
-        Content:
-        
-                                         Apache License
-                                   Version 2.0, January 2004
-                                http://www.apache.org/licenses/
-        
-           TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-        
-           1. Definitions.
-        
-              "License" shall mean the terms and conditions for use, reproduction,
-              and distribution as defined by Sections 1 through 9 of this document.
-        
-              "Licensor" shall mean the copyright owner or entity authorized by
-              the copyright owner that is granting the License.
-        
-              "Legal Entity" shall mean the union of the acting entity and all
-              other entities that control, are controlled by, or are under common
-              control with that entity. For the purposes of this definition,
-              "control" means (i) the power, direct or indirect, to cause the
-              direction or management of such entity, whether by contract or
-              otherwise, or (ii) ownership of fifty percent (50%) or more of the
-              outstanding shares, or (iii) beneficial ownership of such entity.
-        
-              "You" (or "Your") shall mean an individual or Legal Entity
-              exercising permissions granted by this License.
-        
-              "Source" form shall mean the preferred form for making modifications,
-              including but not limited to software source code, documentation
-              source, and configuration files.
-        
-              "Object" form shall mean any form resulting from mechanical
-              transformation or translation of a Source form, including but
-              not limited to compiled object code, generated documentation,
-              and conversions to other media types.
-        
-              "Work" shall mean the work of authorship, whether in Source or
-              Object form, made available under the License, as indicated by a
-              copyright notice that is included in or attached to the work
-              (an example is provided in the Appendix below).
-        
-              "Derivative Works" shall mean any work, whether in Source or Object
-              form, that is based on (or derived from) the Work and for which the
-              editorial revisions, annotations, elaborations, or other modifications
-              represent, as a whole, an original work of authorship. For the purposes
-              of this License, Derivative Works shall not include works that remain
-              separable from, or merely link (or bind by name) to the interfaces of,
-              the Work and Derivative Works thereof.
-        
-              "Contribution" shall mean any work of authorship, including
-              the original version of the Work and any modifications or additions
-              to that Work or Derivative Works thereof, that is intentionally
-              submitted to Licensor for inclusion in the Work by the copyright owner
-              or by an individual or Legal Entity authorized to submit on behalf of
-              the copyright owner. For the purposes of this definition, "submitted"
-              means any form of electronic, verbal, or written communication sent
-              to the Licensor or its representatives, including but not limited to
-              communication on electronic mailing lists, source code control systems,
-              and issue tracking systems that are managed by, or on behalf of, the
-              Licensor for the purpose of discussing and improving the Work, but
-              excluding communication that is conspicuously marked or otherwise
-              designated in writing by the copyright owner as "Not a Contribution."
-        
-              "Contributor" shall mean Licensor and any individual or Legal Entity
-              on behalf of whom a Contribution has been received by Licensor and
-              subsequently incorporated within the Work.
-        
-           2. Grant of Copyright License. Subject to the terms and conditions of
-              this License, each Contributor hereby grants to You a perpetual,
-              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-              copyright license to reproduce, prepare Derivative Works of,
-              publicly display, publicly perform, sublicense, and distribute the
-              Work and such Derivative Works in Source or Object form.
-        
-           3. Grant of Patent License. Subject to the terms and conditions of
-              this License, each Contributor hereby grants to You a perpetual,
-              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-              (except as stated in this section) patent license to make, have made,
-              use, offer to sell, sell, import, and otherwise transfer the Work,
-              where such license applies only to those patent claims licensable
-              by such Contributor that are necessarily infringed by their
-              Contribution(s) alone or by combination of their Contribution(s)
-              with the Work to which such Contribution(s) was submitted. If You
-              institute patent litigation against any entity (including a
-              cross-claim or counterclaim in a lawsuit) alleging that the Work
-              or a Contribution incorporated within the Work constitutes direct
-              or contributory patent infringement, then any patent licenses
-              granted to You under this License for that Work shall terminate
-              as of the date such litigation is filed.
-        
-           4. Redistribution. You may reproduce and distribute copies of the
-              Work or Derivative Works thereof in any medium, with or without
-              modifications, and in Source or Object form, provided that You
-              meet the following conditions:
-        
-              (a) You must give any other recipients of the Work or
-                  Derivative Works a copy of this License; and
-        
-              (b) You must cause any modified files to carry prominent notices
-                  stating that You changed the files; and
-        
-              (c) You must retain, in the Source form of any Derivative Works
-                  that You distribute, all copyright, patent, trademark, and
-                  attribution notices from the Source form of the Work,
-                  excluding those notices that do not pertain to any part of
-                  the Derivative Works; and
-        
-              (d) If the Work includes a "NOTICE" text file as part of its
-                  distribution, then any Derivative Works that You distribute must
-                  include a readable copy of the attribution notices contained
-                  within such NOTICE file, excluding those notices that do not
-                  pertain to any part of the Derivative Works, in at least one
-                  of the following places: within a NOTICE text file distributed
-                  as part of the Derivative Works; within the Source form or
-                  documentation, if provided along with the Derivative Works; or,
-                  within a display generated by the Derivative Works, if and
-                  wherever such third-party notices normally appear. The contents
-                  of the NOTICE file are for informational purposes only and
-                  do not modify the License. You may add Your own attribution
-                  notices within Derivative Works that You distribute, alongside
-                  or as an addendum to the NOTICE text from the Work, provided
-                  that such additional attribution notices cannot be construed
-                  as modifying the License.
-        
-              You may add Your own copyright statement to Your modifications and
-              may provide additional or different license terms and conditions
-              for use, reproduction, or distribution of Your modifications, or
-              for any such Derivative Works as a whole, provided Your use,
-              reproduction, and distribution of the Work otherwise complies with
-              the conditions stated in this License.
-        
-           5. Submission of Contributions. Unless You explicitly state otherwise,
-              any Contribution intentionally submitted for inclusion in the Work
-              by You to the Licensor shall be under the terms and conditions of
-              this License, without any additional terms or conditions.
-              Notwithstanding the above, nothing herein shall supersede or modify
-              the terms of any separate license agreement you may have executed
-              with Licensor regarding such Contributions.
-        
-           6. Trademarks. This License does not grant permission to use the trade
-              names, trademarks, service marks, or product names of the Licensor,
-              except as required for reasonable and customary use in describing the
-              origin of the Work and reproducing the content of the NOTICE file.
-        
-           7. Disclaimer of Warranty. Unless required by applicable law or
-              agreed to in writing, Licensor provides the Work (and each
-              Contributor provides its Contributions) on an "AS IS" BASIS,
-              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-              implied, including, without limitation, any warranties or conditions
-              of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-              PARTICULAR PURPOSE. You are solely responsible for determining the
-              appropriateness of using or redistributing the Work and assume any
-              risks associated with Your exercise of permissions under this License.
-        
-           8. Limitation of Liability. In no event and under no legal theory,
-              whether in tort (including negligence), contract, or otherwise,
-              unless required by applicable law (such as deliberate and grossly
-              negligent acts) or agreed to in writing, shall any Contributor be
-              liable to You for damages, including any direct, indirect, special,
-              incidental, or consequential damages of any character arising as a
-              result of this License or out of the use or inability to use the
-              Work (including but not limited to damages for loss of goodwill,
-              work stoppage, computer failure or malfunction, or any and all
-              other commercial damages or losses), even if such Contributor
-              has been advised of the possibility of such damages.
-        
-           9. Accepting Warranty or Additional Liability. While redistributing
-              the Work or Derivative Works thereof, You may choose to offer,
-              and charge a fee for, acceptance of support, warranty, indemnity,
-              or other liability obligations and/or rights consistent with this
-              License. However, in accepting such obligations, You may act only
-              on Your own behalf and on Your sole responsibility, not on behalf
-              of any other Contributor, and only if You agree to indemnify,
-              defend, and hold each Contributor harmless for any liability
-              incurred by, or claims asserted against, such Contributor by reason
-              of your accepting any such warranty or additional liability.
-        
-           END OF TERMS AND CONDITIONS
-        
-           APPENDIX: How to apply the Apache License to your work.
-        
-              To apply the Apache License to your work, attach the following
-              boilerplate notice, with the fields enclosed by brackets "[]"
-              replaced with your own identifying information. (Don't include
-              the brackets!)  The text should be enclosed in the appropriate
-              comment syntax for the file format. We also recommend that a
-              file or class name and description of purpose be included on the
-              same "printed page" as the copyright notice for easier
-              identification within third-party archives.
-        
-           Copyright [yyyy] [name of copyright owner]
-        
-           Licensed under the Apache License, Version 2.0 (the "License");
-           you may not use this file except in compliance with the License.
-           You may obtain a copy of the License at
-        
-               http://www.apache.org/licenses/LICENSE-2.0
-        
-           Unless required by applicable law or agreed to in writing, software
-           distributed under the License is distributed on an "AS IS" BASIS,
-           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-           See the License for the specific language governing permissions and
-           limitations under the License.
-
-      . README.txt
-        Content:
-        Roboto webfont source: https://www.google.com/fonts/specimen/Roboto
-        WOFF files extracted using https://github.com/majodev/google-webfonts-helper
-        Weights used in this project: Light (300), Regular (400), Bold (700)
-
-    . img/
-      . LICENSE
-        Content:
-        The MIT License (MIT)
-        
-        Copyright (c) 2014 Code Charm Ltd
-        
-        Permission is hereby granted, free of charge, to any person obtaining a copy of
-        this software and associated documentation files (the "Software"), to deal in
-        the Software without restriction, including without limitation the rights to
-        use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-        the Software, and to permit persons to whom the Software is furnished to do so,
-        subject to the following conditions:
-        
-        The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
-        
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-        FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-        COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-        IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-        CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-      . README.txt
-        Content:
-        All icons are taken from Font Awesome (http://fontawesome.io/) project.
-        The Font Awesome font is licensed under the SIL OFL 1.1:
-        - https://scripts.sil.org/OFL
-        
-        SVG icons source: https://github.com/encharm/Font-Awesome-SVG-PNG
-        Font-Awesome-SVG-PNG is licensed under the MIT license (see file license
-        in current folder).
-
-      . gis/
-    . js/
-      . admin/
-  . sitemap.xml
-    Content:
-    <?xml version="1.0" encoding="UTF-8"?>
-    <urlset
-          xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-                http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-    
-      <!-- Main links -->
-      <url>
-        <loc>https://django-dashboard-dattaable.appseed.us</loc>
-        <priority>1</priority>
-        <changefreq>monthly</changefreq>
-      </url>
-    
-    </urlset>
-    
-

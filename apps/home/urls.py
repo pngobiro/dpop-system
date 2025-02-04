@@ -1,25 +1,11 @@
-# -*- encoding: utf-8 -*-
-"""
-Copyright (c) 2019 - present AppSeed.us
-"""
+from django.urls import path
+from . import views
 
-from django.urls import path, re_path
-from apps.home import views
-from django.urls import path, include
+app_name = 'apps.home'
+
 
 urlpatterns = [
-
-    # The home page
-    path('', views.index, name='home'),
-
-    # Matches any html file
-    re_path(r'^.*\.*', views.pages, name='pages'),
-
-
-    # path stastistics dashboard
-  
-
-
-
-    
+    path('', views.index, name='index'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('departments/<int:department_id>/modules/', views.department_modules, name='department_modules'), # New URL for department modules
 ]

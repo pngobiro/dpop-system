@@ -36,6 +36,8 @@ INSTALLED_APPS = [
     'apps.home', 
     'django_unicorn',
     'apps.statistics',
+    'apps.document_management',
+    'apps.organization',
     'debug_toolbar',
 
 ]
@@ -89,17 +91,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
- # postgres
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.getenv('POSTGRES_DB'),
-        'USER': os.getenv('POSTGRES_USER'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-        'HOST': os.getenv('POSTGRES_HOST'),
-        'PORT': os.getenv('POSTGRES_PORT'),
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -151,7 +147,6 @@ STATICFILES_DIRS = (
 
 ASSETS_ROOT = '/static/assets'
 
-CSRF_TRUSTED_ORIGINS = ['*']
 
 # FILE_UPLOAD_MAX_MEMORY_SIZE 8GB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 8589934592
