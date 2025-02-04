@@ -2,30 +2,42 @@ services:
   db:
     image: postgres:14
     volumes:
-      - ./data/db:/var/lib/postgresql/data
-    env_file:
-      - .env
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
-      - "5434:5432"  
+      - "5432:5432"
     networks:
-      - my_network
+      - app_network
 
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8001
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
-      - ./logs:/code/logs  # Add this line
+      - static_volume:/code/static
+      - media_volume:/code/media
     ports:
-      - "8001:8001"
-    env_file:
-      - .env
+      - "8000:8000"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - DEBUG=${DEBUG}
     depends_on:
       - db
-    mem_limit: 8g
     networks:
-      - my_network
+      - app_network
 
 networks:
-  my_network:
+  app_network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

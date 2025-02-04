@@ -44,7 +44,8 @@ def pages(request):
 @login_required
 def department_modules(request, department_id):
     department = get_object_or_404(Department, id=department_id)
-    all_modules = Module.objects.all() # Fetch all modules
+    # all_modules = Module.objects.filter(department=department) # Get all modules for the department
+    all_modules = Module.objects.all()
     permitted_modules = []
 
     for module in all_modules:

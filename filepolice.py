@@ -29,10 +29,10 @@ def should_exclude(item, path):
         "*.egg-info",
         ".ipynb_checkpoints",
         # Front-end related exclusions
-        "*.js",
-        "*.css",
-        "*.html",
         "*.scss",
+        "*.css",
+        ".js",
+        "db.sqlite3",
         "*.sass",
         "*.less",
         "*.ts",
@@ -95,7 +95,7 @@ def should_exclude(item, path):
             return True
     
     # Check if the path contains any of the static/vendor related directories
-    static_vendor_dirs = ["static", "vendor", "assets", "public", "dist", "libs", "external", "third-party", "3rdparty", "cdn"]
+    static_vendor_dirs = ["docs" ,"static", "staticfiles","vendor", "assets", "public", "dist", "libs", "external", "third-party", "3rdparty", "cdn","data"]
     for dir_name in static_vendor_dirs:
         if dir_name.lower() in path.lower().split(os.sep):
             return True

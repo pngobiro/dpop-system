@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Workplan Summary {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Workplan Summary - {{ financial_year.name }}</h2>
+    
+    <div class="table-responsive mt-4">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Budget Item</th>
+                    <th>Code</th>
+                    <th>Q1</th>
+                    <th>Q2</th>
+                    <th>Q3</th>
+                    <th>Q4</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.item.name }}</td>
+                    <td>{{ item.item.budget_code }}</td>
+                    <td>{{ item.q1_amount|floatformat:2 }}</td>
+                    <td>{{ item.q2_amount|floatformat:2 }}</td>
+                    <td>{{ item.q3_amount|floatformat:2 }}</td>
+                    <td>{{ item.q4_amount|floatformat:2 }}</td>
+                    <td>{{ item.total|floatformat:2 }}</td>
+                </tr>
+                {% if item.indicators %}
+                <tr>
+                    <td colspan="7" class="bg-light">
+                        <small>
+                            <strong>Performance Indicators:</strong>
+                            {% for indicator in item.indicators %}
+                            {{ indicator.name }} (Target: {{ indicator.target }}){% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </small>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="table-info">
+                    <th colspan="2">Total</th>
+                    <th>{{ quarterly_totals.1|floatformat:2 }}</th>
+                    <th>{{ quarterly_totals.2|floatformat:2 }}</th>
+                    <th>{{ quarterly_totals.3|floatformat:2 }}</th>
+                    <th>{{ quarterly_totals.4|floatformat:2 }}</th>
+                    <th>{{ total_budget|floatformat:2 }}</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

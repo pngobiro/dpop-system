@@ -1,32 +1,32 @@
+# Use Python 3.9 base image
 FROM python:3.9
 
-# set environment variables
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# set work directory
+# Set work directory
 WORKDIR /code
 
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    apt-utils \
+    ffmpeg \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
-# install  apt-utils ,  FFmpeg for audio and video processing
-RUN apt-get update && apt-get install -y apt-utils ffmpeg
-
-
-# copy requirements.txt to workdir and install dependencies
+# Install Python dependencies
 COPY requirements.txt /code/
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-RUN pip install --upgrade pip
-
-RUN pip install -r requirements.txt
-
-# copy project to workdir
-
+# Copy project
 COPY . /code/
 
+# Add entrypoint script
+COPY entrypoint.sh /code/
+RUN chmod +x /code/entrypoint.sh
 
-
-
-# run docker bash
-
-
-
+# Set entrypoint
+ENTRYPOINT ["/code/entrypoint.sh"]

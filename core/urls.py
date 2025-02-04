@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),          # Django admin route
     path("", include("apps.authentication.urls")), # Auth routes - login / register
     path("statistics/", include("apps.statistics.urls", namespace="statistics")),
+    path('budget/', include('apps.budget.urls', namespace='budget')),
     path("unicorn/", include("django_unicorn.urls")),
     path("", include("apps.home.urls")), # UI Kits Html files
 
