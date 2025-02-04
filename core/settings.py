@@ -198,3 +198,8 @@ LOGGING = {
     },
 }
 
+
+# Google Drive settings
+GOOGLE_OAUTH_CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, 'client_secrets.json')
+GOOGLE_OAUTH_REDIRECT_URI = 'http://your-domain/documents/google-auth-callback/'
+
