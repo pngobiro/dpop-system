@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'apps.document_management',
     'apps.organization',
     'apps.budget',
+    'apps.meetings',
     'debug_toolbar',
 
 ]

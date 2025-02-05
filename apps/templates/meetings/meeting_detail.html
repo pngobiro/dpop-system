@@ -1,0 +1,182 @@
+{# templates/meetings/meeting_detail.html #}
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ meeting.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-[#26443c] text-white d-flex justify-content-between align-items-center">
+            <h2 class="h4 mb-0">{{ meeting.title }}</h2>
+            {% if can_edit %}
+            <div>
+                <a href="{% url 'meeting_update' meeting.pk %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{% url 'meeting_delete' meeting.pk %}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i> Delete
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="mb-3">Meeting Details</h5>
+                    <table class="table">
+                        <tr>
+                            <th>Department:</th>
+                            <td>{{ meeting.department.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date:</th>
+                            <td>{{ meeting.date }}</td>
+                        </tr>
+                        <tr>
+                            <th>Time:</th>
+                            <td>{{ meeting.start_time }} - {{ meeting.end_time }}</td>
+                        </tr>
+                        <tr>
+                            <th>Type:</th>
+                            <td>{{ meeting.get_meeting_type_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                <span class="badge {% if meeting.status == 'completed' %}bg-success{% elif meeting.status == 'cancelled' %}bg-danger{% else %}bg-primary{% endif %}">
+                                    {{ meeting.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="col-md-6">
+                    <h5 class="mb-3">Meeting Access</h5>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <p class="mb-2">
+                                <strong>Mode:</strong> 
+                                {{ meeting.get_meeting_mode_display }}
+                            </p>
+
+                            {% if meeting.physical_location %}
+                            <div class="mb-3">
+                                <strong>Physical Location:</strong><br>
+                                {{ meeting.physical_location }}
+                            </div>
+                            {% endif %}
+
+                            {% if meeting.meeting_mode in 'virtual,hybrid'|split:',' %}
+                            <div class="virtual-meeting-info">
+                                <strong>Virtual Meeting Details:</strong>
+                                <div class="mt-2">
+                                    <p class="mb-1">
+                                        <strong>Platform:</strong> 
+                                        {{ meeting.get_virtual_platform_display }}
+                                    </p>
+                                    {% if meeting.virtual_meeting_url %}
+                                    <p class="mb-1">
+                                        <strong>Join URL:</strong><br>
+                                        <a href="{{ meeting.virtual_meeting_url }}" target="_blank" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-video"></i> Join Meeting
+                                        </a>
+                                    </p>
+                                    {% endif %}
+                                    {% if meeting.virtual_meeting_id %}
+                                    <p class="mb-1">
+                                        <strong>Meeting ID:</strong> 
+                                        {{ meeting.virtual_meeting_id }}
+                                    </p>
+                                    {% endif %}
+                                    {% if meeting.virtual_meeting_password %}
+                                    <p class="mb-1">
+                                        <strong>Password:</strong> 
+                                        {{ meeting.virtual_meeting_password }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Agenda</h5>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            {{ meeting.agenda|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Participants</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Response Date</th>
+                                    <th>Attended</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for participant in participants %}
+                                <tr>
+                                    <td>{{ participant.participant.get_full_name }}</td>
+                                    <td>
+                                        <span class="badge {% if participant.status == 'accepted' %}bg-success{% elif participant.status == 'declined' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ participant.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ participant.response_timestamp|default:"-" }}</td>
+                                    <td>
+                                        {% if participant.attended %}
+                                        <i class="fas fa-check text-success"></i>
+                                        {% else %}
+                                        <i class="fas fa-times text-danger"></i>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if meeting.status == 'completed' and meeting.minutes %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Minutes</h5>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            {{ meeting.minutes|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if meeting.has_recording %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h5>Recording</h5>
+                    <a href="{{ meeting.recording_url }}" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-play"></i> View Recording
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

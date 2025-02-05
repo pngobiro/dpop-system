@@ -1,0 +1,327 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Meeting{% else %}New Meeting{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <!-- Back button -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="{% url 'meetings:dashboard' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <div class="card border-0 shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        {% if form.instance.pk %}
+                            Edit Meeting: {{ form.instance.title }}
+                        {% else %}
+                            Schedule New Meeting
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Basic Information</h5>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Title*</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.title.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.department.id_for_label }}" class="form-label">Department*</label>
+                                {{ form.department }}
+                                {% if form.department.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.department.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.meeting_type.id_for_label }}" class="form-label">Meeting Type*</label>
+                                {{ form.meeting_type }}
+                                {% if form.meeting_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.meeting_type.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Date and Time -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Date and Time</h5>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.date.id_for_label }}" class="form-label">Date*</label>
+                                {{ form.date }}
+                                {% if form.date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.date.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.start_time.id_for_label }}" class="form-label">Start Time*</label>
+                                {{ form.start_time }}
+                                {% if form.start_time.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.start_time.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.end_time.id_for_label }}" class="form-label">End Time*</label>
+                                {{ form.end_time }}
+                                {% if form.end_time.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.end_time.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Location</h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.meeting_mode.id_for_label }}" class="form-label">Meeting Mode*</label>
+                                {{ form.meeting_mode }}
+                                {% if form.meeting_mode.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.meeting_mode.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.physical_location.id_for_label }}" class="form-label">Physical Location</label>
+                                {{ form.physical_location }}
+                                {% if form.physical_location.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.physical_location.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Virtual Meeting Details -->
+                        <div class="row mb-4" id="virtualMeetingDetails">
+                            <div class="col-12">
+                                <h5 class="mb-3">Virtual Meeting Details</h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.virtual_platform.id_for_label }}" class="form-label">Platform</label>
+                                {{ form.virtual_platform }}
+                                {% if form.virtual_platform.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.virtual_platform.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.virtual_meeting_url.id_for_label }}" class="form-label">Meeting URL</label>
+                                {{ form.virtual_meeting_url }}
+                                {% if form.virtual_meeting_url.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.virtual_meeting_url.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.virtual_meeting_id.id_for_label }}" class="form-label">Meeting ID</label>
+                                {{ form.virtual_meeting_id }}
+                                {% if form.virtual_meeting_id.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.virtual_meeting_id.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.virtual_meeting_password.id_for_label }}" class="form-label">Meeting Password</label>
+                                {{ form.virtual_meeting_password }}
+                                {% if form.virtual_meeting_password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.virtual_meeting_password.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Agenda -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Agenda</h5>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.agenda.id_for_label }}" class="form-label">Meeting Agenda*</label>
+                                {{ form.agenda }}
+                                {% if form.agenda.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.agenda.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Participants -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Participants</h5>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.participants.id_for_label }}" class="form-label">Select Participants</label>
+                                {{ form.participants }}
+                                {% if form.participants.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.participants.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Documents -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">Meeting Documents</h5>
+                            </div>
+                            <div class="col-12">
+                                <div id="documents-container">
+                                    <!-- Initial document form -->
+                                    <div class="document-form mb-3 p-3 border rounded bg-light">
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Document Type</label>
+                                                <select name="document_type[]" class="form-control">
+                                                    <option value="agenda">Agenda</option>
+                                                    <option value="minutes">Minutes</option>
+                                                    <option value="presentation">Presentation</option>
+                                                    <option value="report">Report</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">File</label>
+                                                <input type="file" name="document_file[]" class="form-control" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Notes</label>
+                                                <textarea name="document_notes[]" class="form-control" rows="1" 
+                                                    placeholder="Optional notes"></textarea>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-danger remove-document" style="display: none;">
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-secondary" id="add-document">
+                                    <i class="fas fa-plus"></i> Add Another Document
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'meetings:dashboard' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if form.instance.pk %}
+                                    <i class="fas fa-save me-1"></i> Update Meeting
+                                {% else %}
+                                    <i class="fas fa-plus me-1"></i> Create Meeting
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle meeting mode toggle
+    const meetingModeSelect = document.getElementById('{{ form.meeting_mode.id_for_label }}');
+    const virtualDetailsDiv = document.getElementById('virtualMeetingDetails');
+    
+    function toggleVirtualDetails() {
+        if (meetingModeSelect.value === 'physical') {
+            virtualDetailsDiv.style.display = 'none';
+        } else {
+            virtualDetailsDiv.style.display = 'flex';
+        }
+    }
+    
+    meetingModeSelect.addEventListener('change', toggleVirtualDetails);
+    toggleVirtualDetails(); // Call once on page load
+
+    // Handle document forms
+    const container = document.getElementById('documents-container');
+    const addButton = document.getElementById('add-document');
+    
+    addButton.addEventListener('click', function() {
+        // Clone the first document form
+        const newForm = container.querySelector('.document-form').cloneNode(true);
+        
+        // Clear input values
+        newForm.querySelectorAll('input, textarea').forEach(input => input.value = '');
+        
+        // Show remove button
+        newForm.querySelector('.remove-document').style.display = 'block';
+        
+        // Add event listener to remove button
+        newForm.querySelector('.remove-document').addEventListener('click', function() {
+            newForm.remove();
+        });
+        
+        // Append new form
+        container.appendChild(newForm);
+    });
+
+    // Initialize date and time pickers if needed
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr('input[type="date"]', {
+            dateFormat: 'Y-m-d',
+            minDate: 'today'
+        });
+        
+        flatpickr('input[type="time"]', {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock content %}

@@ -1,0 +1,238 @@
+{% extends "layouts/base.html" %}
+{% block title %}Meetings Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Meetings Dashboard</h2>
+        <a href="{% url 'meetings:meeting_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Meeting
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Meetings</h5>
+                    <h2 class="mb-0">{{ stats.total_meetings }}</h2>
+                    <small>Last 30 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming</h5>
+                    <h2 class="mb-0">{{ stats.upcoming_count }}</h2>
+                    <small>Scheduled meetings</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Completed</h5>
+                    <h2 class="mb-0">{{ stats.completed_count }}</h2>
+                    <small>Last 30 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Cancelled</h5>
+                    <h2 class="mb-0">{{ stats.cancelled_count }}</h2>
+                    <small>Last 30 days</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-8">
+            <!-- Upcoming Meetings -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Upcoming Meetings</h5>
+                    <a href="{% url 'meetings:meeting_list' %}?status=scheduled" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Date & Time</th>
+                                    <th>Mode</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for meeting in upcoming_meetings %}
+                                <tr>
+                                    <td>{{ meeting.title }}</td>
+                                    <td>
+                                        {{ meeting.date|date:"M d, Y" }}<br>
+                                        <small class="text-muted">
+                                            {{ meeting.start_time|time:"g:i A" }} - {{ meeting.end_time|time:"g:i A" }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ meeting.meeting_mode|yesno:'primary,secondary' }}">
+                                            {{ meeting.get_meeting_mode_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No upcoming meetings</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Meetings -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Meetings</h5>
+                    <a href="{% url 'meetings:meeting_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for meeting in recent_meetings %}
+                                <tr>
+                                    <td>{{ meeting.title }}</td>
+                                    <td>{{ meeting.date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ meeting.status|yesno:'success,secondary' }}">
+                                            {{ meeting.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No recent meetings</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-md-4">
+            <!-- My Meetings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">My Meetings</h5>
+                </div>
+                <div class="card-body">
+                    {% for meeting in my_meetings %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-light rounded p-2">
+                                <i class="fas fa-calendar-alt text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">{{ meeting.title }}</h6>
+                            <small class="text-muted">
+                                {{ meeting.date|date:"M d, Y" }} at {{ meeting.start_time|time:"g:i A" }}
+                            </small>
+                        </div>
+                        <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted">No upcoming meetings for you</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Meeting Types Distribution -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Meeting Types</h5>
+                </div>
+                <div class="card-body">
+                    {% for type in meetings_by_type %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>{{ type.meeting_type|title }}</span>
+                            <span class="fw-bold">{{ type.count }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div 
+                                class="progress-bar" 
+                                role="progressbar" 
+                                style="width: {% widthratio type.count stats.total_meetings 100 %}%"
+                                aria-valuenow="{% widthratio type.count stats.total_meetings 100 %}"
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Meeting Modes Distribution -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Meeting Modes</h5>
+                </div>
+                <div class="card-body">
+                    {% for mode in meetings_by_mode %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>{{ mode.meeting_mode|title }}</span>
+                            <span class="fw-bold">{{ mode.count }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div 
+                                class="progress-bar bg-success" 
+                                role="progressbar" 
+                                style="width: {% widthratio mode.count stats.total_meetings 100 %}%"
+                                aria-valuenow="{% widthratio mode.count stats.total_meetings 100 %}"
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
