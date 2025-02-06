@@ -1173,7 +1173,20 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           
                   # Get departments
                   departments = Department.objects.all()
-                  director = User.objects.get(username='joseph.osewe')
+                  try:
+                      director = User.objects.get(username='joseph.osewe')
+                  except User.DoesNotExist:
+                      self.stdout.write('Creating director user...')
+                      director = User.objects.create_user(
+                          username='joseph.osewe',
+                          email='joseph.osewe@judiciary.go.ke',
+                          first_name='Joseph',
+                          last_name='Osewe',
+                          is_staff=True,
+                          is_superuser=True
+                      )
+                      director.set_password('Admin123!')
+                      director.save()
           
                   meeting_types = {
                       'Department Internal': [
@@ -1199,12 +1212,9 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                   for department in departments:
                       self.stdout.write(f'Creating meetings for {department.name}')
                       
-                      # Get department head (first Assistant Director)
-                      dept_head = User.objects.filter(
-                          userrole__role__title='Assistant Director',
-                          userrole__role__department=department
-                      ).first()
-          
+                      # Get department head - first user in department with Assistant Director role
+                      dept_head = User.objects.filter(departments=department).first()
+                      
                       if not dept_head:
                           continue
           
@@ -1239,9 +1249,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                               )
           
                               # Add participants
-                              dept_staff = User.objects.filter(
-                                  userrole__role__department=department
-                              ).distinct()
+                              dept_staff = User.objects.filter(departments=department).distinct()
           
                               for staff in dept_staff:
                                   MeetingParticipant.objects.create(
@@ -5651,7 +5659,6 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
       . index.html
         Content:
-        
         <!DOCTYPE html>
         <html lang="en">
         <head> 
@@ -5676,11 +5683,188 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
             
             <!-- Volt CSS -->
             <link type="text/css" href="{{ ASSETS_ROOT }}/css/volt.css" rel="stylesheet">
+        
+            <style>
+                :root {
+                    --primary-green: #0A5F38;  /* Kenya Judiciary Green */
+                    --secondary-green: #0D7344;
+                    --accent-gold: #D4AF37;    /* Official Gold */
+                    --text-dark: #333333;
+                    --text-light: #FFFFFF;
+                    --light-bg: #F8F9FA;
+                    --gold-hover: #BFA030;
+                }
+        
+                body {
+                    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                    color: var(--text-dark);
+                    line-height: 1.6;
+                    background: linear-gradient(135deg, #f5f7fa 0%, #e8f0eb 100%);
+                }
+        
+                .header-global {
+                    background-color: var(--primary-green);
+                    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+                }
+        
+                .navbar-main {
+                    padding: 1rem 0;
+                    background-color: var(--primary-green);
+                }
+        
+                .btn-outline-white {
+                    border: 2px solid var(--accent-gold);
+                    color: var(--accent-gold);
+                    transition: all 0.3s ease;
+                }
+        
+                .btn-outline-white:hover {
+                    background: var(--accent-gold);
+                    color: var(--primary-green);
+                }
+        
+                .section-header {
+                    padding: 5rem 0;
+                    min-height: calc(100vh - 80px);
+                    display: flex;
+                    align-items: center;
+                }
+        
+                .title {
+                    font-size: 2.5rem;
+                    font-weight: 700;
+                    color: var(--primary-green);
+                    margin-bottom: 2rem;
+                    position: relative;
+                    padding-bottom: 1rem;
+                }
+        
+                .title:after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 100px;
+                    height: 4px;
+                    background: var(--accent-gold);
+                    border-radius: 2px;
+                }
+        
+                .container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 0 20px;
+                }
+        
+                .feature-list p {
+                    margin: 1rem 0;
+                    padding: 1.2rem;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                    transition: transform 0.3s ease;
+                    border-left: 4px solid var(--accent-gold);
+                }
+        
+                .feature-list p:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 4px 15px rgba(10, 95, 56, 0.1);
+                    border-left: 4px solid var(--primary-green);
+                }
+        
+                .btn-primary {
+                    background-color: var(--primary-green);
+                    border: none;
+                    padding: 0.8rem 2rem;
+                    font-size: 1.1rem;
+                    border-radius: 30px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(10, 95, 56, 0.2);
+                    color: var(--text-light);
+                }
+        
+                .btn-primary:hover {
+                    background-color: var(--secondary-green);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(10, 95, 56, 0.3);
+                }
+        
+                footer {
+                    padding: 2rem 0;
+                    color: var(--primary-green);
+                }
+        
+                footer a {
+                    color: var(--secondary-green);
+                    font-weight: 500;
+                }
+        
+                footer a:hover {
+                    color: var(--accent-gold);
+                }
+        
+                .lead {
+                    color: var(--primary-green);
+                    font-size: 1.2rem;
+                    font-weight: 500;
+                }
+        
+                /* Check mark styling */
+                .feature-list p::before {
+                    content: "✓";
+                    color: var(--primary-green);
+                    font-weight: bold;
+                    margin-right: 10px;
+                }
+        
+                @media (max-width: 768px) {
+                    .title {
+                        font-size: 2rem;
+                    }
+        
+                    .section-header {
+                        padding: 3rem 0;
+                    }
+        
+                    .feature-list p {
+                        margin: 0.5rem 0;
+                        padding: 0.8rem;
+                    }
+                }
+        
+                /* Animation */
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+        
+                .feature-list p {
+                    animation: fadeIn 0.5s ease forwards;
+                    opacity: 0;
+                }
+        
+                .feature-list p:nth-child(1) { animation-delay: 0.2s; }
+                .feature-list p:nth-child(2) { animation-delay: 0.4s; }
+                .feature-list p:nth-child(3) { animation-delay: 0.6s; }
+                .feature-list p:nth-child(4) { animation-delay: 0.8s; }
+        
+                /* Additional decorative elements */
+                .decorative-bar {
+                    height: 4px;
+                    background: linear-gradient(to right, var(--primary-green), var(--accent-gold));
+                    width: 100%;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                }
+            </style>
         </head>
         
         <body>
             <header class="header-global">
-                <nav id="navbar-main" aria-label="Primary navigation" class="navbar navbar-main navbar-expand-lg navbar-theme-primary pt-4 navbar-dark">
+                <div class="decorative-bar"></div>
+                <nav id="navbar-main" aria-label="Primary navigation" class="navbar navbar-main navbar-expand-lg navbar-theme-primary navbar-dark">
                     <div class="container position-relative">
                         <div class="navbar-collapse collapse me-auto" id="navbar_global">
                             <div class="navbar-collapse-header">
@@ -5695,7 +5879,6 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                                     </div>
                                 </div>
                             </div>
-                
                         </div>
                         <div class="d-flex align-items-center ms-auto">
                             <a href="{% url 'logout' %}" class="btn btn-outline-white d-inline-flex align-items-center me-md-3">
@@ -5707,25 +5890,23 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
             </header>
         
             <main>
-        
                 <section class="section-header">
                     <div class="container">
                         <h1 class="title text-center">Directorate of Strategy, Planning and Organizational Productivity</h1>
                 
                         <div class="text-center mt-5">
-                            <p>A strategic department within the Kenyan Judiciary focused on driving organizational excellence through:</p>
-                            <div class="mt-3">
-                                <p>✓ Strategic planning and implementation</p>
-                                <p>✓ Performance monitoring and evaluation</p>
-                                <p>✓ Research and data analytics</p>
-                                <p>✓ Quality assurance and innovation</p>
+                            <p class="lead">A strategic department within the Kenyan Judiciary focused on driving organizational excellence through:</p>
+                            <div class="mt-4 feature-list">
+                                <p>Strategic planning and implementation</p>
+                                <p>Performance monitoring and evaluation</p>
+                                <p>Research and data analytics</p>
+                                <p>Quality assurance and innovation</p>
                             </div>
                         </div>
         
                         <div class="text-center mt-5">
-                            <a href="{% url 'apps.home:dashboard' %}" class="btn btn-primary">Dashboard</a>
+                            <a href="{% url 'apps.home:dashboard' %}" class="btn btn-primary">Access Dashboard</a>
                         </div>
-        
                 
                         <footer class="text-center mt-5">
                             <a href="https://judiciary.go.ke" class="text-decoration-none">Judiciary</a>
@@ -5733,15 +5914,11 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                         </footer>
                     </div>
                 </section>
-        
-        
-              
             </main>
         
             {% include 'includes/scripts.html' %}
         </body>
         </html>
-        ```
 
       . page-403.html
         Content:
@@ -7862,7 +8039,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                         </a>
                       </li>
                       <li class="nav-item {% if 'dashboard' in segment %} active {% endif %}">
-                        <a href="apps.home:dashboard" class="nav-link">
+                        <a href="/" class="nav-link">
                           <span class="sidebar-icon">
                             <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
                           </span> 
@@ -8383,6 +8560,156 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                     </div>
                 </div>
             </div>
+        </div>
+        {% endblock content %}
+
+      . director_dashboard.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Director Dashboard{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Director's Dashboard</h2>
+                <a href="{% url 'meetings:meeting_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Schedule New Meeting
+                </a>
+            </div>
+        
+            <!-- Overall Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Meetings</h5>
+                            <h2 class="mb-0">{{ total_meetings }}</h2>
+                            <small>Across all departments</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Upcoming Meetings</h5>
+                            <h2 class="mb-0">{{ total_upcoming }}</h2>
+                            <small>Next 30 days</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Participants</h5>
+                            <h2 class="mb-0">{{ total_participants }}</h2>
+                            <small>All meetings</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Director's Meetings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Upcoming Meetings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Department</th>
+                                    <th>Date & Time</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for meeting in director_meetings %}
+                                <tr>
+                                    <td>{{ meeting.title }}</td>
+                                    <td>{{ meeting.department.name }}</td>
+                                    <td>
+                                        {{ meeting.date|date:"M d, Y" }}<br>
+                                        <small class="text-muted">
+                                            {{ meeting.start_time|time:"g:i A" }} - {{ meeting.end_time|time:"g:i A" }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ meeting.status|yesno:'success,warning' }}">
+                                            {{ meeting.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No upcoming meetings</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Department Meetings -->
+            {% for department, data in dept_meetings.items %}
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ department.name }}</h5>
+                    <div>
+                        <span class="badge bg-primary">{{ data.stats.total }} Total</span>
+                        <span class="badge bg-success">{{ data.stats.scheduled }} Upcoming</span>
+                        <span class="badge bg-info">{{ data.stats.with_director }} With Director</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Upcoming Meetings</h6>
+                            <div class="list-group">
+                                {% for meeting in data.upcoming %}
+                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ meeting.title }}</h6>
+                                        <small>{{ meeting.date|date:"M d, Y" }}</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ meeting.start_time|time:"g:i A" }} - {{ meeting.end_time|time:"g:i A" }}
+                                    </small>
+                                </a>
+                                {% empty %}
+                                <p class="text-muted">No upcoming meetings</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Recent Meetings</h6>
+                            <div class="list-group">
+                                {% for meeting in data.recent %}
+                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ meeting.title }}</h6>
+                                        <small>{{ meeting.date|date:"M d, Y" }}</small>
+                                    </div>
+                                    <small class="text-muted">{{ meeting.get_status_display }}</small>
+                                </a>
+                                {% empty %}
+                                <p class="text-muted">No recent meetings</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% endblock content %}
 
@@ -9145,6 +9472,118 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     . memos/
       . dashboard.html
         Content:
+        {% extends "layouts/base.html" %}
+        
+        {% block title %} Department Dashboard {% endblock %}
+        
+        {% block content %}
+        
+        <div class="container mt-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Department Memo Dashboard</h2>
+                <a href="{% url 'memos:memo_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Memo
+                </a>
+            </div>
+        
+            <!-- Overall Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Total Memos</h5>
+                            <h2 class="mb-0">{{ total_memos }}</h2>
+                            <small>Across all departments</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title
+                            text-white">Pending Memos</h5>
+                            <h2 class="mb-0">{{ total_pending }}</h2>
+                            <small>Not yet approved</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Approved Memos</h5>
+                            <h2 class="mb-0">{{ total_approved }}</h2>
+                            <small>Ready for distribution</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Department Memos -->
+        
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Memos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Date Created</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for memo in memos %}
+                                <tr>
+                                    <td>{{ memo.title }}</td>
+                                    <td>{{ memo.created_at }}</td>
+                                    <td>
+                                        {% if memo.status == 'pending' %}
+                                        <span class="badge badge-warning">Pending</span>
+                                        {% else %}
+                                        <span class="badge badge-success">Approved</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'memos:memo_detail' memo.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye text-white"></i>
+                                        </a>
+                                        <a href="{% url 'memos:memo_update' memo.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit text-white"></i>
+                                        </a>
+                                        <a href="{% url 'memos:memo_delete' memo.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash-alt text-white"></i>
+                                        </a>
+        
+                                    </td>
+        
+                                </tr>
+        
+                                {% endfor %}
+        
+                            </tbody>
+        
+                        </table>
+        
+                    </div>
+        
+                </div>
+        
+            </div>
+        
+        </div>
+        
+        {% endblock %}
+        
+        
+        
+
+      . memo_form.html
+        Content:
 
 
       . my_memos.html
@@ -9155,9 +9594,94 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         
         {% block content %}
         <div class="container mt-4">
-            <h2>My Memos</h2>
-            <p>This page will display memos created by the logged-in user.</p>
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">My Memos</h2>
+                <a href="{% url 'memos:memo_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create New Memo
+                </a>
             </div>
+        
+            <!-- Overall Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Total Memos</h5>
+                            <h2 class="mb-0">{{ total_memos }}</h2>
+                            <small>Across all departments</small>
+                        </div>
+        
+                    </div>
+        
+                </div>
+        
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Pending Memos</h5>
+                            <h2 class="mb-0">{{ total_pending }}</h2>
+                            <small>Not yet approved</small>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Approved Memos</h5>
+                            <h2 class="mb-0">{{ total_approved }}</h2>
+                            <small>Ready for distribution</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Department Memos -->
+        
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Memos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Date Created</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for memo in memos %}
+                                <tr>
+                                    <td>{{ memo.title }}</td>
+                                    <td>{{ memo.created_at }}</td>
+                                    <td>
+                                        {% if memo.status == 'pending' %}
+                                        <span class="badge badge-warning">Pending</span>
+                                        {% else %}
+                                        <span class="badge badge-success">Approved</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'memos:memo_detail' memo.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye text-white"></i>
+                                        </a>
+                                        <a href="{% url 'memos:memo_update' memo.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-edit text-white"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endblock %}
 
     . statistics/
@@ -10033,19 +10557,19 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
   . urls.py
     Content:
-    # -*- encoding: utf-8 -*-
-    """
-    Copyright (c) 2019 - present AppSeed.us
-    """
-    
-    from django.urls import path, include
-    from .views import login_view, register_user
+    # authentication/urls.py
+    from django.urls import path
+    from .views import login_view, register_user, view_profile, edit_profile
     from django.contrib.auth.views import LogoutView
+    from .views import CustomLogoutView
+    from django.urls import include
     
     urlpatterns = [
         path('login/', login_view, name="login"),
         path('register/', register_user, name="register"),
-        path("logout/", LogoutView.as_view(), name="logout"),
+        path("logout/", CustomLogoutView.as_view(), name="logout"),
+        path('profile/', view_profile, name='view_profile'),
+        path('profile/edit/', edit_profile, name='edit_profile'),
     ]
 
   . views.py
@@ -10059,6 +10583,22 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     from django.shortcuts import render, redirect
     from django.contrib.auth import authenticate, login
     from .forms import LoginForm, SignUpForm
+    from django.contrib.auth.views import LogoutView
+    
+    
+    
+    #dashboard
+    def dashboard(request):
+        return render(request, "accounts/dashboard.html")
+    
+    
+    #profile
+    def view_profile(request):
+        return render(request, "accounts/profile.html")
+    
+    #edit_profile
+    def edit_profile(request):
+        return render(request, "accounts/edit_profile.html")
     
     
     def login_view(request):
@@ -10106,6 +10646,13 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
             form = SignUpForm()
     
         return render(request, "accounts/register.html", {"form": form, "msg": msg, "success": success})
+    
+    class CustomLogoutView(LogoutView):
+        next_page = '/login/'
+        
+        
+        
+        
 
 . core/
   . __init__.py
@@ -10177,6 +10724,9 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     # SECURITY WARNING: don't run with debug turned on in production!
     DEBUG = True 
     
+    LOGIN_URL = 'authentication:login'  # Correct
+    # or 
+    LOGIN_URL = '/accounts/login/' # Correct - explicitly specifies
     
     # allow all hosts in development
     ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
@@ -10223,8 +10773,8 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     ]
     
     ROOT_URLCONF = 'core.urls'
-    LOGIN_REDIRECT_URL = "home"  # Route defined in home/urls.py
-    LOGOUT_REDIRECT_URL = "home"  # Route defined in home/urls.py
+    LOGIN_REDIRECT_URL = "statistics:home"  # Route defined in statistics/urls.py
+    LOGOUT_REDIRECT_URL = "statistics:home"  # Route defined in statistics/urls.py
     TEMPLATE_DIR = os.path.join(BASE_DIR, "apps/templates")  # ROOT dir for templates
     
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -10369,38 +10919,33 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     # Google Drive settings
     GOOGLE_OAUTH_CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, 'client_secrets.json')
     GOOGLE_OAUTH_REDIRECT_URI = 'http://your-domain/documents/google-auth-callback/'
-    
 
   . urls.py
     Content:
+    # core/urls.py
     from django.contrib import admin
     from django.urls import path, include
+    from authentication import views
     from django.conf import settings
     from django.conf.urls.static import static
     
-    
-    app_name = "apps.core"
-    
     urlpatterns = [
-        path('admin/', admin.site.urls),          # Django admin route
-        path('accounts/', include('authentication.urls')),  # Auth routes - login / register
+        path('admin/', admin.site.urls),
+        path('accounts/', include('authentication.urls')),  # <--- Ensure THIS line is here
         path("statistics/", include("apps.statistics.urls", namespace="statistics")),
+        path('login/', views.login_view, name='login'),
         path('budget/', include('apps.budget.urls', namespace='budget')),
         path('meetings/', include('apps.meetings.urls', namespace='meetings')),
         path('memos/', include('apps.memos.urls', namespace='memos')),
         path("unicorn/", include("django_unicorn.urls")),
-        path("", include("apps.home.urls")), # UI Kits Html files
-    
+        path("", include("apps.home.urls")),
     ]
-    
     
     if settings.DEBUG:
         import debug_toolbar
         urlpatterns = [
             path("__debug__/", include(debug_toolbar.urls)),
         ] + urlpatterns
-    
-    
 
   . wsgi.py
     Content:

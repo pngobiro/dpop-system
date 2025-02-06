@@ -39,3 +39,7 @@ pinecone-client
 langchain
 
 
+# react 
+
+django-webpack-loader==1.8.1
+

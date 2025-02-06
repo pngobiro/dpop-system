@@ -19,9 +19,12 @@ SECRET_KEY = 'django-insecure-x-7z@n$vgndj+lp*g98&*!#z2shsgah6jgt(%%k1f_%q4@nm9r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True 
 
+LOGIN_URL = 'authentication:login'  # Correct
+# or 
+LOGIN_URL = '/accounts/login/' # Correct - explicitly specifies
 
 # allow all hosts in development
-ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
 
 
 # Application definition
@@ -33,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+     'webpack_loader',
     'authentication', # added the authentication apps
     'apps.home', 
     'django_unicorn',
@@ -65,8 +69,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
-LOGIN_REDIRECT_URL = "home"  # Route defined in home/urls.py
-LOGOUT_REDIRECT_URL = "home"  # Route defined in home/urls.py
+LOGIN_REDIRECT_URL = "statistics:home"  # Route defined in statistics/urls.py
+LOGOUT_REDIRECT_URL = "statistics:home"  # Route defined in statistics/urls.py
 TEMPLATE_DIR = os.path.join(BASE_DIR, "apps/templates")  # ROOT dir for templates
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -212,3 +216,17 @@ LOGGING = {
 GOOGLE_OAUTH_CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, 'client_secrets.json')
 GOOGLE_OAUTH_REDIRECT_URI = 'http://your-domain/documents/google-auth-callback/'
 
+
+# Add Webpack loader settings
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'BUNDLE_DIR_NAME': 'js/dist/',
+        'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.json'),
+    }
+}
+
+
+# Update STATICFILES_DIRS
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]

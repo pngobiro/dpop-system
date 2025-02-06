@@ -7,6 +7,22 @@ Copyright (c) 2019 - present AppSeed.us
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from .forms import LoginForm, SignUpForm
+from django.contrib.auth.views import LogoutView
+
+
+
+#dashboard
+def dashboard(request):
+    return render(request, "accounts/dashboard.html")
+
+
+#profile
+def view_profile(request):
+    return render(request, "accounts/profile.html")
+
+#edit_profile
+def edit_profile(request):
+    return render(request, "accounts/edit_profile.html")
 
 
 def login_view(request):
@@ -54,3 +70,10 @@ def register_user(request):
         form = SignUpForm()
 
     return render(request, "accounts/register.html", {"form": form, "msg": msg, "success": success})
+
+class CustomLogoutView(LogoutView):
+    next_page = '/login/'
+    
+    
+    
+    

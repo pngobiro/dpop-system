@@ -9,6 +9,10 @@ from django.shortcuts import render
 from apps.organization.models import Department
 from apps.home.models import Module # Import Module model
 
+
+def react_view(request):
+    return render(request, 'home/react.html')
+
 @login_required
 def dashboard(request):
     departments = Department.objects.prefetch_related('roles').filter(is_active=True)
