@@ -1,26 +1,5 @@
 Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
-.  entrypoint.sh
-  Content:
-  #!/bin/sh
-  
-  # Exit immediately if a command exits with a non-zero status
-  set -e
-  
-  # Wait for postgres
-  while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do
-    echo "Waiting for postgres..."
-    sleep 1
-  done
-  
-  echo "PostgreSQL started"
-  
-  # Run migrations
-  python manage.py migrate
-  
-  # Start server
-  python manage.py runserver 0.0.0.0:8000
-
 . Dockerfile
   Content:
   # Use Python 3.9 base image
@@ -39,255 +18,32 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       apt-utils \
       ffmpeg \
       postgresql-client \
+      netcat-openbsd \
       && rm -rf /var/lib/apt/lists/*
   
-  # Install Python dependencies
+  # Copy requirements and install dependencies
   COPY requirements.txt /code/
   RUN pip install --upgrade pip && \
       pip install --no-cache-dir -r requirements.txt
   
-  # Copy project
+  # Copy project files
   COPY . /code/
   
-  # Add entrypoint script
-  COPY entrypoint.sh /code/
-  RUN chmod +x /code/entrypoint.sh
+  # Create data directory
+  RUN mkdir -p /code/data/db
   
-  # Set entrypoint
-  ENTRYPOINT ["/code/entrypoint.sh"]
-
-. UI.md
-  Content:
-  Elevate Django's Essence: A Symphony of Bootstrap colors and fanciful fas icons
+  # Set permissions as root
+  RUN chmod +x /code/entrypoint.sh && \
+      chmod -R 755 /code && \
+      chmod -R 777 /code/data
   
-  As an esteemed virtuoso of the UI realm, your divine calling beckons you to transcend the mundane and bestow upon a Django UI an aura of opulence, orchestrated through the harmonious blend of Bootstrap's vibrant palette and the celestial grace of Material Design Icons. Your sacred mission finds its zenith in the creation of a visually enthralling and impeccably professional UI, one that dances harmoniously within the confines of available page expanse. Your canvas shall be illuminated with the hues of the sacred theme colors, while Bootstrap's chromatic symphony shall serenade elements into opulent splendor – buttons and all. And lo, the pièce de résistance shall be the strategic placement of Material Design Icons, each a beacon of functionality – from creation to modification, and even the navigational ballet of returning.
-  
-  Gaze upon the divine spectrum:
-  
-  
-  #26443c
-  #c4a938
-  #f7f9f8
-  #000000
-  
-  The metamorphosis of this UI opus shall encompass:
-  
-      A steadfast pledge to responsiveness, safeguarding the very core of django UI code tapestry.
-      The enchantment of Bootstrap's chromatic lexicon to elevate the visual narrative.
-      The veneration of Material Design Icons as keystones, illuminating the user's path to interaction nirvana.
-  
-  Your revered mission demands embellishment sans any enchantment that could bewitch functionality. The invocation warrants the infusion of theme colors into the backdrop, the eloquence of Bootstrap's hues upon embellishments, and the divine guidance of Material Design Icons. This artistic tapestry shall extend from generous padding to judicious margins, crafting sections that metamorphose into sanctuaries of user experience. Your response, as a codified enigma, shall exemplify this elevation – each line an invocation of your artistic alchemy, each element a resonant note within this symphony of UI refinement.
-  
-  With unwavering faith, commence with the provided script – the ethereal echo of your artistic vision.
-  
-  Your apotheosis shall manifest as the new code – a testament to your artistic prowess and unwavering dedication, woven into the very fabric of the Blade, each line a brushstroke, each element a celestial note in this grand symphony of UI enhancement.
+  # Command to run
+  CMD ["/bin/bash", "/code/entrypoint.sh"]
 
 . apps/
   . __init__.py
     Content:
 
-
-  . authentication/
-    . __init__.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-
-    . admin.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
-      from django.contrib import admin
-      
-      # Register your models here.
-
-    . config.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
-      from django.apps import AppConfig
-      
-      
-      class AuthConfig(AppConfig):
-          name = 'apps.auth'
-          label = 'apps_auth'
-
-    . forms.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
-      from django import forms
-      from django.contrib.auth.forms import UserCreationForm
-      from django.contrib.auth.models import User
-      
-      
-      class LoginForm(forms.Form):
-          username = forms.CharField(
-              widget=forms.TextInput(
-                  attrs={
-                      "placeholder": "Username",
-                      "class": "form-control"
-                  }
-              ))
-          password = forms.CharField(
-              widget=forms.PasswordInput(
-                  attrs={
-                      "placeholder": "Password",
-                      "class": "form-control"
-                  }
-              ))
-      
-      
-      class SignUpForm(UserCreationForm):
-          username = forms.CharField(
-              widget=forms.TextInput(
-                  attrs={
-                      "placeholder": "Username",
-                      "class": "form-control"
-                  }
-              ))
-          email = forms.EmailField(
-              widget=forms.EmailInput(
-                  attrs={
-                      "placeholder": "Email",
-                      "class": "form-control"
-                  }
-              ))
-          password1 = forms.CharField(
-              widget=forms.PasswordInput(
-                  attrs={
-                      "placeholder": "Password",
-                      "class": "form-control"
-                  }
-              ))
-          password2 = forms.CharField(
-              widget=forms.PasswordInput(
-                  attrs={
-                      "placeholder": "Password check",
-                      "class": "form-control"
-                  }
-              ))
-      
-          class Meta:
-              model = User
-              fields = ('username', 'email', 'password1', 'password2')
-
-    . migrations/
-      . __init__.py
-        Content:
-        # -*- encoding: utf-8 -*-
-        """
-        Copyright (c) 2019 - present AppSeed.us
-        """
-
-    . models.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
-      from django.db import models
-      
-      # Create your models here.
-
-    . tests.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
-      from django.test import TestCase
-      
-      # Create your tests here.
-
-    . urls.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
-      from django.urls import path, include
-      from .views import login_view, register_user
-      from django.contrib.auth.views import LogoutView
-      
-      urlpatterns = [
-          path('login/', login_view, name="login"),
-          path('register/', register_user, name="register"),
-          path("logout/", LogoutView.as_view(), name="logout"),
-      ]
-
-    . views.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
-      # Create your views here.
-      from django.shortcuts import render, redirect
-      from django.contrib.auth import authenticate, login
-      from .forms import LoginForm, SignUpForm
-      
-      
-      def login_view(request):
-          form = LoginForm(request.POST or None)
-      
-          msg = None
-      
-          if request.method == "POST":
-      
-              if form.is_valid():
-                  username = form.cleaned_data.get("username")
-                  password = form.cleaned_data.get("password")
-                  user = authenticate(username=username, password=password)
-                  if user is not None:
-                      login(request, user)
-                      return redirect("/")
-                  else:
-                      msg = 'Invalid credentials'
-              else:
-                  msg = 'Error validating the form'
-      
-          return render(request, "accounts/login.html", {"form": form, "msg": msg})
-      
-      
-      def register_user(request):
-          msg = None
-          success = False
-      
-          if request.method == "POST":
-              form = SignUpForm(request.POST)
-              if form.is_valid():
-                  form.save()
-                  username = form.cleaned_data.get("username")
-                  raw_password = form.cleaned_data.get("password1")
-                  user = authenticate(username=username, password=raw_password)
-      
-                  msg = 'Account created successfully.'
-                  success = True
-      
-                  # return redirect("/login/")
-      
-              else:
-                  msg = 'Form is not valid'
-          else:
-              form = SignUpForm()
-      
-          return render(request, "accounts/register.html", {"form": form, "msg": msg, "success": success})
 
   . budget/
     . __init__.py
@@ -424,97 +180,6 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                           )
           
                   self.stdout.write(self.style.SUCCESS('Successfully seeded workplan data'))
-
-    . migrations/
-      . 0001_initial.py
-        Content:
-        # Generated by Django 3.2.25 on 2025-02-04 21:31
-        
-        from django.db import migrations, models
-        import django.db.models.deletion
-        
-        
-        class Migration(migrations.Migration):
-        
-            initial = True
-        
-            dependencies = [
-            ]
-        
-            operations = [
-                migrations.CreateModel(
-                    name='BudgetCategory',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('code', models.CharField(max_length=20)),
-                    ],
-                    options={
-                        'verbose_name_plural': 'Budget Categories',
-                    },
-                ),
-                migrations.CreateModel(
-                    name='FinancialYear',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=20)),
-                        ('start_date', models.DateField()),
-                        ('end_date', models.DateField()),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='WorkplanItem',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('budget_code', models.CharField(max_length=20)),
-                        ('description', models.TextField(blank=True)),
-                        ('item_type', models.CharField(choices=[('regular', 'Regular Activity'), ('transformative', 'Transformative Initiative')], max_length=20)),
-                        ('total_amount', models.DecimalField(decimal_places=2, max_digits=12)),
-                        ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='budget.budgetcategory')),
-                        ('financial_year', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='budget.financialyear')),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='TransformativeInitiative',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('implementation_status', models.CharField(max_length=100)),
-                        ('start_date', models.DateField()),
-                        ('end_date', models.DateField()),
-                        ('progress', models.IntegerField(default=0)),
-                        ('workplan_item', models.OneToOneField(limit_choices_to={'item_type': 'transformative'}, on_delete=django.db.models.deletion.CASCADE, to='budget.workplanitem')),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='PerformanceIndicator',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('description', models.TextField(blank=True)),
-                        ('baseline', models.CharField(blank=True, max_length=100)),
-                        ('target', models.CharField(max_length=100)),
-                        ('measurement_frequency', models.CharField(max_length=50)),
-                        ('workplan_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='budget.workplanitem')),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='QuarterlyAllocation',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('quarter', models.IntegerField(choices=[(1, 'Q1'), (2, 'Q2'), (3, 'Q3'), (4, 'Q4')])),
-                        ('amount', models.DecimalField(decimal_places=2, max_digits=12)),
-                        ('workplan_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='budget.workplanitem')),
-                    ],
-                    options={
-                        'unique_together': {('workplan_item', 'quarter')},
-                    },
-                ),
-            ]
-
-      . __init__.py
-        Content:
-
 
     . models.py
       Content:
@@ -725,16 +390,11 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           default_auto_field = "django.db.models.BigAutoField"
           name = "apps.document_management"
 
-    . migrations/
-      . __init__.py
-        Content:
-
-
     . models.py
       Content:
       # apps/document_management/models.py
       from django.db import models
-      from django.contrib.auth.models import User
+      from django.conf import settings
       from django.contrib.contenttypes.fields import GenericForeignKey
       from django.contrib.contenttypes.models import ContentType
       
@@ -799,7 +459,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           parent_document = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='versions')
           
           # Metadata
-          uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+          uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='uploaded_documents')
           created_at = models.DateTimeField(auto_now_add=True)
           updated_at = models.DateTimeField(auto_now=True)
           last_accessed = models.DateTimeField(null=True, blank=True)
@@ -825,9 +485,9 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           ]
       
           document = models.ForeignKey(Document, on_delete=models.CASCADE)
-          user = models.ForeignKey(User, on_delete=models.CASCADE)
+          user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
           permission_type = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
-          granted_by = models.ForeignKey(User, related_name='granted_permissions', on_delete=models.CASCADE)
+          granted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='granted_permissions')
           granted_at = models.DateTimeField(auto_now_add=True)
           expires_at = models.DateTimeField(null=True, blank=True)
           is_active = models.BooleanField(default=True)
@@ -849,7 +509,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           ]
       
           document = models.ForeignKey(Document, on_delete=models.CASCADE)
-          user = models.ForeignKey(User, on_delete=models.CASCADE)
+          user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
           action = models.CharField(max_length=20, choices=ACTION_CHOICES)
           action_details = models.TextField(blank=True)
           ip_address = models.GenericIPAddressField(null=True, blank=True)
@@ -1093,6 +753,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       . commands/
         . seed_modules.py
           Content:
+          # apps/home/management/commands/seed_modules.py
           from django.core.management.base import BaseCommand
           from apps.home.models import Module
           from django.contrib.auth.models import Permission
@@ -1100,128 +761,98 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           
           
           class Command(BaseCommand):
-              help = 'Seeds initial modules data into the database, including permissions'
+              help = 'Seeds modules and their permissions'
           
-              def handle(self, *args, **options):
-                  self.stdout.write('Seeding modules data with permissions...')
+              def handle(self, *args, **kwargs):
+                  self.stdout.write('Seeding modules and permissions...')
+          
+                  # Delete existing modules
+                  Module.objects.all().delete()
           
                   modules_data = [
-                      {'name': 'Documents', 'description': 'Manage and organize department documents.', 'icon_class': 'fas fa-file-alt', 'url_name': '#', 'permission_codename': 'access_documents_module'}, # Added permission_codename
-                      {'name': 'DCRT', 'description': 'Access and analyze DCRT data and statistics.', 'icon_class': 'fas fa-chart-bar', 'url_name': '#', 'permission_codename': 'access_dcrt_module'}, # Added permission_codename
-                      {'name': 'Meetings', 'description': 'Schedule and manage department meetings.', 'icon_class': 'fas fa-calendar-alt', 'url_name': '#', 'permission_codename': 'access_meetings_module'}, # Added permission_codename
-                      {'name': 'Tasks', 'description': 'Create, assign, and track department tasks.', 'icon_class': 'fas fa-tasks', 'url_name': '#', 'permission_codename': 'access_tasks_module'}, # Added permission_codename
-                      {'name': 'Reports', 'description': 'Generate and view department reports.', 'icon_class': 'fas fa-file-pdf', 'url_name': '#', 'permission_codename': 'access_reports_module'}, # Added permission_codename
-                      {'name': 'Budget', 'description': 'Manage and track department budgets.', 'icon_class': 'fas fa-money-bill-alt', 'url_name': '#', 'permission_codename': 'access_budget_module'}, # Added permission_codename
-                      {'name': 'Workplans', 'description': 'Plan and monitor department workplans.', 'icon_class': 'fas fa-clipboard-list', 'url_name': '#', 'permission_codename': 'access_workplans_module'}, # Added permission_codename
-                      {'name': 'Surveys', 'description': 'Create and analyze department surveys.', 'icon_class': 'fas fa-poll', 'url_name': '#', 'permission_codename': 'access_surveys_module'}, # Added permission_codename
-                      {'name': 'Memos', 'description': 'Create and manage department memos.', 'icon_class': 'fas fa-envelope', 'url_name': '#', 'permission_codename': 'access_memos_module'}, # Added permission_codename
+                      {
+                          'name': 'Document Management',
+                          'description': 'Create, share and manage electronic documents', 
+                          'icon_class': 'fas fa-file-alt',
+                          'url_name': 'document_management:document_list',
+                          'permission_codename': 'access_documents'
+                      },
+                      {
+                          'name': 'Meetings',
+                          'description': 'Schedule and manage meetings',
+                          'icon_class': 'fas fa-calendar-alt',
+                          'url_name': 'meetings:dashboard',
+                          'permission_codename': 'access_meetings'
+                      },
+                      {
+                          'name': 'Budget',
+                          'description': 'Manage workplans and budgets',
+                          'icon_class': 'fas fa-money-bill-alt',
+                          'url_name': 'budget:workplan_summary',
+                          'permission_codename': 'access_budget'
+                      },
+                      {
+                          'name': 'Statistics',
+                          'description': 'Access and analyze DCRT data',
+                          'icon_class': 'fas fa-chart-bar',
+                          'url_name': 'statistics:home',
+                          'permission_codename': 'access_statistics'
+                      },
+                      {
+                          'name': 'Performance',
+                          'description': 'Performance tracking and reporting',
+                          'icon_class': 'fas fa-tachometer-alt',
+                          'url_name': 'performance:dashboard',
+                          'permission_codename': 'access_performance'
+                      },
+                      {
+                          'name': 'Memos',
+                          'description': 'Internal memos and communications',
+                          'icon_class': 'fas fa-envelope',
+                          'url_name': 'memos:department_dashboard',
+                          'permission_codename': 'access_memos'
+                      },
+                      {
+                          'name': 'Projects',
+                          'description': 'Track transformative initiatives',
+                          'icon_class': 'fas fa-project-diagram',
+                          'url_name': 'projects:dashboard',
+                          'permission_codename': 'access_projects'
+                      },
+                      {
+                          'name': 'Reports',
+                          'description': 'Generate and download reports',
+                          'icon_class': 'fas fa-file-pdf',
+                          'url_name': 'reports:dashboard', 
+                          'permission_codename': 'access_reports'
+                      }
                   ]
           
-                  # Dynamically define permissions in Module._meta.permissions
-                  module_permissions = []
+                  # Get content type for Module model
+                  content_type = ContentType.objects.get_for_model(Module)
+          
+                  # Create modules and permissions
                   for module_data in modules_data:
-                      permission_codename = module_data['permission_codename']
-                      permission_name = f"Can access {module_data['name']} module" # User-friendly permission name
-                      module_permissions.append((permission_codename, permission_name))
-          
-                  Module._meta.permissions = module_permissions # Set custom permissions for the Module model
-          
-          
-                  for module_data in modules_data:
-                      Module.objects.get_or_create(
+                      # Create module
+                      module = Module.objects.create(
                           name=module_data['name'],
-                          defaults={
-                              'description': module_data['description'],
-                              'icon_class': module_data['icon_class'],
-                              'url_name': module_data['url_name'],
-                              'permission_codename': module_data['permission_codename'], # Set permission_codename during creation
-                          }
+                          description=module_data['description'],
+                          icon_class=module_data['icon_class'],
+                          url_name=module_data['url_name'],
+                          permission_codename=module_data['permission_codename']
                       )
-                      self.stdout.write(self.style.SUCCESS(f"Created module: {module_data['name']} with permission: {module_data['permission_codename']}"))
           
-                  self.stdout.write(self.style.SUCCESS('Successfully seeded modules data and defined permissions.'))
-
-    . migrations/
-      . 0001_initial.py
-        Content:
-        # Generated by Django 4.2.13 on 2025-02-04 14:20
-        
-        from django.db import migrations, models
-        import django.db.models.deletion
-        
-        
-        class Migration(migrations.Migration):
-        
-            initial = True
-        
-            dependencies = [
-                ("organization", "0001_initial"),
-            ]
-        
-            operations = [
-                migrations.CreateModel(
-                    name="Module",
-                    fields=[
-                        (
-                            "id",
-                            models.BigAutoField(
-                                auto_created=True,
-                                primary_key=True,
-                                serialize=False,
-                                verbose_name="ID",
-                            ),
-                        ),
-                        ("name", models.CharField(max_length=100, unique=True)),
-                        ("description", models.TextField(blank=True)),
-                        (
-                            "icon_class",
-                            models.CharField(
-                                blank=True,
-                                help_text="Font Awesome icon class (e.g., 'fas fa-file-alt')",
-                                max_length=100,
-                            ),
-                        ),
-                        (
-                            "url_name",
-                            models.CharField(
-                                blank=True,
-                                help_text="Name of the URL pattern for this module (e.g., 'document_module_view')",
-                                max_length=200,
-                            ),
-                        ),
-                        (
-                            "permission_codename",
-                            models.CharField(
-                                blank=True,
-                                help_text="Codename for permission to access this module (e.g., 'access_documents')",
-                                max_length=150,
-                                unique=True,
-                            ),
-                        ),
-                        (
-                            "department",
-                            models.ForeignKey(
-                                blank=True,
-                                null=True,
-                                on_delete=django.db.models.deletion.SET_NULL,
-                                related_name="modules",
-                                to="organization.department",
-                            ),
-                        ),
-                    ],
-                    options={
-                        "ordering": ["name"],
-                        "permissions": [],
-                    },
-                ),
-            ]
-
-      . __init__.py
-        Content:
-        # -*- encoding: utf-8 -*-
-        """
-        Copyright (c) 2019 - present AppSeed.us
-        """
+                      # Create permission
+                      permission_name = f"Can access {module_data['name']} module"
+                      Permission.objects.create(
+                          codename=module_data['permission_codename'],
+                          name=permission_name,
+                          content_type=content_type,
+                      )
+          
+                      self.stdout.write(f"Created module: {module.name} with permission: {module_data['permission_codename']}")
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded modules and permissions'))
 
     . models.py
       Content:
@@ -1410,7 +1041,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       Content:
       # apps/meetings/forms.py
       from django import forms
-      from .models import Meeting, MeetingParticipant, MeetingDocument
+      from .models import Meeting, MeetingParticipant, MeetingDocument, MeetingAction
       
       class MeetingForm(forms.ModelForm):
           def __init__(self, *args, **kwargs):
@@ -1453,14 +1084,72 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               widgets = {
                   'agenda': forms.Textarea(attrs={'rows': 4}),
               }
+              
+      class MeetingActionForm(forms.ModelForm):
+          class Meta:
+              model = MeetingAction
+              fields = ['description', 'assigned_to', 'due_date']
+              widgets = {
+                  'description': forms.Textarea(attrs={
+                      'rows': 3,
+                      'class': 'form-control',
+                      'placeholder': 'Enter action item description'
+                  }),
+                  'assigned_to': forms.Select(attrs={
+                      'class': 'form-control'
+                  }),
+                  'due_date': forms.DateInput(attrs={
+                      'class': 'form-control',
+                      'type': 'date'
+                  })
+              }
+      
+          def __init__(self, *args, **kwargs):
+              super().__init__(*args, **kwargs)
+              self.fields['description'].label = 'Action Item Description'
+              self.fields['assigned_to'].label = 'Assign To'
+              self.fields['due_date'].label = 'Due Date'
+              
+              
+      
+      # apps/meetings/forms.py
       
       class MeetingDocumentForm(forms.ModelForm):
+          DOCUMENT_TYPES = [
+              ('agenda', 'Agenda'),
+              ('minutes', 'Minutes'),
+              ('presentation', 'Presentation'),
+              ('report', 'Report'),
+              ('other', 'Other')
+          ]
+          
+          document_type = forms.ChoiceField(
+              choices=DOCUMENT_TYPES,
+              widget=forms.Select(attrs={'class': 'form-control'})
+          )
+          file = forms.FileField(
+              widget=forms.FileInput(attrs={'class': 'form-control'})
+          )
+          notes = forms.CharField(
+              required=False,
+              widget=forms.Textarea(attrs={
+                  'class': 'form-control',
+                  'rows': 3,
+                  'placeholder': 'Optional notes about this document'
+              })
+          )
+      
           class Meta:
               model = MeetingDocument
-              fields = ['document_type', 'document', 'notes']
-              widgets = {
-                  'notes': forms.Textarea(attrs={'rows': 3}),
-              }
+              fields = ['document_type', 'file', 'notes']
+              
+          def save(self, meeting, commit=True):
+              instance = super().save(commit=False)
+              instance.meeting = meeting
+              
+              if commit:
+                  instance.save()
+              return instance
 
     . management/
       . commands/
@@ -1468,128 +1157,114 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           Content:
           # apps/meetings/management/commands/seed_meetings.py
           from django.core.management.base import BaseCommand
+          from django.contrib.auth import get_user_model
           from django.utils import timezone
-          from django.contrib.auth.models import User
-          from apps.meetings.models import Meeting, MeetingParticipant, MeetingDocument
+          from apps.meetings.models import Meeting, MeetingParticipant
           from apps.organization.models import Department
-          from datetime import timedelta, datetime
+          from datetime import timedelta
+          
+          User = get_user_model()
           
           class Command(BaseCommand):
-              help = 'Seed meetings data'
+              help = 'Seeds sample meetings for each department'
           
-              def handle(self, *args, **options):
+              def handle(self, *args, **kwargs):
                   self.stdout.write('Seeding meetings data...')
           
-                  # Get demo users and departments
-                  try:
-                      director = User.objects.get(username='director')
-                      departments = Department.objects.all()
-                      
-                      # Sample meeting data
-                      meetings_data = [
-                          {
-                              'title': 'Performance Management Review',
-                              'meeting_type': 'director',
-                              'meeting_mode': 'hybrid',
-                              'physical_location': 'Conference Room A',
-                              'virtual_platform': 'zoom',
-                              'virtual_meeting_url': 'https://zoom.us/j/example',
-                              'virtual_meeting_id': '123456789',
-                              'virtual_meeting_password': 'performance',
-                              'agenda': '''
-                              1. Review of Q1 Performance Metrics
-                              2. Discussion of KPIs
-                              3. Planning for Q2
-                              4. AOB
-                              ''',
-                              'status': 'scheduled'
-                          },
-                          {
-                              'title': 'Budget Planning Session',
-                              'meeting_type': 'department',
-                              'meeting_mode': 'virtual',
-                              'virtual_platform': 'teams',
-                              'virtual_meeting_url': 'https://teams.microsoft.com/l/example',
-                              'virtual_meeting_id': '987654321',
-                              'virtual_meeting_password': 'budget2025',
-                              'agenda': '''
-                              1. Budget Review 2024
-                              2. Budget Allocation 2025
-                              3. Cost Saving Measures
-                              4. Project Funding Requirements
-                              ''',
-                              'status': 'scheduled'
-                          },
-                          {
-                              'title': 'Data Quality Workshop',
-                              'meeting_type': 'committee',
-                              'meeting_mode': 'physical',
-                              'physical_location': 'Training Room B',
-                              'agenda': '''
-                              1. Current Data Quality Issues
-                              2. Data Collection Standards
-                              3. Quality Improvement Measures
-                              4. Training Requirements
-                              ''',
-                              'status': 'scheduled'
-                          }
-                      ]
+                  # Get departments
+                  departments = Department.objects.all()
+                  director = User.objects.get(username='joseph.osewe')
           
-                      # Create meetings for each department
-                      for dept in departments:
-                          for idx, meeting_data in enumerate(meetings_data):
-                              # Calculate meeting date (future dates)
-                              meeting_date = timezone.now().date() + timedelta(days=idx+1)
+                  meeting_types = {
+                      'Department Internal': [
+                          'Monthly Performance Review',
+                          'Staff Meeting',
+                          'Team Building',
+                          'Strategy Session'
+                      ],
+                      'With Director': [
+                          'Quarterly Review',
+                          'Budget Planning',
+                          'Performance Assessment',
+                          'Strategic Planning'
+                      ],
+                      'Committee': [
+                          'Technical Committee',
+                          'Quality Assurance',
+                          'Research Committee',
+                          'Innovation Committee'
+                      ]
+                  }
+          
+                  for department in departments:
+                      self.stdout.write(f'Creating meetings for {department.name}')
+                      
+                      # Get department head (first Assistant Director)
+                      dept_head = User.objects.filter(
+                          userrole__role__title='Assistant Director',
+                          userrole__role__department=department
+                      ).first()
+          
+                      if not dept_head:
+                          continue
+          
+                      # Create meetings for each type
+                      for meeting_type, titles in meeting_types.items():
+                          for title in titles:
+                              # Create future meeting
+                              days_ahead = 14 if meeting_type == 'Department Internal' else 30
+                              meeting_date = timezone.now().date() + timedelta(days=days_ahead)
                               
-                              # Create meeting
                               meeting = Meeting.objects.create(
-                                  title=f"{dept.name} - {meeting_data['title']}",
-                                  department=dept,
-                                  meeting_type=meeting_data['meeting_type'],
-                                  meeting_mode=meeting_data['meeting_mode'],
+                                  title=f"{department.name} - {title}",
+                                  department=department,
+                                  meeting_type=meeting_type,
                                   date=meeting_date,
-                                  start_time=datetime.strptime('10:00', '%H:%M').time(),
-                                  end_time=datetime.strptime('11:30', '%H:%M').time(),
-                                  physical_location=meeting_data.get('physical_location', ''),
-                                  virtual_platform=meeting_data.get('virtual_platform', ''),
-                                  virtual_meeting_url=meeting_data.get('virtual_meeting_url', ''),
-                                  virtual_meeting_id=meeting_data.get('virtual_meeting_id', ''),
-                                  virtual_meeting_password=meeting_data.get('virtual_meeting_password', ''),
-                                  agenda=meeting_data['agenda'],
-                                  status=meeting_data['status'],
-                                  organizer=director
+                                  start_time='10:00',
+                                  end_time='11:30',
+                                  meeting_mode='hybrid',
+                                  physical_location='Conference Room A',
+                                  virtual_platform='teams',
+                                  virtual_meeting_url='https://teams.microsoft.com/meeting',
+                                  agenda=f"""
+                                  1. Opening Remarks
+                                  2. Previous Action Items Review
+                                  3. {title} Main Agenda
+                                  4. Department Updates
+                                  5. Way Forward
+                                  6. AOB
+                                  """,
+                                  status='scheduled',
+                                  organizer=dept_head if meeting_type == 'Department Internal' else director
                               )
           
                               # Add participants
-                              # Get some users from the department
-                              department_users = User.objects.filter(department=dept)[:3]
-                              for user in department_users:
+                              dept_staff = User.objects.filter(
+                                  userrole__role__department=department
+                              ).distinct()
+          
+                              for staff in dept_staff:
                                   MeetingParticipant.objects.create(
                                       meeting=meeting,
-                                      participant=user,
-                                      status='accepted',
-                                      invitation_sent=True
+                                      participant=staff,
+                                      role='attendee'
                                   )
           
-                              self.stdout.write(self.style.SUCCESS(
-                                  f'Created meeting: {meeting.title}'
-                              ))
-          
-                  except Exception as e:
-                      self.stdout.write(self.style.ERROR(f'Error seeding meetings: {str(e)}'))
+                              # Add director for director meetings
+                              if meeting_type == 'With Director':
+                                  MeetingParticipant.objects.create(
+                                      meeting=meeting,
+                                      participant=director,
+                                      role='organizer'
+                                  )
           
                   self.stdout.write(self.style.SUCCESS('Successfully seeded meetings data'))
-
-    . migrations/
-      . __init__.py
-        Content:
-
 
     . models.py
       Content:
       # apps/meetings/models.py
       from django.db import models
-      from django.contrib.auth.models import User
+      from django.conf import settings
       from apps.organization.models import Department
       from apps.document_management.models import Document
       
@@ -1597,7 +1272,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       class MeetingAction(models.Model):
           meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
           description = models.TextField()
-          assigned_to = models.ForeignKey(User, on_delete=models.CASCADE)
+          assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
           due_date = models.DateField()
       
           class Meta:
@@ -1610,16 +1285,29 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           
       
       class MeetingDocument(models.Model):
+          DOCUMENT_TYPES = [
+              ('agenda', 'Agenda'),
+              ('minutes', 'Minutes'),
+              ('presentation', 'Presentation'),
+              ('report', 'Report'),
+              ('other', 'Other')
+          ]
+      
           meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
           document = models.ForeignKey(Document, on_delete=models.CASCADE)
+          document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
+          notes = models.TextField(blank=True, help_text="Additional notes about the document")
+          uploaded_at = models.DateTimeField(auto_now_add=True)
+          updated_at = models.DateTimeField(auto_now=True)
       
           class Meta:
               unique_together = ['meeting', 'document']
               verbose_name = 'Meeting Document'
               verbose_name_plural = 'Meeting Documents'
+              ordering = ['-uploaded_at']
       
           def __str__(self):
-              return f"{self.document.title} - {self.meeting.title}"
+              return f"{self.get_document_type_display()} for {self.meeting}"
       
       
       
@@ -1631,7 +1319,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           ]
       
           meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
-          participant = models.ForeignKey(User, on_delete=models.CASCADE)
+          participant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
           role = models.CharField(max_length=20, choices=PARTICIPANT_ROLE, default='attendee')
       
           class Meta:
@@ -1697,8 +1385,8 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           status = models.CharField(max_length=20, choices=MEETING_STATUS, default='scheduled')
           
           # Meeting organization
-          organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_meetings')
-          participants = models.ManyToManyField(User, through='MeetingParticipant')
+          organizer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='organized_meetings')
+          participants = models.ManyToManyField(settings.AUTH_USER_MODEL, through='MeetingParticipant', related_name='meetings')
           
           # Recording (for virtual meetings)
           recording_url = models.URLField(blank=True, null=True)
@@ -1754,210 +1442,1120 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       from django.urls import path
       from . import views
       
-      app_name = 'apps.meetings'
+      app_name = 'meetings'
       
       urlpatterns = [
-          path('', views.meeting_list, name='meeting_list'),
+          path('', views.dashboard, name='dashboard'),
+          path('director/', views.director_dashboard, name='director_dashboard'),
+          path('list/', views.meeting_list, name='meeting_list'),
           path('create/', views.meeting_create, name='meeting_create'),
           path('<int:pk>/', views.meeting_detail, name='meeting_detail'),
           path('<int:pk>/edit/', views.meeting_update, name='meeting_update'),
           path('<int:pk>/delete/', views.meeting_delete, name='meeting_delete'),
-          path('<int:meeting_pk>/documents/upload/', 
-               views.meeting_document_upload, name='meeting_document_upload'),
-          path('<int:meeting_pk>/action/create/', 
-               views.action_item_create, name='action_item_create'),
+      ]
+
+    . views/
+      . __init__.py
+        Content:
+        # apps/meetings/views/__init__.py
+        from .base import dashboard, director_dashboard
+        from .crud import (
+            meeting_create,
+            meeting_detail, 
+            meeting_update,
+            meeting_delete
+        )
+        from .lists import meeting_list
+        
+        __all__ = [
+            'dashboard',
+            'director_dashboard',
+            'meeting_create',
+            'meeting_detail',
+            'meeting_update', 
+            'meeting_delete',
+            'meeting_list'
+        ]
+
+      . base.py
+        Content:
+        # apps/meetings/views/base.py
+        from django.shortcuts import render, redirect
+        from django.contrib.auth.decorators import login_required
+        from django.contrib import messages
+        from django.db.models import Q
+        from django.utils import timezone
+        from apps.meetings.models import Meeting, MeetingParticipant
+        from apps.organization.models import Department
+        
+        @login_required 
+        def dashboard(request):
+            user = request.user
+            today = timezone.now().date()
+            thirty_days_ago = today - timezone.timedelta(days=30)
+        
+            base_query = Q(department=user.department) | Q(participants=user)
+        
+            stats = {
+                'total_meetings': Meeting.objects.filter(base_query).distinct().count(),
+                'upcoming_count': Meeting.objects.filter(
+                    date__gte=today,
+                    status='scheduled'
+                ).filter(base_query).distinct().count(),
+                'completed_count': Meeting.objects.filter(
+                    status='completed',
+                    date__gte=thirty_days_ago
+                ).filter(base_query).distinct().count()
+            }
+        
+            upcoming_meetings = Meeting.objects.filter(
+                date__gte=today,
+                status='scheduled'
+            ).filter(base_query).distinct().order_by('date', 'start_time')[:5]
+        
+            context = {
+                'stats': stats,
+                'upcoming_meetings': upcoming_meetings,
+            }
+            return render(request, 'meetings/dashboard.html', context)
+        
+        @login_required
+        def director_dashboard(request):
+            if not request.user.is_superuser:
+                messages.error(request, "Access denied")
+                return redirect('meetings:dashboard')
+        
+            today = timezone.now().date()
+            departments = Department.objects.all()
+            dept_meetings = {}
+        
+            for dept in departments:
+                dept_meetings[dept] = {
+                    'upcoming': Meeting.objects.filter(
+                        department=dept,
+                        date__gte=today,
+                        status='scheduled'
+                    ).order_by('date')[:5],
+                    'recent': Meeting.objects.filter(
+                        department=dept,
+                        date__lt=today
+                    ).order_by('-date')[:5],
+                    'stats': {
+                        'total': Meeting.objects.filter(department=dept).count(),
+                        'scheduled': Meeting.objects.filter(
+                            department=dept, 
+                            status='scheduled'
+                        ).count(),
+                        'completed': Meeting.objects.filter(
+                            department=dept,
+                            status='completed'
+                        ).count()
+                    }
+                }
+        
+            context = {
+                'dept_meetings': dept_meetings,
+                'total_meetings': Meeting.objects.count(),
+                'total_participants': MeetingParticipant.objects.count()
+            }
+            
+            return render(request, 'meetings/director_dashboard.html', context)
+
+      . crud.py
+        Content:
+        # apps/meetings/views/crud.py
+        from django.shortcuts import render, get_object_or_404, redirect
+        from django.contrib.auth.decorators import login_required
+        from django.contrib import messages
+        from django.utils import timezone
+        from apps.meetings.models import Meeting, MeetingParticipant
+        from apps.meetings.forms import MeetingForm
+        
+        @login_required
+        def meeting_create(request):
+            """Create a new meeting"""
+            if request.method == 'POST':
+                form = MeetingForm(request.POST)
+                if form.is_valid():
+                    meeting = form.save(commit=False)
+                    meeting.organizer = request.user
+                    meeting.department = request.user.department
+                    meeting.save()
+                    form.save_m2m()
+        
+                    # Create participant entries
+                    for user_participant in form.cleaned_data['participants']:
+                        MeetingParticipant.objects.create(
+                            meeting=meeting,
+                            participant=user_participant
+                        )
+        
+                    messages.success(request, 'Meeting created successfully.')
+                    return redirect('meetings:meeting_detail', pk=meeting.pk)
+            else:
+                form = MeetingForm()
+        
+            return render(request, 'meetings/meeting_form.html', {
+                'form': form, 
+                'action': 'Create'
+            })
+        
+        @login_required
+        def meeting_detail(request, pk):
+            """View meeting details"""
+            meeting = get_object_or_404(Meeting, pk=pk)
+            user = request.user
+        
+            # Check permissions
+            if not (user == meeting.organizer or
+                    user.department == meeting.department or
+                    meeting.participants.filter(id=user.id).exists()):
+                messages.error(request, "You don't have permission to view this meeting.")
+                return redirect('meetings:dashboard')
+        
+            context = {
+                'meeting': meeting,
+                'participants': MeetingParticipant.objects.filter(meeting=meeting),
+                'can_edit': user == meeting.organizer or user.has_perm('meetings.change_meeting')
+            }
+            return render(request, 'meetings/meeting_detail.html', context)
+        
+        @login_required
+        def meeting_update(request, pk):
+            """Update existing meeting"""
+            meeting = get_object_or_404(Meeting, pk=pk)
+            user = request.user
+        
+            if not (user == meeting.organizer or user.has_perm('meetings.change_meeting')):
+                messages.error(request, "You don't have permission to edit this meeting.")
+                return redirect('meetings:meeting_detail', pk=pk)
+        
+            if request.method == 'POST':
+                form = MeetingForm(request.POST, instance=meeting)
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, 'Meeting updated successfully.')
+                    return redirect('meetings:meeting_detail', pk=pk)
+            else:
+                form = MeetingForm(instance=meeting)
+        
+            return render(request, 'meetings/meeting_form.html', {
+                'form': form,
+                'meeting': meeting,
+                'action': 'Update'
+            })
+        
+        @login_required
+        def meeting_delete(request, pk):
+            """Delete a meeting"""
+            meeting = get_object_or_404(Meeting, pk=pk)
+            user = request.user
+        
+            if not (user == meeting.organizer or user.has_perm('meetings.delete_meeting')):
+                messages.error(request, "You don't have permission to delete this meeting.")
+                return redirect('meetings:meeting_detail', pk=pk)
+        
+            if request.method == 'POST':
+                meeting.delete()
+                messages.success(request, 'Meeting deleted successfully.')
+                return redirect('meetings:dashboard')
+        
+            return render(request, 'meetings/meeting_confirm_delete.html', {
+                'meeting': meeting
+            })
+
+      . lists.py
+        Content:
+        # apps/meetings/views/lists.py
+        from django.shortcuts import render
+        from django.contrib.auth.decorators import login_required
+        from django.db.models import Q
+        from django.core.paginator import Paginator
+        from apps.meetings.models import Meeting
+        from apps.organization.models import Department
+        
+        @login_required
+        def meeting_list(request):
+            """View for listing meetings based on user's role and department"""
+            user = request.user
+            
+            # Check if user can view all meetings
+            can_view_all = user.has_perm('meetings.view_all_meetings')
+            
+            if can_view_all:
+                meetings = Meeting.objects.all()
+            else:
+                # Department users see only their department meetings
+                meetings = Meeting.objects.filter(
+                    Q(department=user.department) | Q(participants=user)
+                ).distinct()
+        
+            # Filter options
+            status = request.GET.get('status')
+            meeting_type = request.GET.get('meeting_type')
+            department_id = request.GET.get('department')
+        
+            if status:
+                meetings = meetings.filter(status=status)
+            if meeting_type:
+                meetings = meetings.filter(meeting_type=meeting_type)
+            if department_id and can_view_all:
+                meetings = meetings.filter(department_id=department_id)
+        
+            # Pagination
+            paginator = Paginator(meetings.order_by('-date'), 10)
+            page = request.GET.get('page')
+            meetings = paginator.get_page(page)
+        
+            context = {
+                'meetings': meetings,
+                'departments': Department.objects.all() if can_view_all else None,
+                'can_view_all': can_view_all,
+            }
+            return render(request, 'meetings/meeting_list.html', context)
+
+  . memos/
+    . __init__.py
+      Content:
+
+
+    . admin.py
+      Content:
+      from django.contrib import admin
+      
+      # Register your models here.
+
+    . apps.py
+      Content:
+      from django.apps import AppConfig
+      
+      
+      class MemosConfig(AppConfig):
+          default_auto_field = "django.db.models.BigAutoField"
+          name = "apps.memos"
+          label = "memos"
+
+    . forms.py
+      Content:
+      from django import forms
+      from .models import Memo, MemoTemplate, MemoComment
+      from apps.document_management.models import Document
+      
+      class MemoForm(forms.ModelForm):
+          document = forms.FileField(required=False)
+          template = forms.ModelChoiceField(
+              queryset=MemoTemplate.objects.none(),
+              required=False,
+              empty_label="Select a template"
+          )
+      
+          class Meta:
+              model = Memo
+              fields = [
+                  'title', 'memo_type', 'content', 'recipient_departments',
+                  'recipient_users', 'is_confidential', 'external_recipient',
+                  'external_organization', 'tags', 'file_number'
+              ]
+              widgets = {
+                  'content': forms.Textarea(attrs={'rows': 10, 'class': 'rich-text-editor'}),
+                  'tags': forms.TextInput(attrs={'data-role': 'tagsinput'}),
+                  'recipient_departments': forms.SelectMultiple(
+                      attrs={'class': 'select2', 'data-placeholder': 'Select departments'}
+                  ),
+                  'recipient_users': forms.SelectMultiple(
+                      attrs={'class': 'select2', 'data-placeholder': 'Select users'}
+                  )
+              }
+      
+          def __init__(self, *args, **kwargs):
+              user = kwargs.pop('user', None)
+              super().__init__(*args, **kwargs)
+              
+              if user:
+                  # Filter templates based on user's department
+                  self.fields['template'].queryset = MemoTemplate.objects.filter(
+                      models.Q(department=user.department) | 
+                      models.Q(department__isnull=True)
+                  )
+      
+          def clean(self):
+              cleaned_data = super().clean()
+              memo_type = cleaned_data.get('memo_type')
+              external_recipient = cleaned_data.get('external_recipient')
+      
+      class MemoTemplateForm(forms.ModelForm):
+          class Meta:
+              model = MemoTemplate
+              fields = ['name', 'content', 'department']
+              widgets = {
+                  'content': forms.Textarea(attrs={'rows': 10, 'class': 'rich-text-editor'}),
+              }
+      
+      class MemoCommentForm(forms.ModelForm):
+          class Meta:
+              model = MemoComment
+              fields = ['content']
+              widgets = {
+                  'content': forms.Textarea(attrs={
+                      'rows': 3,
+                      'class': 'form-control',
+                      'placeholder': 'Enter your comment'
+                  }),
+              }
+
+    . models.py
+      Content:
+      
+      from django.db import models
+      from django.conf import settings
+      from apps.organization.models import Department
+      from apps.document_management.models import Document, DocumentCategory
+      
+      class MemoTemplate(models.Model):
+          """Templates for different types of memos"""
+          name = models.CharField(max_length=200)
+          description = models.TextField(blank=True)
+          content = models.TextField()
+          memo_type = models.CharField(max_length=50, choices=[
+              ('internal', 'Internal Memo'),
+              ('external', 'External Letter'),
+              ('circular', 'Circular')
+          ])
+          department = models.ForeignKey(Department, on_delete=models.CASCADE)
+          created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+          created_at = models.DateTimeField(auto_now_add=True)
+          updated_at = models.DateTimeField(auto_now=True)
+          is_active = models.BooleanField(default=True)
+      
+          def __str__(self):
+              return f"{self.name} - {self.get_memo_type_display()}"
+      
+      class Memo(models.Model):
+          """Main memo model"""
+          MEMO_STATUS = [
+              ('draft', 'Draft'),
+              ('pending_approval', 'Pending Approval'),
+              ('approved', 'Approved'),
+              ('rejected', 'Rejected'),
+              ('published', 'Published'),
+              ('archived', 'Archived')
+          ]
+          
+          MEMO_TYPE = [
+              ('internal', 'Internal Memo'),
+              ('external', 'External Letter'),
+              ('circular', 'Circular')
+          ]
+      
+          title = models.CharField(max_length=255)
+          reference_number = models.CharField(max_length=100, unique=True)
+          memo_type = models.CharField(max_length=50, choices=MEMO_TYPE)
+          template = models.ForeignKey(MemoTemplate, null=True, blank=True, on_delete=models.SET_NULL)
+          content = models.TextField()
+          department = models.ForeignKey(Department, on_delete=models.CASCADE)
+          status = models.CharField(max_length=50, choices=MEMO_STATUS, default='draft')
+          
+          # Main document - stores the final version
+          document = models.ForeignKey(
+              Document, 
+              on_delete=models.SET_NULL, 
+              null=True, 
+              blank=True,
+              related_name='memo_main_document'
+          )
+          
+          # Metadata
+          created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+          created_at = models.DateTimeField(auto_now_add=True)
+          updated_at = models.DateTimeField(auto_now=True)
+          published_at = models.DateTimeField(null=True, blank=True)
+          version_number = models.PositiveIntegerField(default=1)
+          
+          # Recipients and visibility
+          recipient_departments = models.ManyToManyField(
+              Department, related_name='received_memos', blank=True
+          )
+          recipient_users = models.ManyToManyField(
+              settings.AUTH_USER_MODEL, related_name='receipent_memos', blank=True
+          )
+          is_confidential = models.BooleanField(default=False)
+          
+          # For external memos
+          external_recipient = models.CharField(max_length=255, blank=True, null=True)
+          external_organization = models.CharField(max_length=255, blank=True, null=True)
+          
+          # Classification and filing
+          tags = models.CharField(max_length=500, blank=True)  # Comma-separated tags
+          file_number = models.CharField(max_length=100, blank=True)  # For physical filing reference
+          
+          class Meta:
+              ordering = ['-created_at']
+              permissions = [
+                  ("can_approve_memos", "Can approve memos"),
+                  ("can_publish_memos", "Can publish memos"),
+                  ("view_department_memos", "Can view department memos"),
+              ]
+      
+          def create_document(self, file_obj, title_suffix=""):
+              """Helper method to create a Document for this memo"""
+              from apps.document_management.utils import DocumentManager
+      
+              title = f"{self.title}{title_suffix}"
+              return DocumentManager.attach_document(
+                  file=file_obj,
+                  source_object=self,
+                  uploaded_by=self.created_by,
+                  title=title,
+                  description=f"Document for memo: {self.reference_number}",
+                  category=DocumentCategory.objects.get_or_create(
+                      name="Memos",
+                      defaults={'description': 'Documents related to memos'}
+                  )[0],
+                  is_confidential=self.is_confidential,
+                  status='draft' if self.status == 'draft' else 'approved'
+              )
+      
+      class MemoVersion(models.Model):
+          """Track different versions of a memo"""
+          memo = models.ForeignKey(Memo, on_delete=models.CASCADE, related_name='versions')
+          version_number = models.PositiveIntegerField()
+          content = models.TextField()
+          document = models.ForeignKey(
+              Document, 
+              on_delete=models.SET_NULL,
+              null=True,
+              blank=True,
+              related_name='memo_versions'
+          )
+          created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+          created_at = models.DateTimeField(auto_now_add=True)
+          comments = models.TextField(blank=True)
+          
+          class Meta:
+              unique_together = ['memo', 'version_number']
+              ordering = ['-version_number']
+      
+      class MemoApproval(models.Model):
+          """Track approval workflow for memos"""
+          APPROVAL_STATUS = [
+              ('pending', 'Pending'),
+              ('approved', 'Approved'),
+              ('rejected', 'Rejected'),
+              ('skipped', 'Skipped')
+          ]
+          
+          memo = models.ForeignKey(Memo, on_delete=models.CASCADE, related_name='approvals')
+          approver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+          status = models.CharField(max_length=20, choices=APPROVAL_STATUS, default='pending')
+          comments = models.TextField(blank=True)
+          approved_at = models.DateTimeField(null=True, blank=True)
+          level = models.PositiveIntegerField(help_text="Approval hierarchy level")
+          
+          # Document containing approval signature or stamp
+          signature_document = models.ForeignKey(
+              Document,
+              on_delete=models.SET_NULL,
+              null=True,
+              blank=True,
+              related_name='memo_approvals'
+          )
+          
+          class Meta:
+              ordering = ['level']
+              unique_together = ['memo', 'approver', 'level']
+      
+      class MemoComment(models.Model):
+          """Comments and feedback on memos"""
+          memo = models.ForeignKey(Memo, on_delete=models.CASCADE, related_name='comments')
+          user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+          content = models.TextField()
+          created_at = models.DateTimeField(auto_now_add=True)
+          updated_at = models.DateTimeField(auto_now=True)
+          parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, 
+                                    related_name='replies')
+          is_internal = models.BooleanField(default=True, 
+                                          help_text="Internal comments are only visible to memo creators and approvers")
+          
+          # Attachments to comments (like screenshots or supporting documents)
+          attachments = models.ManyToManyField(Document, blank=True, related_name='memo_comments')
+      
+      class MemoActivity(models.Model):
+          """Audit trail of all memo-related activities"""
+          ACTION_TYPES = [
+              ('create', 'Created'),
+              ('update', 'Updated'),
+              ('status_change', 'Status Changed'),
+              ('approve', 'Approved'),
+              ('reject', 'Rejected'),
+              ('comment', 'Commented'),
+              ('view', 'Viewed'),
+              ('download', 'Downloaded'),
+              ('share', 'Shared')
+          ]
+          
+          memo = models.ForeignKey(Memo, on_delete=models.CASCADE, related_name='activities')
+          user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+          action = models.CharField(max_length=20, choices=ACTION_TYPES)
+          action_details = models.JSONField(null=True, blank=True)
+          timestamp = models.DateTimeField(auto_now_add=True)
+          ip_address = models.GenericIPAddressField(null=True, blank=True)
+          user_agent = models.CharField(max_length=500, blank=True)
+          
+          # Related document if action involves a document
+          document = models.ForeignKey(
+              Document,
+              on_delete=models.SET_NULL,
+              null=True,
+              blank=True,
+              related_name='memo_activities'
+          )
+
+    . signals.py
+      Content:
+      # apps/memos/signals.py
+      from django.db.models.signals import post_save, pre_save
+      from django.dispatch import receiver
+      from .models import Memo, MemoActivity, MemoApproval
+      from django.utils import timezone
+      
+      @receiver(post_save, sender=Memo)
+      def create_memo_activity(sender, instance, created, **kwargs):
+          if created:
+              MemoActivity.objects.create(
+                  memo=instance,
+                  user=instance.created_by,
+                  action='create',
+                  action_details={'status': instance.status}
+              )
+      
+      @receiver(pre_save, sender=Memo)
+      def track_memo_changes(sender, instance, **kwargs):
+          if instance.pk:  # Only for existing instances
+              old_instance = Memo.objects.get(pk=instance.pk)
+              if old_instance.status != instance.status:
+                  MemoActivity.objects.create(
+                      memo=instance,
+                      user=instance.created_by,
+                      action='status_change',
+                      action_details={
+                          'old_status': old_instance.status,
+                          'new_status': instance.status
+                      }
+                  )
+
+    . tests.py
+      Content:
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . urls.py
+      Content:
+      # apps/memos/urls.py
+      from django.urls import path
+      from . import views
+      
+      app_name = 'apps.memos'
+      
+      urlpatterns = [
+          # Dashboard
+          path('', views.department_dashboard, name='department_dashboard'),
+          path('my-memos/', views.my_memos, name='my_memos'),
+          path('pending-approvals/', views.pending_approvals, name='pending_approvals'),
+          
+          # Memo CRUD
+          path('create/', views.memo_create, name='memo_create'),
+          path('<int:pk>/', views.memo_detail, name='memo_detail'),
+          path('<int:pk>/edit/', views.memo_edit, name='memo_edit'),
+          path('<int:pk>/delete/', views.memo_delete, name='memo_delete'),
+          
+          # Workflow
+          path('<int:pk>/submit/', views.memo_submit, name='memo_submit'),
+          path('<int:pk>/approve/', views.memo_approve, name='memo_approve'),
+          path('<int:pk>/reject/', views.memo_reject, name='memo_reject'),
+          path('<int:pk>/publish/', views.memo_publish, name='memo_publish'),
+          
+          # Comments
+          path('<int:pk>/comment/', views.add_comment, name='add_comment'),
+          path('comment/<int:pk>/reply/', views.add_reply, name='add_reply'),
+          
+          # Templates
+          path('templates/', views.template_list, name='template_list'),
+          path('templates/create/', views.template_create, name='template_create'),
+          path('templates/<int:pk>/edit/', views.template_edit, name='template_edit'),
+          
+          # API endpoints for AJAX
+          path('api/memo/<int:pk>/status/', views.memo_status_update, name='memo_status_update'),
+          path('api/memo/<int:pk>/attachments/', views.memo_attachments, name='memo_attachments'),
       ]
 
     . views.py
       Content:
-      # apps/meetings/views.py
       from django.shortcuts import render, get_object_or_404, redirect
       from django.contrib.auth.decorators import login_required, permission_required
       from django.contrib import messages
-      from django.db.models import Q
-      from django.core.paginator import Paginator
+      from django.db.models import Q, Count
       from django.http import JsonResponse
-      from .models import Meeting, MeetingParticipant, MeetingDocument, MeetingAction
-      from .forms import MeetingForm, MeetingDocumentForm, MeetingActionForm
-      from apps.organization.models import Department
+      from django.views.decorators.http import require_POST
+      from django.utils import timezone
+      
+      from .models import Memo, MemoTemplate, MemoApproval, MemoComment, MemoActivity
+      from .forms import MemoForm, MemoTemplateForm, MemoCommentForm
+      from apps.document_management.models import Document
+      from apps.document_management.utils.document_manager import DocumentManager
       
       @login_required
-      def meeting_list(request):
-          """View for listing meetings based on user's role and department"""
+      def department_dashboard(request):
+          """Department dashboard showing memo statistics and lists"""
           user = request.user
-          
-          # Check if user is director or has permission to view all meetings
-          is_director = user.has_perm('meetings.view_all_meetings')
-          
-          if is_director:
-              meetings = Meeting.objects.all()
-          else:
-              # Get meetings where user is organizer or participant
-              meetings = Meeting.objects.filter(
-                  Q(department=user.department) |
-                  Q(participants=user)
-              ).distinct()
-          
-          # Filter options
-          status = request.GET.get('status')
-          meeting_type = request.GET.get('meeting_type')
-          department_id = request.GET.get('department')
-          
-          if status:
-              meetings = meetings.filter(status=status)
-          if meeting_type:
-              meetings = meetings.filter(meeting_type=meeting_type)
-          if department_id and is_director:
-              meetings = meetings.filter(department_id=department_id)
-          
-          # Pagination
-          paginator = Paginator(meetings, 10)
-          page = request.GET.get('page')
-          meetings = paginator.get_page(page)
-          
-          context = {
-              'meetings': meetings,
-              'departments': Department.objects.all() if is_director else None,
-              'is_director': is_director,
+          department = user.department
+      
+          # Get memos statistics
+          stats = {
+              'draft': Memo.objects.filter(department=department, status='draft').count(),
+              'pending': Memo.objects.filter(department=department, status='pending_approval').count(),
+              'approved': Memo.objects.filter(department=department, status='approved').count(),
+              'published': Memo.objects.filter(department=department, status='published').count()
           }
-          
-          return render(request, 'meetings/meeting_list.html', context)
+      
+          # Recent memos
+          recent_memos = Memo.objects.filter(
+              Q(department=department) | Q(recipient_departments=department)
+          ).distinct().order_by('-created_at')[:10]
+      
+          # Pending approvals
+          pending_approvals = MemoApproval.objects.filter(
+              approver=request.user,
+              status='pending'
+          ).select_related('memo').order_by('memo__created_at')
+      
+          context = {
+              'stats': stats,
+              'recent_memos': recent_memos,
+              'pending_approvals': pending_approvals
+          }
+          return render(request, 'memos/dashboard.html', context)
       
       @login_required
-      def meeting_detail(request, pk):
-          """View for meeting details"""
-          meeting = get_object_or_404(Meeting, pk=pk)
+      def memo_create(request):
+          """Create a new memo"""
+          if request.method == 'POST':
+              form = MemoForm(request.POST, request.FILES)
+              if form.is_valid():
+                  memo = form.save(commit=False)
+                  memo.created_by = request.user
+                  memo.department = request.user.department
+                  memo.save()
+                  form.save_m2m()
+      
+                  # Handle document creation if file is uploaded
+                  if request.FILES.get('document'):
+                      memo.create_document(request.FILES['document'])
+      
+                  messages.success(request, 'Memo created successfully.')
+                  return redirect('memos:memo_detail', pk=memo.pk)
+          else:
+              form = MemoForm()
+      
+          templates = MemoTemplate.objects.filter(
+              Q(department=request.user.department) | Q(department__isnull=True)
+          )
+      
+          return render(request, 'memos/memo_form.html', {
+              'form': form,
+              'templates': templates,
+              'action': 'Create'
+          })
+      
+      @login_required
+      def memo_detail(request, pk):
+          """View memo details"""
+          memo = get_object_or_404(Memo, pk=pk)
           user = request.user
-          
+      
           # Check permissions
-          if not (user.has_perm('meetings.view_all_meetings') or
-                  user.department == meeting.department or
-                  meeting.participants.filter(id=user.id).exists()):
-              messages.error(request, "You don't have permission to view this meeting.")
-              return redirect('meeting_list')
-          
+          if not (user == memo.created_by or 
+                  user.department == memo.department or
+                  memo.recipient_departments.filter(id=user.department.id).exists() or
+                  memo.recipient_users.filter(id=user.id).exists()):
+              messages.error(request, "You don't have permission to view this memo.")
+              return redirect('memos:department_dashboard')
+      
+          # Record view activity
+          MemoActivity.objects.create(
+              memo=memo,
+              user=user,
+              action='view',
+              ip_address=request.META.get('REMOTE_ADDR')
+          )
+      
           context = {
-              'meeting': meeting,
-              'participants': MeetingParticipant.objects.filter(meeting=meeting),
-              'documents': MeetingDocument.objects.filter(meeting=meeting),
-              'actions': MeetingAction.objects.filter(meeting=meeting),
-              'can_edit': user.has_perm('meetings.change_meeting') or meeting.organizer == user,
+              'memo': memo,
+              'approvals': memo.approvals.select_related('approver').order_by('level'),
+              'comments': memo.comments.select_related('user').order_by('created_at'),
+              'activities': memo.activities.select_related('user').order_by('-timestamp')[:10],
+              'can_approve': MemoApproval.objects.filter(
+                  memo=memo, 
+                  approver=user, 
+                  status='pending'
+              ).exists()
           }
-          
-          return render(request, 'meetings/meeting_detail.html', context)
+          return render(request, 'memos/memo_detail.html', context)
       
       @login_required
-      def meeting_create(request):
-          """View for creating a new meeting"""
-          if not request.user.has_perm('meetings.add_meeting'):
-              messages.error(request, "You don't have permission to create meetings.")
-              return redirect('meeting_list')
+      @require_POST
+      def memo_submit(request, pk):
+          """Submit memo for approval"""
+          memo = get_object_or_404(Memo, pk=pk)
           
-          if request.method == 'POST':
-              form = MeetingForm(request.POST)
-              if form.is_valid():
-                  meeting = form.save(commit=False)
-                  meeting.organizer = request.user
-                  meeting.save()
-                  form.save_m2m()  # Save participants
-                  
-                  # Create participant entries
-                  for user in form.cleaned_data['participants']:
-                      MeetingParticipant.objects.create(
-                          meeting=meeting,
-                          participant=user
+          if memo.created_by != request.user:
+              messages.error(request, "You don't have permission to submit this memo.")
+              return redirect('memos:memo_detail', pk=pk)
+      
+          if memo.status != 'draft':
+              messages.error(request, "Only draft memos can be submitted for approval.")
+              return redirect('memos:memo_detail', pk=pk)
+      
+          # Create approval workflow
+          approvers = get_memo_approvers(memo)  # Define this function based on your workflow rules
+          for level, approver in enumerate(approvers, 1):
+              MemoApproval.objects.create(
+                  memo=memo,
+                  approver=approver,
+                  level=level
+              )
+      
+          memo.status = 'pending_approval'
+          memo.save()
+      
+          messages.success(request, 'Memo submitted for approval.')
+          return redirect('memos:memo_detail', pk=pk)
+      
+      @login_required
+      @require_POST
+      def memo_approve(request, pk):
+          """Approve a memo"""
+          memo = get_object_or_404(Memo, pk=pk)
+          approval = get_object_or_404(
+              MemoApproval, 
+              memo=memo, 
+              approver=request.user,
+              status='pending'
+          )
+      
+          approval.status = 'approved'
+          approval.approved_at = timezone.now()
+          approval.comments = request.POST.get('comments', '')
+          approval.save()
+      
+          # Handle digital signature/stamp if provided
+          if request.FILES.get('signature'):
+              document = DocumentManager.attach_document(
+                  file=request.FILES['signature'],
+                  source_object=approval,
+                  uploaded_by=request.user,
+                  title=f"Approval signature - {memo.reference_number} - Level {approval.level}",
+                  is_confidential=memo.is_confidential
+              )
+              approval.signature_document = document
+              approval.save()
+      
+          # Check if this was the final approval
+          if not memo.approvals.filter(status='pending').exists():
+              memo.status = 'approved'
+              memo.save()
+              messages.success(request, 'Final approval granted. Memo is now approved.')
+          else:
+              messages.success(request, 'Memo approved. Waiting for next level approval.')
+      
+          return redirect('memos:memo_detail', pk=pk)
+      
+      @login_required
+      def pending_approvals(request):
+          """List of memos pending user's approval"""
+          pending = MemoApproval.objects.filter(
+              approver=request.user,
+              status='pending'
+          ).select_related(
+              'memo', 
+              'memo__created_by', 
+              'memo__department'
+          ).order_by('memo__created_at')
+      
+          return render(request, 'memos/pending_approvals.html', {'approvals': pending})
+      
+      @login_required
+      @require_POST
+      def add_comment(request, pk):
+          """Add a comment to a memo"""
+          memo = get_object_or_404(Memo, pk=pk)
+          form = MemoCommentForm(request.POST)
+          
+          if form.is_valid():
+              comment = form.save(commit=False)
+              comment.memo = memo
+              comment.user = request.user
+              comment.save()
+      
+              # Handle attachments
+              for file in request.FILES.getlist('attachments'):
+                  document = DocumentManager.attach_document(
+                      file=file,
+                      source_object=comment,
+                      uploaded_by=request.user,
+                      title=f"Comment attachment - {memo.reference_number}",
+                      is_confidential=memo.is_confidential
+                  )
+                  comment.attachments.add(document)
+      
+              if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                  return JsonResponse({
+                      'status': 'success',
+                      'comment_html': render_to_string(
+                          'memos/partials/comment.html', 
+                          {'comment': comment}
                       )
-                  
-                  messages.success(request, 'Meeting created successfully.')
-                  return redirect('meeting_detail', pk=meeting.pk)
-          else:
-              form = MeetingForm()
-              
-          return render(request, 'meetings/meeting_form.html', {'form': form, 'action': 'Create'})
+                  })
+      
+          messages.success(request, 'Comment added successfully.')
+          return redirect('memos:memo_detail', pk=pk)
+      
+      def get_memo_approvers(memo):
+          """Helper function to determine memo approvers based on department hierarchy"""
+          approvers = []
+          department = memo.department
+      
+          # Add immediate supervisor
+          if department.head:
+              approvers.append(department.head)
+      
+          # Add department director
+          if department.director and department.director != department.head:
+              approvers.append(department.director)
+      
+          # Add additional approvers based on memo type and department
+          if memo.memo_type == 'external':
+              # Add any additional required approvers for external memos
+              pass
+      
+          return approvers
       
       @login_required
-      def meeting_update(request, pk):
-          """View for updating an existing meeting"""
-          meeting = get_object_or_404(Meeting, pk=pk)
-          
-          if not (request.user.has_perm('meetings.change_meeting') or meeting.organizer == request.user):
-              messages.error(request, "You don't have permission to edit this meeting.")
-              return redirect('meeting_detail', pk=pk)
-          
+      def my_memos(request):
+          """View for listing memos created by the current user"""
+          memos = Memo.objects.filter(created_by=request.user).order_by('-created_at')
+          return render(request, 'memos/my_memos.html', {'memos': memos})
+      
+      
+      
+      @login_required
+      def memo_edit(request, pk):
+          """Edit an existing memo"""
+          memo = get_object_or_404(Memo, pk=pk)
+      
+          if memo.status != 'draft':
+              messages.error(request, "Only draft memos can be edited.")
+              return redirect('memos:memo_detail', pk=pk)
+      
           if request.method == 'POST':
-              form = MeetingForm(request.POST, instance=meeting)
+              form = MemoForm(request.POST, request.FILES, instance=memo)
               if form.is_valid():
-                  meeting = form.save()
-                  messages.success(request, 'Meeting updated successfully.')
-                  return redirect('meeting_detail', pk=meeting.pk)
+                  memo = form.save()
+                  form.save_m2m()
+                  messages.success(request, 'Memo updated successfully.')
+                  return redirect('memos:memo_detail', pk=memo.pk)
           else:
-              form = MeetingForm(instance=meeting)
-              
-          return render(request, 'meetings/meeting_form.html', {
+              form = MemoForm(instance=memo, user=request.user)
+      
+          templates = MemoTemplate.objects.filter(department=request.user.department)
+      
+          return render(request, 'memos/memo_form.html', {
               'form': form,
-              'meeting': meeting,
-              'action': 'Update'
+              'memo': memo,
+              'templates': templates,
+              'action': 'Edit'
           })
       
-      @login_required
-      def meeting_delete(request, pk):
-          """View for deleting a meeting"""
-          meeting = get_object_or_404(Meeting, pk=pk)
-          
-          if not (request.user.has_perm('meetings.delete_meeting') or meeting.organizer == request.user):
-              messages.error(request, "You don't have permission to delete this meeting.")
-              return redirect('meeting_detail', pk=pk)
-          
-          if request.method == 'POST':
-              meeting.delete()
-              messages.success(request, 'Meeting deleted successfully.')
-              return redirect('meeting_list')
-              
-          return render(request, 'meetings/meeting_confirm_delete.html', {'meeting': meeting})
       
       @login_required
-      def meeting_document_upload(request, meeting_pk):
-          """View for uploading meeting documents"""
-          meeting = get_object_or_404(Meeting, pk=meeting_pk)
-          
-          if request.method == 'POST':
-              form = MeetingDocumentForm(request.POST, request.FILES)
-              if form.is_valid():
-                  document = form.save(commit=False)
-                  document.meeting = meeting
-                  document.uploaded_by = request.user
-                  document.save()
-                  messages.success(request, 'Document uploaded successfully.')
-                  return redirect('meeting_detail', pk=meeting_pk)
-          else:
-              form = MeetingDocumentForm()
-              
-          return render(request, 'meetings/document_upload.html', {
-              'form': form,
-              'meeting': meeting
-          })
+      @require_POST
+      def memo_delete(request, pk):
+          """Delete a memo"""
+          memo = get_object_or_404(Memo, pk=pk)
+      
+          if memo.created_by != request.user:
+              messages.error(request, "You don't have permission to delete this memo.")
+              return redirect('memos:memo_detail', pk=pk)
+      
+          if memo.status != 'draft':
+              messages.error(request, "Only draft memos can be deleted.")
+              return redirect('memos:memo_detail', pk=pk)
+      
+          memo.delete()
+          messages.success(request, 'Memo deleted successfully.')
+          return redirect('memos:department_dashboard')
+      
       
       @login_required
-      def action_item_create(request, meeting_pk):
-          """View for creating action items"""
-          meeting = get_object_or_404(Meeting, pk=meeting_pk)
+      @require_POST
+      def memo_reject(request, pk):
+          """Reject a memo approval request"""
+          memo = get_object_or_404(Memo, pk=pk)
+          approval = get_object_or_404(
+              MemoApproval,
+              memo=memo,
+              approver=request.user,
+              status='pending'
+          )
+      
+          approval.status = 'rejected'
+          approval.comments = request.POST.get('comments', '')
+          approval.rejected_at = timezone.now()
+          approval.save()
+      
+          messages.success(request, 'Memo approval rejected.')
+          return redirect('memos:memo_detail', pk=pk)
+      
+      
+      @login_required
+      @require_POST
+      def memo_publish(request, pk):
+          """Publish a memo"""
+          memo = get_object_or_404(Memo, pk=pk)
+      
+          if memo.status != 'approved':
+              messages.error(request, "Only approved memos can be published.")
+              return redirect('memos:memo_detail', pk=pk)
+      
+          memo.status = 'published'
+          memo.published_at = timezone.now()
+          memo.save()
+      
+          messages.success(request, 'Memo published successfully.')
+          return redirect('memos:memo_detail', pk=pk)
+      
+      # add_reply
+      @login_required
+      def add_reply(request, pk):
+          """Add a reply to a memo"""
+          memo = get_object_or_404(Memo, pk=pk)
+          form = MemoCommentForm(request.POST)
           
+          if form.is_valid():
+              comment = form.save(commit=False)
+              comment.memo = memo
+              comment.user = request.user
+              comment.save()
+      
+              # Handle attachments
+              for file in request.FILES.getlist('attachments'):
+                  document = DocumentManager.attach_document(
+                      file=file,
+                      source_object=comment,
+                      uploaded_by=request.user,
+                      title=f"Comment attachment - {memo.reference_number}",
+                      is_confidential=memo.is_confidential
+                  )
+                  comment.attachments.add(document)
+      
+              if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                  return JsonResponse({
+                      'status': 'success',
+                      'comment_html': render_to_string(
+                          'memos/partials/comment.html', 
+                          {'comment': comment}
+                      )
+                  })
+      
+          messages.success(request, 'Comment added successfully.')
+          return redirect('memos:memo_detail', pk=pk)
+      
+      # template_list
+      
+      @login_required
+      def template_list(request):
+          """List of memo templates"""
+          templates = MemoTemplate.objects.filter(
+              Q(department=request.user.department) | Q(department__isnull=True)
+          )
+          return render(request, 'memos/template_list.html', {'templates': templates})
+      
+      
+      # template_create
+      
+      @login_required
+      def template_create(request):
+          """Create a new memo template"""
           if request.method == 'POST':
-              form = MeetingActionForm(request.POST)
+              form = MemoTemplateForm(request.POST)
               if form.is_valid():
-                  action = form.save(commit=False)
-                  action.meeting = meeting
-                  action.created_by = request.user
-                  action.save()
-                  messages.success(request, 'Action item created successfully.')
-                  return redirect('meeting_detail', pk=meeting_pk)
+                  template = form.save(commit=False)
+                  template.department = request.user.department
+                  template.save()
+                  form.save_m2m()
+                  messages.success(request, 'Template created successfully.')
+                  return redirect('memos:template_list')
           else:
-              form = MeetingActionForm()
-              
-          return render(request, 'meetings/action_form.html', {
+              form = MemoTemplateForm()
+      
+          return render(request, 'memos/template_form.html', {
               'form': form,
-              'meeting': meeting
+              'action': 'Create'
           })
+      
+      
+      # template_edit
+      
+      @login_required
+      def template_edit(request, pk):
+          """Edit an existing memo template"""
+          template = get_object_or_404(MemoTemplate, pk=pk)
+      
+          if request.method == 'POST':
+              form = MemoTemplateForm(request.POST, instance=template)
+              if form.is_valid():
+                  template = form.save()
+                  form.save_m2m()
+                  messages.success(request, 'Template updated successfully.')
+                  return redirect('memos:template_list')
+          else:
+              form = MemoTemplateForm(instance=template)
+      
+          return render(request, 'memos/template_form.html', {
+              'form': form,
+              'template': template,
+              'action': 'Edit'
+          })
+      
+      # memo_status_update
+      
+      @login_required
+      @require_POST
+      def memo_status_update(request, pk):
+          """Update memo status"""
+          memo = get_object_or_404(Memo, pk=pk)
+          status = request.POST.get('status')
+      
+          if status not in ['draft', 'pending_approval', 'approved', 'published']:
+              messages.error(request, 'Invalid status.')
+              return redirect('memos:memo_detail', pk=pk)
+      
+          memo.status = status
+          memo.save()
+      
+          messages.success(request, 'Memo status updated successfully.')
+          return redirect('memos:memo_detail', pk=pk)
+      
+      
+      # memo_attachments
+      
+      @login_required
+      def memo_attachments(request, pk):
+          """View memo attachments"""
+          memo = get_object_or_404(Memo, pk=pk)
+          return render(request, 'memos/memo_attachments.html', {'memo': memo})
+      
+          
 
   . organization/
     . __init__.py
@@ -1981,251 +2579,146 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
     . management/
       . commands/
+        . clear_org_data.py
+          Content:
+          # apps/organization/management/commands/clear_org_data.py
+          from django.core.management.base import BaseCommand
+          from django.contrib.auth import get_user_model
+          from apps.organization.models import Department, Role, UserRole
+          
+          class Command(BaseCommand):
+              help = 'Clears all organization data'
+          
+              def handle(self, *args, **kwargs):
+                  User = get_user_model()
+                  UserRole.objects.all().delete()
+                  Role.objects.all().delete()
+                  Department.objects.all().delete()
+                  User.objects.all().delete()
+                  self.stdout.write(self.style.SUCCESS('Successfully cleared all organization data'))
+
         . seed_organization.py
           Content:
           # apps/organization/management/commands/seed_organization.py
           from django.core.management.base import BaseCommand
-          from apps.organization.models import Department, Role
+          from django.contrib.auth import get_user_model
+          from apps.organization.models import Department, Role, UserRole
+          
+          User = get_user_model()
           
           class Command(BaseCommand):
-              help = 'Seeds basic organizational structure'
+              help = 'Seeds organization structure and users'
           
               def handle(self, *args, **kwargs):
-                  self.stdout.write('Seeding organization data...')
+                  self.stdout.write('Creating departments...')
+                  departments = {
+                      'directors_office': Department.objects.create(
+                          name="Director's Office",
+                          description="Office of the Director of Strategy, Planning and Organizational Performance"
+                      ),
+                      'performance': Department.objects.create(
+                          name="Performance Coordination",
+                          description="Performance monitoring and coordination"
+                      ),
+                      'planning': Department.objects.create(
+                          name="Planning, Monitoring & Evaluation",
+                          description="Planning, monitoring and evaluation activities"
+                      ),
+                      'research': Department.objects.create(
+                          name="Research & Statistics",
+                          description="Research and statistical analysis"
+                      ),
+                      'quality': Department.objects.create(
+                          name="Quality Assurance & Innovation",
+                          description="Quality assurance and innovation initiatives"
+                      )
+                  }
           
-                  # Create Departments
-                  departments_data = [
-                      {
-                          'name': "Director's Office",
-                          'description': "Overall leadership of strategy development, planning, research, performance improvement, and innovation"
-                      },
-                      {
-                          'name': "Organizational Productivity & Quality Assurance",
-                          'description': "Focuses on workflow optimization, performance standards, and quality management"
-                      },
-                      {
-                          'name': "Planning, Monitoring & Evaluation",
-                          'description': "Handles strategic planning, implementation, monitoring, and evaluation"
-                      },
-                      {
-                          'name': "Research & Data Analytics",
-                          'description': "Drives evidence-based decision making and manages judicial data and research"
-                      }
+                  self.stdout.write('Creating base roles...')
+                  base_roles = [
+                      ("Assistant Director", 'JSG3'),
+                      ("Court Assistant II", 'JSG4'),
+                      ("Economist I", 'JSG4'),
+                      ("Court Administrator I", 'JSG4'),
+                      ("Statistician II", 'JSG4'),
+                      ("Accountant I", 'JSG4'),
+                      ("Office Assistant I", 'JSG5'),
+                      ("Office Assistant II", 'JSG5'),
                   ]
           
-                  departments = {}
-                  for dept_data in departments_data:
-                      dept, created = Department.objects.get_or_create(
-                          name=dept_data['name'],
-                          defaults={'description': dept_data['description']}
-                      )
-                      departments[dept_data['name']] = dept
-                      if created:
-                          self.stdout.write(f'Created department: {dept.name}')
+                  roles = {}
+                  for dept in departments.values():
+                      for title, job_group in base_roles:
+                          role_key = f"{title}_{dept.name}".lower().replace(' ', '_').replace(',', '').replace('&', 'and')
+                          roles[role_key] = Role.objects.create(
+                              title=title,
+                              department=dept,
+                              job_group=job_group
+                          )
           
-                  # Create Roles
-                  roles_data = [
-                      # Director's Office
-                      {
-                          'department': "Director's Office",
-                          'title': "Director of Strategy, Planning and Organizational Productivity",
-                          'job_group': 'JSG1',
-                          'description': "Overall leadership and reporting to top judiciary leadership"
-                      },
-                      # Organizational Productivity & QA
-                      {
-                          'department': "Organizational Productivity & Quality Assurance",
-                          'title': "Deputy Director - Organizational Productivity & QA",
-                          'job_group': 'JSG2',
-                          'description': "Leads workflow optimization and quality management"
-                      },
-                      {
-                          'department': "Organizational Productivity & Quality Assurance",
-                          'title': "Assistant Director - Organizational Productivity",
-                          'job_group': 'JSG3',
-                          'description': "Manages organizational productivity initiatives"
-                      },
-                      {
-                          'department': "Organizational Productivity & Quality Assurance",
-                          'title': "Assistant Director - Quality Assurance & Innovation",
-                          'job_group': 'JSG3',
-                          'description': "Manages quality assurance and innovation programs"
-                      },
-                      # Planning, M&E
-                      {
-                          'department': "Planning, Monitoring & Evaluation",
-                          'title': "Deputy Director - Planning, M&E",
-                          'job_group': 'JSG2',
-                          'description': "Leads strategic planning and evaluation"
-                      },
-                      {
-                          'department': "Planning, Monitoring & Evaluation",
-                          'title': "Assistant Director - Strategy and Planning",
-                          'job_group': 'JSG3',
-                          'description': "Manages strategic planning implementation"
-                      },
-                      # Research & Data Analytics
-                      {
-                          'department': "Research & Data Analytics",
-                          'title': "Deputy Director - Research & Data Analytics",
-                          'job_group': 'JSG2',
-                          'description': "Leads research and data analytics initiatives"
-                      },
-                      {
-                          'department': "Research & Data Analytics",
-                          'title': "Assistant Director - Data Analytics",
-                          'job_group': 'JSG3',
-                          'description': "Manages data analytics operations"
-                      },
-                      {
-                          'department': "Research & Data Analytics",
-                          'title': "Research Officer",
-                          'job_group': 'JSG4',
-                          'description': "Conducts research and analysis"
-                      }
+                  staff_data = [
+                      {'name': 'George Obai', 'pj': '64282', 'title': 'Assistant Director', 'dept': departments['performance']},
+                      {'name': 'Dominic Nyambane', 'pj': '64739', 'title': 'Assistant Director', 'dept': departments['planning']},
+                      {'name': 'Gilbert Kipkirui', 'pj': '69727', 'title': 'Assistant Director', 'dept': departments['research']},
+                      {'name': 'Victor Lumwamu', 'pj': '62751', 'title': 'Economist I', 'dept': departments['quality']},
+                      {'name': 'Alex Njeru', 'pj': '75665', 'title': 'Court Assistant II', 'dept': departments['planning']},
+                      {'name': 'Evelyne Simiyu', 'pj': '42505', 'title': 'Economist I', 'dept': departments['performance']},
+                      {'name': 'Linda Lukhale', 'pj': '44029', 'title': 'Court Administrator I', 'dept': departments['quality']},
+                      {'name': 'Martin Asitiba', 'pj': '33627', 'title': 'Court Assistant II', 'dept': departments['research']},
+                      {'name': 'Eric Kocheli', 'pj': '75681', 'title': 'Court Assistant II', 'dept': departments['research']},
+                      {'name': 'Solomon Onyara', 'pj': '76433', 'title': 'Court Assistant II', 'dept': departments['planning']},
+                      {'name': 'Caroline Mungai', 'pj': '75657', 'title': 'Court Assistant II', 'dept': departments['quality']},
+                      {'name': 'Margret Ochieng', 'pj': '80113', 'title': 'Court Assistant II', 'dept': departments['research']},
+                      {'name': 'Stanford Mwangi', 'pj': '47117', 'title': 'Court Assistant II', 'dept': departments['research']},
+                      {'name': 'Patrick Ngobiro', 'pj': '59433', 'title': 'Court Assistant II', 'dept': departments['directors_office']},
+                      {'name': 'John Mbiti', 'pj': '71530', 'title': 'Court Assistant II', 'dept': departments['performance']},
+                      {'name': 'Mercy Chemitai', 'pj': '71483', 'title': 'Court Assistant II', 'dept': departments['research']},
+                      {'name': 'Hannah Gichuki', 'pj': '54936', 'title': 'Office Assistant II', 'dept': departments['directors_office']},
+                      {'name': 'Lucy Gachoka', 'pj': '30982', 'title': 'Office Assistant I', 'dept': departments['directors_office']},
+                      {'name': 'Steve Njehia', 'pj': '57049', 'title': 'Accountant I', 'dept': departments['planning']},
+                      {'name': 'Leonard Melly', 'pj': '81485', 'title': 'Statistician II', 'dept': departments['research']},
+                      {'name': 'Lorna Barasa', 'pj': '82594', 'title': 'Office Assistant II', 'dept': departments['directors_office']}
                   ]
           
-                  for role_data in roles_data:
-                      role, created = Role.objects.get_or_create(
-                          title=role_data['title'],
-                          department=departments[role_data['department']],
-                          defaults={
-                              'job_group': role_data['job_group'],
-                              'description': role_data['description']
-                          }
+                  self.stdout.write('Creating staff users...')
+                  for staff in staff_data:
+                      user = User.objects.create(
+                          username=f"{staff['name'].lower().replace(' ', '.')}",
+                          first_name=staff['name'].split()[0],
+                          last_name=staff['name'].split()[-1],
+                          email=f"{staff['name'].lower().replace(' ', '.')}@judiciary.go.ke",
+                          pj_number=staff['pj']
                       )
-                      if created:
-                          self.stdout.write(f'Created role: {role.title}')
+                      user.set_password('Password123!')
+                      user.save()
+          
+                      role_key = f"{staff['title']}_{staff['dept'].name}".lower().replace(' ', '_').replace(',', '').replace('&', 'and')
+                      role = roles[role_key]
+                      
+                      UserRole.objects.create(
+                          user=user,
+                          role=role,
+                          is_active=True
+                      )
+          
+                  self.stdout.write('Creating director user...')
+                  director = User.objects.create(
+                      username='joseph.osewe',
+                      email='joseph.osewe@judiciary.go.ke',
+                      first_name='Joseph',
+                      last_name='Osewe',
+                      is_staff=True,
+                      is_superuser=True
+                  )
+                  director.set_password('Admin123!')
+                  director.save()
           
                   self.stdout.write(self.style.SUCCESS('Successfully seeded organization data'))
 
-    . migrations/
-      . 0001_initial.py
-        Content:
-        # Generated by Django 4.2.13 on 2025-02-04 12:42
-        
-        from django.conf import settings
-        from django.db import migrations, models
-        import django.db.models.deletion
-        
-        
-        class Migration(migrations.Migration):
-        
-            initial = True
-        
-            dependencies = [
-                migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-            ]
-        
-            operations = [
-                migrations.CreateModel(
-                    name="Department",
-                    fields=[
-                        (
-                            "id",
-                            models.BigAutoField(
-                                auto_created=True,
-                                primary_key=True,
-                                serialize=False,
-                                verbose_name="ID",
-                            ),
-                        ),
-                        ("name", models.CharField(max_length=200)),
-                        ("description", models.TextField(blank=True)),
-                        ("created_at", models.DateTimeField(auto_now_add=True)),
-                        ("is_active", models.BooleanField(default=True)),
-                    ],
-                    options={
-                        "ordering": ["name"],
-                    },
-                ),
-                migrations.CreateModel(
-                    name="Role",
-                    fields=[
-                        (
-                            "id",
-                            models.BigAutoField(
-                                auto_created=True,
-                                primary_key=True,
-                                serialize=False,
-                                verbose_name="ID",
-                            ),
-                        ),
-                        ("title", models.CharField(max_length=200)),
-                        (
-                            "job_group",
-                            models.CharField(
-                                choices=[
-                                    ("JSG1", "JSG1"),
-                                    ("JSG2", "JSG2"),
-                                    ("JSG3", "JSG3"),
-                                    ("JSG4", "JSG4"),
-                                    ("JSG5", "JSG5"),
-                                ],
-                                max_length=4,
-                            ),
-                        ),
-                        ("description", models.TextField(blank=True)),
-                        ("is_active", models.BooleanField(default=True)),
-                        ("created_at", models.DateTimeField(auto_now_add=True)),
-                        (
-                            "department",
-                            models.ForeignKey(
-                                on_delete=django.db.models.deletion.CASCADE,
-                                related_name="roles",
-                                to="organization.department",
-                            ),
-                        ),
-                    ],
-                    options={
-                        "ordering": ["department", "job_group", "title"],
-                    },
-                ),
-                migrations.CreateModel(
-                    name="UserRole",
-                    fields=[
-                        (
-                            "id",
-                            models.BigAutoField(
-                                auto_created=True,
-                                primary_key=True,
-                                serialize=False,
-                                verbose_name="ID",
-                            ),
-                        ),
-                        ("assigned_at", models.DateTimeField(auto_now_add=True)),
-                        ("is_active", models.BooleanField(default=True)),
-                        (
-                            "role",
-                            models.ForeignKey(
-                                on_delete=django.db.models.deletion.CASCADE,
-                                to="organization.role",
-                            ),
-                        ),
-                        (
-                            "user",
-                            models.ForeignKey(
-                                on_delete=django.db.models.deletion.CASCADE,
-                                related_name="user_roles",
-                                to=settings.AUTH_USER_MODEL,
-                            ),
-                        ),
-                    ],
-                    options={
-                        "unique_together": {("user", "role")},
-                    },
-                ),
-            ]
-
-      . __init__.py
-        Content:
-
-
     . models.py
       Content:
-      # apps/organization/models.py
       from django.db import models
-      from django.contrib.auth.models import User
+      from django.conf import settings
       
       class Department(models.Model):
           name = models.CharField(max_length=200)
@@ -2262,7 +2755,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               ordering = ['department', 'job_group', 'title']
       
       class UserRole(models.Model):
-          user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_roles')
+          user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_roles')
           role = models.ForeignKey(Role, on_delete=models.CASCADE)
           assigned_at = models.DateTimeField(auto_now_add=True)
           is_active = models.BooleanField(default=True)
@@ -2629,195 +3122,6 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           
           
                    
-
-    . migrations/
-      . 0001_initial_squashed_0022_dcrtdata_unit_rank.py
-        Content:
-        # Generated by Django 3.2.21 on 2023-10-11 07:01
-        
-        from django.db import migrations, models
-        import django.db.models.deletion
-        
-        
-        class Migration(migrations.Migration):
-        
-            replaces = [('statistics', '0001_initial'), ('statistics', '0002_unitrank_is_court'), ('statistics', '0003_financialyear'), ('statistics', '0004_financialquarter'), ('statistics', '0005_unit'), ('statistics', '0006_unit_is_court'), ('statistics', '0007_months'), ('statistics', '0008_auto_20231009_1427'), ('statistics', '0009_dcrtdata_division'), ('statistics', '0010_alter_division_code'), ('statistics', '0011_auto_20231009_1510'), ('statistics', '0012_alter_dcrtdata_division'), ('statistics', '0013_alter_dcrtdata_division'), ('statistics', '0014_auto_20231009_1932'), ('statistics', '0015_auto_20231009_2005'), ('statistics', '0016_alter_dcrtdata_division'), ('statistics', '0017_dcrtdata_name_of_court'), ('statistics', '0018_auto_20231009_2106'), ('statistics', '0019_alter_dcrtdata_case_coming_for'), ('statistics', '0020_auto_20231009_2115'), ('statistics', '0021_alter_months_financial_quarter'), ('statistics', '0022_dcrtdata_unit_rank')]
-        
-            dependencies = [
-            ]
-        
-            operations = [
-                migrations.CreateModel(
-                    name='UnitRank',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('is_court', models.BooleanField(default=False)),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='FinancialYear',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('start_date', models.DateTimeField()),
-                        ('end_date', models.DateTimeField()),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='FinancialQuarter',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('start_date', models.DateField()),
-                        ('end_date', models.DateField()),
-                        ('financial_year', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.financialyear')),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='Months',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('month_number', models.IntegerField(help_text='Number of days in the month')),
-                        ('financial_quarter', models.IntegerField(help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4')),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='Unit',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('unique_id', models.CharField(max_length=255)),
-                        ('unique_code', models.CharField(max_length=255)),
-                        ('head_id_fk', models.IntegerField()),
-                        ('subhead_id_fk', models.IntegerField()),
-                        ('has_division', models.BooleanField(default=False)),
-                        ('unit_rank', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.unitrank')),
-                        ('is_court', models.BooleanField(default=False)),
-                        ('latitude', models.FloatField(default=0)),
-                        ('longitude', models.FloatField(default=0)),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='Division',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('name', models.CharField(max_length=255)),
-                        ('is_active', models.BooleanField(default=True)),
-                        ('code', models.CharField(max_length=50)),
-                        ('deleted_at', models.DateTimeField(blank=True, null=True)),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='UnitDivision',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('division', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.division')),
-                        ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.unit')),
-                    ],
-                ),
-                migrations.CreateModel(
-                    name='DcrtData',
-                    fields=[
-                        ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                        ('financial_quarter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.financialquarter')),
-                        ('financial_year', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.financialyear')),
-                        ('month', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.months')),
-                        ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.unit')),
-                        ('division', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='statistics.division')),
-                        ('adjournment_reason', models.CharField(blank=True, max_length=255, null=True)),
-                        ('appeal_number_code', models.CharField(blank=True, max_length=255, null=True)),
-                        ('appeal_number_court_name', models.CharField(blank=True, max_length=255, null=True)),
-                        ('appeal_number_number', models.IntegerField(blank=True, null=True)),
-                        ('appeal_number_year', models.IntegerField(blank=True, null=True)),
-                        ('case_coming_for', models.CharField(blank=True, max_length=255, null=True)),
-                        ('case_number_code', models.CharField(blank=True, max_length=255, null=True)),
-                        ('case_number_day', models.IntegerField(blank=True, null=True)),
-                        ('case_number_month', models.CharField(blank=True, max_length=255, null=True)),
-                        ('case_number_number', models.IntegerField(blank=True, null=True)),
-                        ('case_number_year', models.IntegerField(blank=True, null=True)),
-                        ('case_outcome', models.CharField(blank=True, max_length=255, null=True)),
-                        ('date_of_next_activity_day', models.IntegerField(blank=True, null=True)),
-                        ('date_of_next_activity_month', models.CharField(blank=True, max_length=255, null=True)),
-                        ('date_of_next_activity_year', models.IntegerField(blank=True, null=True)),
-                        ('judicial_officer_1', models.CharField(blank=True, max_length=255, null=True)),
-                        ('judicial_officer_2', models.CharField(blank=True, max_length=255, null=True)),
-                        ('judicial_officer_3', models.CharField(blank=True, max_length=255, null=True)),
-                        ('judicial_officer_4', models.CharField(blank=True, max_length=255, null=True)),
-                        ('judicial_officer_5', models.CharField(blank=True, max_length=255, null=True)),
-                        ('judicial_officer_6', models.CharField(blank=True, max_length=255, null=True)),
-                        ('last_date_of_submission_of_case_file_day', models.CharField(blank=True, max_length=255, null=True)),
-                        ('last_date_of_submission_of_case_file_month', models.CharField(blank=True, max_length=255, null=True)),
-                        ('last_date_of_submission_of_case_file_year', models.CharField(blank=True, max_length=255, null=True)),
-                        ('no_of_accused_remanded', models.IntegerField(blank=True, null=True)),
-                        ('no_of_defendants_accused_female', models.IntegerField(blank=True, null=True)),
-                        ('no_of_defendants_accused_male', models.IntegerField(blank=True, null=True)),
-                        ('no_of_defendants_accused_organization', models.IntegerField(blank=True, null=True)),
-                        ('no_of_plaintiffs_or_appellants_female', models.IntegerField(blank=True, null=True)),
-                        ('no_of_plaintiffs_or_appellants_male', models.IntegerField(blank=True, null=True)),
-                        ('no_of_plaintiffs_or_appellants_organization', models.IntegerField(blank=True, null=True)),
-                        ('no_of_witnesses_in_court_d', models.IntegerField(blank=True, null=True)),
-                        ('no_of_witnesses_in_court_w', models.IntegerField(blank=True, null=True)),
-                        ('parties_have_legal_representation', models.CharField(blank=True, max_length=255, null=True)),
-                        ('remarks', models.CharField(blank=True, max_length=255, null=True)),
-                        ('specific_case_type', models.CharField(blank=True, max_length=255, null=True)),
-                        ('today_date_day', models.IntegerField(blank=True, null=True)),
-                        ('today_date_month', models.CharField(blank=True, max_length=255, null=True)),
-                        ('today_date_year', models.CharField(blank=True, max_length=255, null=True)),
-                        ('judicial_officer_7', models.CharField(blank=True, max_length=255, null=True)),
-                        ('judicial_officer_8', models.CharField(blank=True, max_length=255, null=True)),
-                        ('name_of_court', models.CharField(blank=True, max_length=255, null=True)),
-                        ('unit_rank', models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='statistics.unitrank')),
-                    ],
-                ),
-            ]
-
-      . 0002_remove_dcrtdata_unit_rank.py
-        Content:
-        # Generated by Django 3.2.21 on 2023-10-11 07:12
-        
-        from django.db import migrations
-        
-        
-        class Migration(migrations.Migration):
-        
-            dependencies = [
-                ('statistics', '0001_initial_squashed_0022_dcrtdata_unit_rank'),
-            ]
-        
-            operations = [
-                migrations.RemoveField(
-                    model_name='dcrtdata',
-                    name='unit_rank',
-                ),
-            ]
-
-      . 0003_financialquarter_quarter_number.py
-        Content:
-        # Generated by Django 3.2.21 on 2023-10-11 12:43
-        
-        from django.db import migrations, models
-        
-        
-        class Migration(migrations.Migration):
-        
-            dependencies = [
-                ('statistics', '0002_remove_dcrtdata_unit_rank'),
-            ]
-        
-            operations = [
-                migrations.AddField(
-                    model_name='financialquarter',
-                    name='quarter_number',
-                    field=models.IntegerField(default=1, help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4'),
-                    preserve_default=False,
-                ),
-            ]
-
-      . __init__.py
-        Content:
-
 
     . models.py
       Content:
@@ -3639,7 +3943,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                                 <div class="bg-white shadow border-0 rounded border-light p-4 p-lg-5 w-100 fmxw-500">
                                     <div class="text-center text-md-center mb-4 mt-md-0">
                                         <h1 class="mb-0 h3">
-                                            Judiciary Stastical Information System
+                                            Sign IN
                                         </h1>
                                         <br />
                                         <p>
@@ -3731,7 +4035,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                                 <div class="bg-white shadow border-0 rounded border-light p-4 p-lg-5 w-100 fmxw-500">
                                     <div class="text-center text-md-center mb-4 mt-md-0">
                                         <h1 class="mb-0 h3">
-                                            Judiciary Stastical Information System
+                                            Sign UP
                                         </h1>
                                         <br />
                                         <p>
@@ -7841,6 +8145,247 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         </html>
 
     . meetings/
+      . dashboard.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Meetings Dashboard{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Meetings Dashboard</h2>
+                <a href="{% url 'meetings:meeting_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Meeting
+                </a>
+            </div>
+        
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Meetings</h5>
+                            <h2 class="mb-0">{{ stats.total_meetings }}</h2>
+                            <small>Last 30 days</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Upcoming</h5>
+                            <h2 class="mb-0">{{ stats.upcoming_count }}</h2>
+                            <small>Scheduled meetings</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Completed</h5>
+                            <h2 class="mb-0">{{ stats.completed_count }}</h2>
+                            <small>Last 30 days</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Cancelled</h5>
+                            <h2 class="mb-0">{{ stats.cancelled_count }}</h2>
+                            <small>Last 30 days</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-8">
+                    <!-- Upcoming Meetings -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Upcoming Meetings</h5>
+                            <a href="{% url 'meetings:meeting_list' %}?status=scheduled" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Date & Time</th>
+                                            <th>Mode</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for meeting in upcoming_meetings %}
+                                        <tr>
+                                            <td>{{ meeting.title }}</td>
+                                            <td>
+                                                {{ meeting.date|date:"M d, Y" }}<br>
+                                                <small class="text-muted">
+                                                    {{ meeting.start_time|time:"g:i A" }} - {{ meeting.end_time|time:"g:i A" }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ meeting.meeting_mode|yesno:'primary,secondary' }}">
+                                                    {{ meeting.get_meeting_mode_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">No upcoming meetings</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Recent Meetings -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Recent Meetings</h5>
+                            <a href="{% url 'meetings:meeting_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for meeting in recent_meetings %}
+                                        <tr>
+                                            <td>{{ meeting.title }}</td>
+                                            <td>{{ meeting.date|date:"M d, Y" }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ meeting.status|yesno:'success,secondary' }}">
+                                                    {{ meeting.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">No recent meetings</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Right Column -->
+                <div class="col-md-4">
+                    <!-- My Meetings -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">My Meetings</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for meeting in my_meetings %}
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-light rounded p-2">
+                                        <i class="fas fa-calendar-alt text-primary"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">{{ meeting.title }}</h6>
+                                    <small class="text-muted">
+                                        {{ meeting.date|date:"M d, Y" }} at {{ meeting.start_time|time:"g:i A" }}
+                                    </small>
+                                </div>
+                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                            {% empty %}
+                            <p class="text-center text-muted">No upcoming meetings for you</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+        
+                    <!-- Meeting Types Distribution -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Meeting Types</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for type in meetings_by_type %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{{ type.meeting_type|title }}</span>
+                                    <span class="fw-bold">{{ type.count }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div 
+                                        class="progress-bar" 
+                                        role="progressbar" 
+                                        style="width: {% widthratio type.count stats.total_meetings 100 %}%"
+                                        aria-valuenow="{% widthratio type.count stats.total_meetings 100 %}"
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+        
+                    <!-- Meeting Modes Distribution -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Meeting Modes</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for mode in meetings_by_mode %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{{ mode.meeting_mode|title }}</span>
+                                    <span class="fw-bold">{{ mode.count }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div 
+                                        class="progress-bar bg-success" 
+                                        role="progressbar" 
+                                        style="width: {% widthratio mode.count stats.total_meetings 100 %}%"
+                                        aria-valuenow="{% widthratio mode.count stats.total_meetings 100 %}"
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock content %}
+
       . meeting_detail.html
         Content:
         {# templates/meetings/meeting_detail.html #}
@@ -8024,6 +8569,595 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                 </div>
             </div>
         </div>
+        {% endblock %}
+
+      . meeting_form.html
+        Content:
+        {% extends "layouts/base.html" %}
+        
+        {% block title %}
+            {% if form.instance.pk %}Edit Meeting{% else %}New Meeting{% endif %}
+        {% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-10">
+                    <!-- Back button -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <a href="{% url 'meetings:dashboard' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+        
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h2 class="h4 mb-0">
+                                {% if form.instance.pk %}
+                                    Edit Meeting: {{ form.instance.title }}
+                                {% else %}
+                                    Schedule New Meeting
+                                {% endif %}
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                                {% csrf_token %}
+        
+                                {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+        
+                                <!-- Basic Information -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3">Basic Information</h5>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label for="{{ form.title.id_for_label }}" class="form-label">Title*</label>
+                                        {{ form.title }}
+                                        {% if form.title.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.title.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.department.id_for_label }}" class="form-label">Department*</label>
+                                        {{ form.department }}
+                                        {% if form.department.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.department.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.meeting_type.id_for_label }}" class="form-label">Meeting Type*</label>
+                                        {{ form.meeting_type }}
+                                        {% if form.meeting_type.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.meeting_type.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <!-- Date and Time -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3">Date and Time</h5>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.date.id_for_label }}" class="form-label">Date*</label>
+                                        {{ form.date }}
+                                        {% if form.date.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.date.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.start_time.id_for_label }}" class="form-label">Start Time*</label>
+                                        {{ form.start_time }}
+                                        {% if form.start_time.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.start_time.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.end_time.id_for_label }}" class="form-label">End Time*</label>
+                                        {{ form.end_time }}
+                                        {% if form.end_time.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.end_time.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <!-- Location -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3">Location</h5>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.meeting_mode.id_for_label }}" class="form-label">Meeting Mode*</label>
+                                        {{ form.meeting_mode }}
+                                        {% if form.meeting_mode.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.meeting_mode.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.physical_location.id_for_label }}" class="form-label">Physical Location</label>
+                                        {{ form.physical_location }}
+                                        {% if form.physical_location.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.physical_location.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <!-- Virtual Meeting Details -->
+                                <div class="row mb-4" id="virtualMeetingDetails">
+                                    <div class="col-12">
+                                        <h5 class="mb-3">Virtual Meeting Details</h5>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.virtual_platform.id_for_label }}" class="form-label">Platform</label>
+                                        {{ form.virtual_platform }}
+                                        {% if form.virtual_platform.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.virtual_platform.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.virtual_meeting_url.id_for_label }}" class="form-label">Meeting URL</label>
+                                        {{ form.virtual_meeting_url }}
+                                        {% if form.virtual_meeting_url.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.virtual_meeting_url.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.virtual_meeting_id.id_for_label }}" class="form-label">Meeting ID</label>
+                                        {{ form.virtual_meeting_id }}
+                                        {% if form.virtual_meeting_id.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.virtual_meeting_id.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.virtual_meeting_password.id_for_label }}" class="form-label">Meeting Password</label>
+                                        {{ form.virtual_meeting_password }}
+                                        {% if form.virtual_meeting_password.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.virtual_meeting_password.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <!-- Agenda -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3">Agenda</h5>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label for="{{ form.agenda.id_for_label }}" class="form-label">Meeting Agenda*</label>
+                                        {{ form.agenda }}
+                                        {% if form.agenda.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.agenda.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <!-- Participants -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3">Participants</h5>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label for="{{ form.participants.id_for_label }}" class="form-label">Select Participants</label>
+                                        {{ form.participants }}
+                                        {% if form.participants.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.participants.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <!-- Documents -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3">Meeting Documents</h5>
+                                    </div>
+                                    <div class="col-12">
+                                        <div id="documents-container">
+                                            <!-- Initial document form -->
+                                            <div class="document-form mb-3 p-3 border rounded bg-light">
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">Document Type</label>
+                                                        <select name="document_type[]" class="form-control">
+                                                            <option value="agenda">Agenda</option>
+                                                            <option value="minutes">Minutes</option>
+                                                            <option value="presentation">Presentation</option>
+                                                            <option value="report">Report</option>
+                                                            <option value="other">Other</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">File</label>
+                                                        <input type="file" name="document_file[]" class="form-control" required>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">Notes</label>
+                                                        <textarea name="document_notes[]" class="form-control" rows="1" 
+                                                            placeholder="Optional notes"></textarea>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-danger remove-document" style="display: none;">
+                                                    <i class="fas fa-trash"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <button type="button" class="btn btn-secondary" id="add-document">
+                                            <i class="fas fa-plus"></i> Add Another Document
+                                        </button>
+                                    </div>
+                                </div>
+        
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'meetings:dashboard' %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-arrow-left me-1"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        {% if form.instance.pk %}
+                                            <i class="fas fa-save me-1"></i> Update Meeting
+                                        {% else %}
+                                            <i class="fas fa-plus me-1"></i> Create Meeting
+                                        {% endif %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% block javascripts %}
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle meeting mode toggle
+            const meetingModeSelect = document.getElementById('{{ form.meeting_mode.id_for_label }}');
+            const virtualDetailsDiv = document.getElementById('virtualMeetingDetails');
+            
+            function toggleVirtualDetails() {
+                if (meetingModeSelect.value === 'physical') {
+                    virtualDetailsDiv.style.display = 'none';
+                } else {
+                    virtualDetailsDiv.style.display = 'flex';
+                }
+            }
+            
+            meetingModeSelect.addEventListener('change', toggleVirtualDetails);
+            toggleVirtualDetails(); // Call once on page load
+        
+            // Handle document forms
+            const container = document.getElementById('documents-container');
+            const addButton = document.getElementById('add-document');
+            
+            addButton.addEventListener('click', function() {
+                // Clone the first document form
+                const newForm = container.querySelector('.document-form').cloneNode(true);
+                
+                // Clear input values
+                newForm.querySelectorAll('input, textarea').forEach(input => input.value = '');
+                
+                // Show remove button
+                newForm.querySelector('.remove-document').style.display = 'block';
+                
+                // Add event listener to remove button
+                newForm.querySelector('.remove-document').addEventListener('click', function() {
+                    newForm.remove();
+                });
+                
+                // Append new form
+                container.appendChild(newForm);
+            });
+        
+            // Initialize date and time pickers if needed
+            if (typeof flatpickr !== 'undefined') {
+                flatpickr('input[type="date"]', {
+                    dateFormat: 'Y-m-d',
+                    minDate: 'today'
+                });
+                
+                flatpickr('input[type="time"]', {
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: "H:i",
+                    time_24hr: true
+                });
+            }
+        });
+        </script>
+        {% endblock %}
+        {% endblock content %}
+
+      . meeting_list.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Meetings Dashboard{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Meetings Dashboard</h2>
+                <a href="{% url 'meetings:meeting_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Meeting
+                </a>
+            </div>
+        
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Meetings</h5>
+                            <h2 class="mb-0">{{ stats.total_meetings }}</h2>
+                            <small>Last 30 days</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Upcoming</h5>
+                            <h2 class="mb-0">{{ stats.upcoming_count }}</h2>
+                            <small>Scheduled meetings</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Completed</h5>
+                            <h2 class="mb-0">{{ stats.completed_count }}</h2>
+                            <small>Last 30 days</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Cancelled</h5>
+                            <h2 class="mb-0">{{ stats.cancelled_count }}</h2>
+                            <small>Last 30 days</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-8">
+                    <!-- Upcoming Meetings -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Upcoming Meetings</h5>
+                            <a href="{% url 'meetings:meeting_list' %}?status=scheduled" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Date & Time</th>
+                                            <th>Mode</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for meeting in upcoming_meetings %}
+                                        <tr>
+                                            <td>{{ meeting.title }}</td>
+                                            <td>
+                                                {{ meeting.date|date:"M d, Y" }}<br>
+                                                <small class="text-muted">
+                                                    {{ meeting.start_time|time:"g:i A" }} - {{ meeting.end_time|time:"g:i A" }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ meeting.meeting_mode|yesno:'primary,secondary' }}">
+                                                    {{ meeting.get_meeting_mode_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">No upcoming meetings</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Recent Meetings -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Recent Meetings</h5>
+                            <a href="{% url 'meetings:meeting_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for meeting in recent_meetings %}
+                                        <tr>
+                                            <td>{{ meeting.title }}</td>
+                                            <td>{{ meeting.date|date:"M d, Y" }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ meeting.status|yesno:'success,secondary' }}">
+                                                    {{ meeting.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">No recent meetings</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Right Column -->
+                <div class="col-md-4">
+                    <!-- My Meetings -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">My Meetings</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for meeting in my_meetings %}
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-light rounded p-2">
+                                        <i class="fas fa-calendar-alt text-primary"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">{{ meeting.title }}</h6>
+                                    <small class="text-muted">
+                                        {{ meeting.date|date:"M d, Y" }} at {{ meeting.start_time|time:"g:i A" }}
+                                    </small>
+                                </div>
+                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                            {% empty %}
+                            <p class="text-center text-muted">No upcoming meetings for you</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+        
+                    <!-- Meeting Types Distribution -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Meeting Types</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for type in meetings_by_type %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{{ type.meeting_type|title }}</span>
+                                    <span class="fw-bold">{{ type.count }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div 
+                                        class="progress-bar" 
+                                        role="progressbar" 
+                                        style="width: {% widthratio type.count stats.total_meetings 100 %}%"
+                                        aria-valuenow="{% widthratio type.count stats.total_meetings 100 %}"
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+        
+                    <!-- Meeting Modes Distribution -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Meeting Modes</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for mode in meetings_by_mode %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{{ mode.meeting_mode|title }}</span>
+                                    <span class="fw-bold">{{ mode.count }}</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div 
+                                        class="progress-bar bg-success" 
+                                        role="progressbar" 
+                                        style="width: {% widthratio mode.count stats.total_meetings 100 %}%"
+                                        aria-valuenow="{% widthratio mode.count stats.total_meetings 100 %}"
+                                        aria-valuemin="0" 
+                                        aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock content %}
+
+    . memos/
+      . dashboard.html
+        Content:
+
+
+      . my_memos.html
+        Content:
+        {% extends "layouts/base.html" %}
+        
+        {% block title %} My Memos {% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <h2>My Memos</h2>
+            <p>This page will display memos created by the logged-in user.</p>
+            </div>
         {% endblock %}
 
     . statistics/
@@ -8766,19 +9900,21 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     
     # Register your models here.
 
+  . apps.py
+    Content:
+
+
   . config.py
     Content:
-    # -*- encoding: utf-8 -*-
-    """
-    Copyright (c) 2019 - present AppSeed.us
-    """
-    
     from django.apps import AppConfig
     
     
+    
     class AuthConfig(AppConfig):
-        name = 'apps.auth'
-        label = 'apps_auth'
+        name = 'auth'
+        label = "authentication" # <--- Correct label
+        
+        
 
   . forms.py
     Content:
@@ -8843,24 +9979,46 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
             model = User
             fields = ('username', 'email', 'password1', 'password2')
 
-  . migrations/
-    . __init__.py
-      Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-
   . models.py
     Content:
-    # -*- encoding: utf-8 -*-
-    """
-    Copyright (c) 2019 - present AppSeed.us
-    """
-    
+          
     from django.db import models
+    from django.contrib.auth.models import AbstractUser
+    from apps.organization.models import Department  # Correct import path
     
-    # Create your models here.
+    
+    class CustomUser(AbstractUser):
+        departments = models.ManyToManyField(Department, related_name='members')
+    
+        # Add any other fields you need here, e.g.
+        first_name = models.CharField(max_length=150, blank=True)
+        last_name = models.CharField(max_length=150, blank=True)
+        pj_number = models.CharField(max_length=150, blank=True)
+        phone = models.CharField(max_length=150, blank=True)
+        mobile = models.CharField(max_length=150, blank=True)
+    
+    
+        # OPTIONAL: Add a __str__ method
+        def __str__(self):
+            return self.username
+    
+        @property
+        def department(self):
+            """Get user's primary department based on their active role"""
+            user_role = self.user_roles.filter(is_active=True).first()
+            if user_role:
+                return user_role.role.department
+            return None
+        
+        @property
+        def is_director(self):
+            """Check if user is a director"""
+            return self.user_roles.filter(is_active=True, role__name='Director').exists()
+    
+        @property
+        def is_manager(self):
+            """Check if user is a manager"""
+            return self.user_roles.filter(is_active=True, role__name='Manager').exists()
 
   . tests.py
     Content:
@@ -8901,7 +10059,6 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     from django.shortcuts import render, redirect
     from django.contrib.auth import authenticate, login
     from .forms import LoginForm, SignUpForm
-    
     
     
     def login_view(request):
@@ -9034,6 +10191,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
+        'authentication', # added the authentication apps
         'apps.home', 
         'django_unicorn',
         'apps.statistics',
@@ -9041,9 +10199,15 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         'apps.organization',
         'apps.budget',
         'apps.meetings',
+        'apps.memos',
         'debug_toolbar',
     
     ]
+    
+    
+    
+    AUTH_USER_MODEL = 'authentication.CustomUser'
+    
     
     
     
@@ -9219,10 +10383,11 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     
     urlpatterns = [
         path('admin/', admin.site.urls),          # Django admin route
-        path("", include("apps.authentication.urls")), # Auth routes - login / register
+        path('accounts/', include('authentication.urls')),  # Auth routes - login / register
         path("statistics/", include("apps.statistics.urls", namespace="statistics")),
         path('budget/', include('apps.budget.urls', namespace='budget')),
         path('meetings/', include('apps.meetings.urls', namespace='meetings')),
+        path('memos/', include('apps.memos.urls', namespace='memos')),
         path("unicorn/", include("django_unicorn.urls")),
         path("", include("apps.home.urls")), # UI Kits Html files
     
@@ -9252,10 +10417,6 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     
     application = get_wsgi_application()
 
-. db.sqlite3-journal
-  Content:
-  Unable to read file: 'utf-8' codec can't decode byte 0xeb in position 12: invalid continuation byte
-
 . docker-compose.yml
   Content:
   services:
@@ -9265,25 +10426,25 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         - postgres_data:/var/lib/postgresql/data
       environment:
         - POSTGRES_DB=${POSTGRES_DB}
-        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_=${POSTGRES_}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       ports:
-        - "5432:5432"
+        - "5433:5432"
       networks:
         - app_network
   
     web:
       build: .
-      command: python manage.py runserver 0.0.0.0:8000
+      command: python manage.py runserver 0.0.0.0:8005
       volumes:
         - .:/code
         - static_volume:/code/static
         - media_volume:/code/media
       ports:
-        - "8000:8000"
+        - "8005:8005"
       environment:
         - POSTGRES_DB=${POSTGRES_DB}
-        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_=${POSTGRES_}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
         - POSTGRES_HOST=${POSTGRES_HOST}
         - POSTGRES_PORT=${POSTGRES_PORT}
@@ -9301,6 +10462,24 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     postgres_data:
     static_volume:
     media_volume:
+
+. entrypoint.sh
+  Content:
+  #!/bin/sh
+  
+  # Wait for postgres
+  until nc -z $POSTGRES_HOST $POSTGRES_PORT; do
+      echo "Waiting for postgres..."
+      sleep 1
+  done
+  
+  echo "PostgreSQL started"
+  
+  # Run migrations
+  python manage.py migrate
+  
+  # Start server
+  exec python manage.py runserver 0.0.0.0:8005
 
 . env.sample
   Content:
@@ -9357,178 +10536,6 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       main()
 
 . media/
-. readme.md
-  Content:
-  
-  # Moringa Capstone Project: [Your Project Name Here - e.g., Judiciary Performance Management System]
-  
-  ## Description
-  
-  [**Replace this with a concise and informative description of your project.**]
-  
-  This Django project aims to [**briefly explain the purpose of your application.**  For example: "This Django project is a web application designed to manage and track performance data within the judiciary. It includes modules for document management, statistical reporting (DCRT), meeting scheduling, workplan management, and budget tracking."].
-  
-  It is built using Django framework and incorporates:
-  
-  *   **Modular Design:** Organized into Django apps for different functionalities (authentication, home, statistics, document management, organization, meetings).
-  *   **Bootstrap UI:**  Utilizes Bootstrap for a responsive and visually appealing user interface, enhanced with Material Design Icons.
-  *   **Dockerized:**  Easily deployable and runnable using Docker.
-  *   **Database:** Uses SQLite3 for development (can be configured for other databases in production).
-  
-  ## Features
-  
-  [**List the main features of your application.  Refer to the file structure and modules you have implemented to create this list.**  For example:]
-  
-  *   **User Authentication:** Secure user registration, login, and logout functionality.
-  *   **Department and Role Management:**  Organization module to define departments and roles within the judiciary.
-  *   **Dashboard:** Central dashboard to view departments and access module functionalities.
-  *   **Document Management:** Module for uploading, organizing, and managing documents.
-  *   **Statistics (DCRT):** Module for data entry, analysis, and reporting of Daily Court Returns data.
-  *   **Meetings Management:** Module for scheduling, managing, and tracking meetings.
-  *   **Workplan Management:** Module for creating and tracking departmental workplans.
-  *   **Budget Management:** Module for managing and tracking departmental budgets.
-  *   **Role-Based Permissions:**  Module-level access control based on user roles and permissions.
-  *   **Responsive Design:**  UI is designed to be responsive and work well on different screen sizes.
-  
-  ## Getting Started
-  
-  Follow these instructions to set up and run the project locally for development.
-  
-  ### Prerequisites
-  
-  *   **Python 3.9+** (as specified in the `Dockerfile`)
-  *   **pip** (Python package installer)
-  *   **Docker** and **Docker Compose** (if you want to use Docker)
-  
-  ### Installation
-  
-  1.  **Clone the repository:**
-  
-      ```bash
-      git clone [repository URL]
-      cd moringa_capstone
-      ```
-  
-  2.  **Create a virtual environment (recommended):**
-  
-      ```bash
-      python -m venv venv
-      source venv/bin/activate  # On Linux/macOS
-      venv\Scripts\activate  # On Windows
-      ```
-  
-  3.  **Install dependencies:**
-  
-      ```bash
-      pip install --upgrade pip
-      pip install -r requirements.txt
-      ```
-  
-  4.  **Apply database migrations:**
-  
-      ```bash
-      python manage.py migrate
-      ```
-  
-  5.  **Seed initial data (optional but recommended):**
-  
-      To populate the database with initial organizational structure and modules, run the seed commands:
-  
-      ```bash
-      python manage.py seed_organization
-      python manage.py seed_modules
-      python manage.py seeddivisions
-      python manage.py unit_seeder
-      python manage.py unit_division_seeder
-      python manage.py populate_unit_ranks
-      python manage.py seedfinancialdata
-      python manage.py seed_months
-      ```
-  
-  6.  **Create a superuser (admin account):**
-  
-      ```bash
-      python manage.py createsuperuser
-      ```
-  
-  7.  **Run the development server:**
-  
-      ```bash
-      python manage.py runserver 0.0.0.0:8001
-      ```
-  
-      Access the application in your browser at `http://127.0.0.1:8001/`.
-  
-  ## Running with Docker
-  
-  1.  **Build the Docker image:**
-  
-      ```bash
-      docker-compose build web
-      ```
-  
-  2.  **Run the Docker containers:**
-  
-      ```bash
-      docker-compose up
-      ```
-  
-      The application will be accessible at `http://127.0.0.1:8001/`.
-  
-  3.  **Access Docker Bash (optional):**
-  
-      To run management commands or inspect the container, you can access the Docker bash:
-  
-      ```bash
-      docker-compose exec web bash
-      ```
-  
-      From within the Docker container's bash, you can run Django management commands like `python manage.py createsuperuser`, `python manage.py migrate`, `python manage.py seed_organization`, etc.
-  
-  ## Usage
-  
-  1.  **Access the application in your browser** at `http://127.0.0.1:8001/`.
-  2.  **Log in** using the superuser account you created or register a new user.
-  3.  **Navigate to the Dashboard** to see the list of departments.
-  4.  **Click "View Modules"** on a department card to access the available modules.
-  5.  **Explore the modules** you have access to, such as DCRT (Statistics), Workplans, and Budget.
-  
-  ## Theme Colors
-  
-  The application's UI theme uses the following colors, as defined in `UI.md`:
-  
-  *   **Primary:** `#26443c`
-  *   **Accent:** `#c4a938`
-  *   **Background:** `#f7f9f8`
-  *   **Text (Black):** `#000000`
-  
-  These colors are used for headings, card headers, icons, and other UI elements to create a consistent and visually appealing design.
-  
-  ## Contributing
-  
-  [**Optional: Add guidelines for contributing if you plan to allow contributions.**  For example:]
-  
-  Contributions are welcome! If you'd like to contribute to this project, please follow these steps:
-  
-  1.  Fork the repository.
-  2.  Create a new branch for your feature or bug fix.
-  3.  Make your changes and commit them with clear commit messages.
-  4.  Submit a pull request to the main branch.
-  
-  ## License
-  
-  [**Optional: Specify the project license, e.g., MIT License, Apache 2.0, or leave it as "Proprietary" if it's not open-source.**  For example:]
-  
-  This project is licensed under the [MIT License](LICENSE) - see the `LICENSE.md` file for details.
-  
-  ## Contact
-  
-  [**Optional: Add contact information or links, e.g., your email, GitHub profile.**  For example:]
-  
-  For questions or inquiries, please contact [Your Name] at [your.email@example.com].
-  
-  ---
-
 . requirements.txt
   Content:
   # Core Django requirements

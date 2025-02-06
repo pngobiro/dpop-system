@@ -72,6 +72,8 @@ def should_exclude(item, path):
         "encoded-key.txt",
         "neo4j_kenya_ewakili.pem",
         "odk_central.pem",
+        "readme.md",
+        "UI.md",
         # New static and vendor related exclusions
         "static",
         "vendor",
@@ -84,6 +86,7 @@ def should_exclude(item, path):
         "3rdparty",
         "project docs"
         "cdn",
+        "migrations",
     ]
     
     # Check if the item matches any in the exclude list

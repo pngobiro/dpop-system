@@ -1,6 +1,6 @@
 # apps/meetings/models.py
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from apps.organization.models import Department
 from apps.document_management.models import Document
 
@@ -8,7 +8,7 @@ from apps.document_management.models import Document
 class MeetingAction(models.Model):
     meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
     description = models.TextField()
-    assigned_to = models.ForeignKey(User, on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     due_date = models.DateField()
 
     class Meta:
@@ -55,7 +55,7 @@ class MeetingParticipant(models.Model):
     ]
 
     meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
-    participant = models.ForeignKey(User, on_delete=models.CASCADE)
+    participant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=PARTICIPANT_ROLE, default='attendee')
 
     class Meta:
@@ -121,8 +121,8 @@ class Meeting(models.Model):
     status = models.CharField(max_length=20, choices=MEETING_STATUS, default='scheduled')
     
     # Meeting organization
-    organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_meetings')
-    participants = models.ManyToManyField(User, through='MeetingParticipant')
+    organizer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='organized_meetings')
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, through='MeetingParticipant', related_name='meetings')
     
     # Recording (for virtual meetings)
     recording_url = models.URLField(blank=True, null=True)

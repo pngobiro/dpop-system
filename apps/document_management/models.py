@@ -1,6 +1,6 @@
 # apps/document_management/models.py
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
@@ -65,7 +65,7 @@ class Document(models.Model):
     parent_document = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='versions')
     
     # Metadata
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='uploaded_documents')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_accessed = models.DateTimeField(null=True, blank=True)
@@ -91,9 +91,9 @@ class DocumentAccess(models.Model):
     ]
 
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     permission_type = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
-    granted_by = models.ForeignKey(User, related_name='granted_permissions', on_delete=models.CASCADE)
+    granted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='granted_permissions')
     granted_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -115,7 +115,7 @@ class DocumentActivity(models.Model):
     ]
 
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     action_details = models.TextField(blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)

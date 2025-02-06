@@ -14,19 +14,24 @@ RUN apt-get update && \
     apt-utils \
     ffmpeg \
     postgresql-client \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Copy requirements and install dependencies
 COPY requirements.txt /code/
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# Copy project files
 COPY . /code/
 
-# Add entrypoint script
-COPY entrypoint.sh /code/
-RUN chmod +x /code/entrypoint.sh
+# Create data directory
+RUN mkdir -p /code/data/db
 
-# Set entrypoint
-ENTRYPOINT ["/code/entrypoint.sh"]
+# Set permissions as root
+RUN chmod +x /code/entrypoint.sh && \
+    chmod -R 755 /code && \
+    chmod -R 777 /code/data
+
+# Command to run
+CMD ["/bin/bash", "/code/entrypoint.sh"]

@@ -1,6 +1,5 @@
-# apps/organization/models.py
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 class Department(models.Model):
     name = models.CharField(max_length=200)
@@ -37,7 +36,7 @@ class Role(models.Model):
         ordering = ['department', 'job_group', 'title']
 
 class UserRole(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_roles')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_roles')
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     assigned_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)

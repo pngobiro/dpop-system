@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'authentication', # added the authentication apps
     'apps.home', 
     'django_unicorn',
     'apps.statistics',
@@ -40,9 +41,15 @@ INSTALLED_APPS = [
     'apps.organization',
     'apps.budget',
     'apps.meetings',
+    'apps.memos',
     'debug_toolbar',
 
 ]
+
+
+
+AUTH_USER_MODEL = 'authentication.CustomUser'
+
 
 
 

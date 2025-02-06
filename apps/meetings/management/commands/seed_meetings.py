@@ -1,131 +1,112 @@
 # apps/meetings/management/commands/seed_meetings.py
 from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
 from django.utils import timezone
-from django.contrib.auth.models import User
-from apps.meetings.models import Meeting, MeetingParticipant, MeetingDocument
+from apps.meetings.models import Meeting, MeetingParticipant
 from apps.organization.models import Department
-from datetime import timedelta, datetime
+from datetime import timedelta
+
+User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Seeds meetings data'
+    help = 'Seeds sample meetings for each department'
 
-    def create_default_users(self):
-        """Create default users if they don't exist."""
-        director, created = User.objects.get_or_create(
-            username='director',
-            defaults={
-                'email': 'director@judiciary.go.ke',
-                'first_name': 'John',
-                'last_name': 'Director',
-                'is_staff': True
-            }
-        )
-        if created:
-            director.set_password('director123')  # Set a default password
-            director.save()
-            self.stdout.write(self.style.SUCCESS('Created director user'))
-        return director
-
-    def handle(self, *args, **options):
+    def handle(self, *args, **kwargs):
         self.stdout.write('Seeding meetings data...')
 
+        # Get departments
+        departments = Department.objects.all()
         try:
-            # Ensure we have a director user
-            director = self.create_default_users()
+            director = User.objects.get(username='joseph.osewe')
+        except User.DoesNotExist:
+            self.stdout.write('Creating director user...')
+            director = User.objects.create_user(
+                username='joseph.osewe',
+                email='joseph.osewe@judiciary.go.ke',
+                first_name='Joseph',
+                last_name='Osewe',
+                is_staff=True,
+                is_superuser=True
+            )
+            director.set_password('Admin123!')
+            director.save()
 
-            # Get departments
-            departments = Department.objects.all()
-            if not departments.exists():
-                self.stdout.write(self.style.WARNING('No departments found. Please run seed_organization first.'))
-                return
-
-            # Sample meeting data
-            meetings_data = [
-                {
-                    'title': 'Performance Management Review',
-                    'meeting_type': 'director',
-                    'meeting_mode': 'hybrid',
-                    'physical_location': 'Conference Room A',
-                    'virtual_platform': 'zoom',
-                    'virtual_meeting_url': 'https://zoom.us/j/example',
-                    'virtual_meeting_id': '123456789',
-                    'virtual_meeting_password': 'performance',
-                    'agenda': '''
-                    1. Review of Q1 Performance Metrics
-                    2. Discussion of KPIs
-                    3. Planning for Q2
-                    4. AOB
-                    ''',
-                    'status': 'scheduled'
-                },
-                {
-                    'title': 'Budget Planning Session',
-                    'meeting_type': 'department',
-                    'meeting_mode': 'virtual',
-                    'virtual_platform': 'teams',
-                    'virtual_meeting_url': 'https://teams.microsoft.com/l/example',
-                    'virtual_meeting_id': '987654321',
-                    'virtual_meeting_password': 'budget2025',
-                    'agenda': '''
-                    1. Budget Review 2024
-                    2. Budget Allocation 2025
-                    3. Cost Saving Measures
-                    4. Project Funding Requirements
-                    ''',
-                    'status': 'scheduled'
-                },
-                {
-                    'title': 'Data Quality Workshop',
-                    'meeting_type': 'committee',
-                    'meeting_mode': 'physical',
-                    'physical_location': 'Training Room B',
-                    'agenda': '''
-                    1. Current Data Quality Issues
-                    2. Data Collection Standards
-                    3. Quality Improvement Measures
-                    4. Training Requirements
-                    ''',
-                    'status': 'scheduled'
-                }
+        meeting_types = {
+            'Department Internal': [
+                'Monthly Performance Review',
+                'Staff Meeting',
+                'Team Building',
+                'Strategy Session'
+            ],
+            'With Director': [
+                'Quarterly Review',
+                'Budget Planning',
+                'Performance Assessment',
+                'Strategic Planning'
+            ],
+            'Committee': [
+                'Technical Committee',
+                'Quality Assurance',
+                'Research Committee',
+                'Innovation Committee'
             ]
+        }
 
-            # Create meetings for each department
-            for dept in departments:
-                for idx, meeting_data in enumerate(meetings_data):
-                    # Calculate meeting date (future dates)
-                    meeting_date = timezone.now().date() + timedelta(days=idx+1)
+        for department in departments:
+            self.stdout.write(f'Creating meetings for {department.name}')
+            
+            # Get department head - first user in department with Assistant Director role
+            dept_head = User.objects.filter(departments=department).first()
+            
+            if not dept_head:
+                continue
 
-                    # Create meeting
+            # Create meetings for each type
+            for meeting_type, titles in meeting_types.items():
+                for title in titles:
+                    # Create future meeting
+                    days_ahead = 14 if meeting_type == 'Department Internal' else 30
+                    meeting_date = timezone.now().date() + timedelta(days=days_ahead)
+                    
                     meeting = Meeting.objects.create(
-                        title=f"{dept.name} - {meeting_data['title']}",
-                        department=dept,
-                        meeting_type=meeting_data['meeting_type'],
-                        meeting_mode=meeting_data['meeting_mode'],
+                        title=f"{department.name} - {title}",
+                        department=department,
+                        meeting_type=meeting_type,
                         date=meeting_date,
-                        start_time=datetime.strptime('10:00', '%H:%M').time(),
-                        end_time=datetime.strptime('11:30', '%H:%M').time(),
-                        physical_location=meeting_data.get('physical_location', ''),
-                        virtual_platform=meeting_data.get('virtual_platform', ''),
-                        virtual_meeting_url=meeting_data.get('virtual_meeting_url', ''),
-                        virtual_meeting_id=meeting_data.get('virtual_meeting_id', ''),
-                        virtual_meeting_password=meeting_data.get('virtual_meeting_password', ''),
-                        agenda=meeting_data['agenda'],
-                        status=meeting_data['status'],
-                        organizer=director
+                        start_time='10:00',
+                        end_time='11:30',
+                        meeting_mode='hybrid',
+                        physical_location='Conference Room A',
+                        virtual_platform='teams',
+                        virtual_meeting_url='https://teams.microsoft.com/meeting',
+                        agenda=f"""
+                        1. Opening Remarks
+                        2. Previous Action Items Review
+                        3. {title} Main Agenda
+                        4. Department Updates
+                        5. Way Forward
+                        6. AOB
+                        """,
+                        status='scheduled',
+                        organizer=dept_head if meeting_type == 'Department Internal' else director
                     )
 
-                    # Create a participant entry for the organizer
-                    MeetingParticipant.objects.create(
-                        meeting=meeting,
-                        participant=director,
-                        role='organizer',
-                    )
+                    # Add participants
+                    dept_staff = User.objects.filter(departments=department).distinct()
 
-                    self.stdout.write(self.style.SUCCESS(
-                        f'Created meeting: {meeting.title}'
-                    ))
+                    for staff in dept_staff:
+                        MeetingParticipant.objects.create(
+                            meeting=meeting,
+                            participant=staff,
+                            role='attendee'
+                        )
 
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Error seeding meetings: {str(e)}'))
+                    # Add director for director meetings
+                    if meeting_type == 'With Director':
+                        MeetingParticipant.objects.create(
+                            meeting=meeting,
+                            participant=director,
+                            role='organizer'
+                        )
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded meetings data'))
