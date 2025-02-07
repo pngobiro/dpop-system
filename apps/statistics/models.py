@@ -17,13 +17,24 @@ class FinancialQuarter(models.Model):
     name = models.CharField(max_length=255)
     start_date = models.DateField()
     end_date = models.DateField()
-    financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE)
-    quarter_number = models.IntegerField(help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4')
-
-    # show the name - start_date - end_date as get_quarter_name in date format dd/mm/yyyy
+    financial_year = models.ForeignKey('FinancialYear', on_delete=models.CASCADE)
+    quarter_number = models.IntegerField(
+        help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4'
+    )
 
     def get_quarter_name(self):
-        return self.name + ' - ' + str(self.start_date.strftime('%d/%m/%Y')) + ' - ' + str(self.end_date.strftime('%d/%m/%Y'))
+        """Format quarter name with dates in dd/mm/yyyy format"""
+        if isinstance(self.start_date, str):
+            return f"{self.name} ({self.start_date} - {self.end_date})"
+        
+        return "{} ({} - {})".format(
+            self.name,
+            self.start_date.strftime('%d/%m/%Y') if self.start_date else 'N/A',
+            self.end_date.strftime('%d/%m/%Y') if self.end_date else 'N/A'
+        )
+
+    def __str__(self):
+        return self.get_quarter_name()
     
 class Unit(models.Model):
     name = models.CharField(max_length=255)
