@@ -70,6 +70,28 @@ class Command(BaseCommand):
                 'icon_class': 'fas fa-file-pdf',
                 'url_name': 'reports:dashboard', 
                 'permission_codename': 'access_reports'
+            },
+            {
+                'name': 'Mail',
+                'description': 'Manage physical',
+                'icon_class': 'fas fa-envelope',
+                'url_name': 'mail:physical_list',
+                'permission_codename': 'access_mail'
+
+            },
+            {
+                'name': 'Surveys',
+                'description': 'Create and manage surveys',
+                'icon_class': 'fas fa-poll',
+                'url_name': 'surveys:dashboard',
+                'permission_codename': 'access_surveys'
+            },
+            {
+                'name': 'PMMU Evaluation and Target Setting',
+                'description': 'PMMU Evaluation and Target Setting',
+                'icon_class': 'fas fa-chart-line',
+                'url_name': 'pmmu_evaluation:dashboard',
+                'permission_codename': 'access_pmmu_evaluation'
             }
         ]
 
@@ -87,14 +109,21 @@ class Command(BaseCommand):
                 permission_codename=module_data['permission_codename']
             )
 
-            # Create permission
-            permission_name = f"Can access {module_data['name']} module"
-            Permission.objects.create(
+                 # Create permission using get_or_create
+            permission, created = Permission.objects.get_or_create(
                 codename=module_data['permission_codename'],
-                name=permission_name,
                 content_type=content_type,
+                defaults={
+                    'name': f"Can access {module_data['name']} module",
+                }
             )
 
-            self.stdout.write(f"Created module: {module.name} with permission: {module_data['permission_codename']}")
+            if created:
+                self.stdout.write(f"Created module: {module.name} with permission: {module_data['permission_codename']}")
+            else:
+                self.stdout.write(self.style.WARNING(f"Module '{module.name}' and/or permission '{module_data['permission_codename']}' already exists. Skipping."))
+
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded modules and permissions'))
+
+          

@@ -1,11 +1,12 @@
 from django import forms
 from .models import Memo, MemoTemplate, MemoComment
 from apps.document_management.models import Document
+from django.db.models import Q # Import Q
 
 class MemoForm(forms.ModelForm):
     document = forms.FileField(required=False)
     template = forms.ModelChoiceField(
-        queryset=MemoTemplate.objects.none(),
+        queryset=MemoTemplate.objects.none(),  # Start with an empty queryset
         required=False,
         empty_label="Select a template"
     )
@@ -29,25 +30,30 @@ class MemoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
+        user = kwargs.pop('user', None)  # Get the user from kwargs
         super().__init__(*args, **kwargs)
-        
+
         if user:
-            # Filter templates based on user's department
+            # Filter templates based on user's department (or global templates)
             self.fields['template'].queryset = MemoTemplate.objects.filter(
-                models.Q(department=user.department) | 
-                models.Q(department__isnull=True)
+                Q(department=user.department) | Q(department__isnull=True)
             )
+
 
     def clean(self):
         cleaned_data = super().clean()
         memo_type = cleaned_data.get('memo_type')
         external_recipient = cleaned_data.get('external_recipient')
 
+        # Add validation logic here if needed, based on memo_type and external_recipient
+
+        return cleaned_data # important
+
+
 class MemoTemplateForm(forms.ModelForm):
     class Meta:
         model = MemoTemplate
-        fields = ['name', 'content', 'department']
+        fields = ['name', 'content', 'department'] # added department
         widgets = {
             'content': forms.Textarea(attrs={'rows': 10, 'class': 'rich-text-editor'}),
         }

@@ -1,0 +1,132 @@
+{% extends "layouts/base.html" %}
+{% block title %}Mail Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Mail Detail: {{ mail.tracking_number }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Basic Information</h5>
+                    <p><strong>Subject:</strong> {{ mail.subject }}</p>
+                    <p><strong>Type:</strong> {{ mail.get_mail_type_display }}</p>
+                    <p><strong>Status:</strong> <span class="badge bg-info">{{ mail.get_status_display }}</span></p>
+                    <p><strong>Department:</strong> {{ mail.department.name }}</p>
+                    <p><strong>Priority:</strong> {{ mail.get_priority_display }}</p>
+                    <p><strong>File Number:</strong> {{ mail.file_number }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Sender/Recipient</h5>
+                    <p><strong>Sender:</strong> {{ mail.sender_name }}</p>
+                    <p><strong>Sender Address:</strong> {{ mail.sender_address|default:"-" }}</p>
+                    <p><strong>Recipient:</strong> {{ mail.recipient_name }}</p>
+                    <p><strong>Recipient Address:</strong> {{ mail.recipient_address|default:"-" }}</p>
+
+                    {% if mail.date_received %}
+                        <p><strong>Date Received:</strong> {{ mail.date_received }}</p>
+                    {% endif %}
+                    {% if mail.date_sent %}
+                        <p><strong>Date Sent:</strong> {{ mail.date_sent }}</p>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <hr>
+
+            <h5>Attachments</h5>
+            {% if mail.attachments.all %}
+                <ul>
+                {% for attachment in mail.attachments.all %}
+                    <li>
+                        {{ attachment.name }} - {{ attachment.description }}
+                        {% if attachment.digital_copy %}
+                        <a href="{{ attachment.digital_copy.document.get_file_url }}" target="_blank">View Digital Copy</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No attachments.</p>
+            {% endif %}
+
+
+             <hr>
+
+            <h5>Movement History</h5>
+           {% if movements %}
+              <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Handler</th>
+                            <th>Timestamp</th>
+                            <th>Notes</th>
+                            <th>Received By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movement in movements %}
+                        <tr>
+                            <td>{{ movement.from_location }}</td>
+                            <td>{{ movement.to_location }}</td>
+                            <td>{{ movement.handler.get_full_name }}</td>
+                            <td>{{ movement.timestamp }}</td>
+                            <td>{{ movement.notes|default:"-" }}</td>
+                            <td>{{ movement.received_by|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+              </div>
+              {% else %}
+               <p>No movement history.</p>
+              {% endif %}
+
+
+
+            <hr>
+            <h5>Activity Log</h5>
+              {% if activities %}
+
+                <div class="table-responsive">
+
+                  <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Timestamp</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                      {% for activity in activities %}
+                      <tr>
+                        <td>{{ activity.user.get_full_name }}</td>
+                        <td>{{ activity.get_action_display }}</td>
+                        <td>{{ activity.timestamp }}</td>
+                        <td>{{ activity.notes|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+
+                </div>
+
+              {% else %}
+               <p>No activity log.</p>
+              {% endif %}
+
+        </div>
+      </div>
+    <div class="text-center mt-3">
+      <a href="{% url 'mail:mail_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

@@ -70,7 +70,7 @@ def should_exclude(item, path):
         "neo4j_kenya_ewakili.pem",
         "odk_central.pem",
         "readme.md",
-        "UI.md",,
+        "UI.md",
         "vendor",
         "assets",
         "public",

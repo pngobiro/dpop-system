@@ -713,14 +713,38 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
     . admin.py
       Content:
-      # -*- encoding: utf-8 -*-
-      """
-      Copyright (c) 2019 - present AppSeed.us
-      """
-      
+      # apps/home/admin.py
       from django.contrib import admin
+      from django.contrib.auth.admin import UserAdmin
+      from .models import Module
+      from authentication.models import CustomUser  # Import CustomUser
       
-      # Register your models here.
+      class ModuleAdmin(admin.ModelAdmin):
+          list_display = ('name', 'description', 'icon_class', 'url_name', 'permission_codename', 'department') #Added Department
+          search_fields = ('name', 'description', 'url_name', 'permission_codename')
+          list_filter = ('department',)  # Add filtering by department
+      
+      admin.site.register(Module, ModuleAdmin)
+      
+      
+      class CustomUserAdmin(UserAdmin):
+          model = CustomUser
+          # Add or modify fieldsets to include custom fields in the admin
+          fieldsets = UserAdmin.fieldsets + (
+              (None, {'fields': ('pj_number', 'phone', 'mobile', 'departments',)}), #Added the many to many field
+          )
+          add_fieldsets = UserAdmin.add_fieldsets + (
+              (None, {'fields': ('pj_number', 'phone', 'mobile','departments',)}),
+          )
+          list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'get_departments') #added get_departments
+          search_fields = ('username', 'email', 'first_name', 'last_name', 'pj_number')
+          list_filter = ('is_staff', 'is_superuser', 'departments')
+      
+          def get_departments(self, obj): # added a function to return the department of a user
+              return ", ".join([d.name for d in obj.departments.all()])
+          get_departments.short_description = 'Departments'
+      
+      admin.site.register(CustomUser, CustomUserAdmin)
 
     . components/
       . __init__.py
@@ -825,6 +849,14 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                           'icon_class': 'fas fa-file-pdf',
                           'url_name': 'reports:dashboard', 
                           'permission_codename': 'access_reports'
+                      },
+                      {
+                          'name': 'Mail',
+                          'description': 'Manage physical',
+                          'icon_class': 'fas fa-envelope',
+                          'url_name': 'mail:physical_list',
+                          'permission_codename': 'access_mail'
+          
                       }
                   ]
           
@@ -842,17 +874,24 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                           permission_codename=module_data['permission_codename']
                       )
           
-                      # Create permission
-                      permission_name = f"Can access {module_data['name']} module"
-                      Permission.objects.create(
+                           # Create permission using get_or_create
+                      permission, created = Permission.objects.get_or_create(
                           codename=module_data['permission_codename'],
-                          name=permission_name,
                           content_type=content_type,
+                          defaults={
+                              'name': f"Can access {module_data['name']} module",
+                          }
                       )
           
-                      self.stdout.write(f"Created module: {module.name} with permission: {module_data['permission_codename']}")
+                      if created:
+                          self.stdout.write(f"Created module: {module.name} with permission: {module_data['permission_codename']}")
+                      else:
+                          self.stdout.write(self.style.WARNING(f"Module '{module.name}' and/or permission '{module_data['permission_codename']}' already exists. Skipping."))
+          
           
                   self.stdout.write(self.style.SUCCESS('Successfully seeded modules and permissions'))
+          
+                    
 
     . models.py
       Content:
@@ -925,6 +964,10 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       from apps.organization.models import Department
       from apps.home.models import Module # Import Module model
       
+      
+      def react_view(request):
+          return render(request, 'home/react.html')
+      
       @login_required
       def dashboard(request):
           departments = Department.objects.prefetch_related('roles').filter(is_active=True)
@@ -974,6 +1017,751 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               'modules': permitted_modules, # Pass only permitted modules to the template
           }
           return render(request, "home/department_modules.html", context)
+
+  . mail/
+    . __init__.py
+      Content:
+
+
+    . admin.py
+      Content:
+      from django.contrib import admin
+      
+      # Register your models here.
+
+    . apps.py
+      Content:
+            
+      # apps/mail/apps.py
+      from django.apps import AppConfig
+      
+      class MailConfig(AppConfig):
+          default_auto_field = 'django.db.models.BigAutoField'
+          name = 'apps.mail'
+          label = 'mail'
+      
+          def ready(self):
+              import apps.mail.signals  # Import signals here
+      
+          
+
+    . forms.py
+      Content:
+      # apps/mail/forms.py
+      from django import forms
+      from .models import PhysicalMail, MailAttachment, MailAssignment, MailMovement
+      
+      class PhysicalMailForm(forms.ModelForm):
+          class Meta:
+              model = PhysicalMail
+              fields = [
+                  'mail_type', 'subject', 'description', 'department',
+                  'priority', 'confidential', 'file_number',
+                  'delivery_method', 'weight', 'postage_cost',
+                  'courier_name', 'courier_tracking_number',
+                  'sender_name', 'sender_address', 'sender_phone',
+                  'recipient_name', 'recipient_address', 'recipient_phone',
+                  'requires_response', 'response_deadline'
+              ]
+              widgets = {
+                  'description': forms.Textarea(attrs={'rows': 4}),
+                  'sender_address': forms.Textarea(attrs={'rows': 3}),
+                  'recipient_address': forms.Textarea(attrs={'rows': 3}),
+                  'response_deadline': forms.DateInput(attrs={'type': 'date'}),
+              }
+      
+      class MailAttachmentForm(forms.ModelForm):
+          class Meta:
+              model = MailAttachment
+              fields = ['name', 'description', 'attachment_type', 'quantity', 'condition', 'digital_copy']
+              widgets = {
+                  'description': forms.Textarea(attrs={'rows': 3}),
+              }
+      
+      class MailMovementForm(forms.ModelForm):
+          class Meta:
+              model = MailMovement
+              fields = ['from_location', 'to_location', 'notes', 'received_by']
+              widgets = {
+                  'notes': forms.Textarea(attrs={'rows': 3}),
+                  'received_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+              }
+      
+      class MailAssignmentForm(forms.ModelForm):
+          class Meta:
+              model = MailAssignment
+              fields = [
+                  'assigned_to', 'due_date', 'notes', 
+                  'current_location', 'acknowledgment_required'
+              ]
+              widgets = {
+                  'due_date': forms.DateInput(attrs={'type': 'date'}),
+                  'notes': forms.Textarea(attrs={'rows': 3}),
+              }
+      
+      class MailReceiptForm(forms.Form):
+          """Form for recording receipt of physical mail"""
+          received_date = forms.DateTimeField(
+              widget=forms.DateTimeInput(attrs={'type': 'datetime-local'})
+          )
+          received_by = forms.CharField(max_length=255)
+          condition = forms.CharField(
+              widget=forms.Textarea(attrs={'rows': 3}),
+              help_text="Describe the condition of the mail when received"
+          )
+          seal_intact = forms.BooleanField(required=False)
+          notes = forms.CharField(
+              widget=forms.Textarea(attrs={'rows': 3}),
+              required=False
+          )
+      
+      class MailDispatchForm(forms.Form):
+          """Form for recording dispatch of physical mail"""
+          dispatch_date = forms.DateTimeField(
+              widget=forms.DateTimeInput(attrs={'type': 'datetime-local'})
+          )
+          dispatched_by = forms.CharField(max_length=255)
+          delivery_method = forms.ChoiceField(choices=PhysicalMail.DELIVERY_METHOD_CHOICES)
+          courier_name = forms.CharField(max_length=100, required=False)
+          tracking_number = forms.CharField(max_length=100, required=False)
+          postage_cost = forms.DecimalField(max_digits=10, decimal_places=2, required=False)
+          notes = forms.CharField(
+              widget=forms.Textarea(attrs={'rows': 3}),
+              required=False
+          )
+
+    . management/
+      . commands/
+        . seed_mail.py
+          Content:
+          # apps/mail/management/commands/seed_mail.py
+          from django.core.management.base import BaseCommand
+          from django.contrib.auth import get_user_model
+          from django.utils import timezone
+          from apps.mail.models import PhysicalMail, MailActivity, MailAssignment, MailMovement
+          from apps.organization.models import Department
+          from faker import Faker
+          import random
+          from datetime import timedelta
+          
+          User = get_user_model()
+          fake = Faker()
+          
+          class Command(BaseCommand):
+              help = 'Seeds sample mail data (PhysicalMail, MailActivity, MailAssignment, MailMovement)'
+          
+              def handle(self, *args, **kwargs):
+                  self.stdout.write('Seeding mail data...')
+          
+                  # --- Prerequisites ---
+                  departments = Department.objects.all()
+                  if not departments.exists():
+                      self.stdout.write(self.style.ERROR('No departments found. Run seed_organization first.'))
+                      return
+          
+                  users = User.objects.all()
+                  if not users.exists():
+                      self.stdout.write(self.style.ERROR('No users found. Run seed_organization first.'))
+                      return
+          
+                  # --- Sample Data ---
+                  mail_subjects = [
+                      'Request for Budget Approval', 'Monthly Performance Report',
+                      'Meeting Minutes: Department Heads', 'Policy Update Notification',
+                      'Training Program Schedule', 'Equipment Purchase Request',
+                      'Staff Transfer Notice', 'IT System Maintenance',
+                      'Quarterly Review Summary', 'Holiday Schedule Update',
+                      'Complaint from Citizen', 'Court Order', 'Summons', 'Legal Opinion Request',
+                      'Invitation to Tender', 'Contract Agreement', 'Internal Audit Report' # Added more
+                  ]
+                  mail_types = ['incoming', 'outgoing']
+                  statuses = ['received', 'in_transit', 'delivered', 'pending_dispatch', 'dispatched', 'acknowledged', 'archived']
+                  priorities = ['normal', 'express', 'urgent']
+                  delivery_methods = ['hand_delivery', 'postal', 'courier', 'diplomatic_bag']
+          
+                  # --- Create Mail ---
+                  for _ in range(50):  # Create 50 mail entries
+                      department = random.choice(departments)
+                      creator = random.choice(users.filter(departments=department)) # More robust user selection.
+                      mail_type = random.choice(mail_types)
+                      status = random.choice(statuses)
+                      priority = random.choice(priorities)
+                      delivery_method = random.choice(delivery_methods)
+          
+                      # Generate dates
+                      base_date = timezone.now() - timedelta(days=random.randint(0, 90))
+                      received_date = base_date if mail_type == 'incoming' else None
+                      sent_date = base_date if mail_type == 'outgoing' else None
+          
+                      mail = PhysicalMail.objects.create(
+                          # tracking_number=generate_tracking_number(),   # Handled by pre_save signal
+                          mail_type=mail_type,
+                          subject=random.choice(mail_subjects),
+                          description=fake.paragraph(nb_sentences=3),
+                          date_received=received_date,
+                          date_sent=sent_date,
+                          department=department,
+                          priority=priority,
+                          confidential=random.choice([True, False]),
+                          file_number=f"FILE/{random.randint(1000, 9999)}/{base_date.year}",
+                          delivery_method=delivery_method,
+                          weight=random.uniform(50, 2000) if delivery_method != 'hand_delivery' else None,  # Weight in grams
+                          postage_cost=random.uniform(10, 500) if delivery_method == 'postal' else None,
+                          courier_name=fake.company() if delivery_method == 'courier' else "",
+                          courier_tracking_number=fake.uuid4() if delivery_method == 'courier' else "",
+                          status=status,
+                          created_by=creator,
+                          created_at=base_date,
+                          updated_at=base_date,
+                          sender_name=fake.name(),
+                          sender_address=fake.address(),
+                          sender_phone=fake.phone_number(),
+                          recipient_name=fake.name(),
+                          recipient_address=fake.address(),
+                          recipient_phone=fake.phone_number(),
+                          requires_response=random.choice([True, False]),
+                          response_deadline=base_date + timedelta(days=random.randint(7, 30)) if random.choice([True, False]) else None,
+                      )
+                      # --- Create Assignments (for some mail) ---
+                      if random.choice([True, False]):
+                          assigned_to = random.choice(users.filter(departments=department)) # Assign to users *within* the department
+                          due_date = base_date + timedelta(days=random.randint(7,30))
+                          completed = random.choice([True, False])
+                          MailAssignment.objects.create(
+                              mail=mail,
+                              assigned_to=assigned_to,
+                              assigned_by=creator,
+                              assigned_at=base_date + timedelta(days=1),
+                              due_date=due_date,
+                              completed=completed,
+                              completed_at=due_date if completed else None,
+                              notes=fake.sentence(),
+                              current_location = department.name,
+                              acknowledgment_required=random.choice([True, False])
+                          )
+          
+                       # --- Create Movements (for some mail) ---
+                      if random.choice([True, False]):
+                          from_location = random.choice(departments).name  # Random from location
+                          to_location = random.choice(departments).name    # Random to location
+                          handler = random.choice(users)               # Random handler (could be anyone)
+          
+                          MailMovement.objects.create(
+                              mail=mail,
+                              from_location=from_location,
+                              to_location=to_location,
+                              handler=handler,
+                              timestamp=timezone.now(),  # Use current time for movement
+                              notes=fake.sentence(),
+                              received_by=handler if random.choice([True, False]) else "",  # Optional received by
+                              received_at=timezone.now() if random.choice([True, False]) else None,  # Optional receive time
+                          )
+          
+          
+                      # --- Create Response Mail (for some items that require a response) ---
+                      if mail.requires_response and random.choice([True, False]):
+                        response_date = base_date + timedelta(days=random.randint(1,14))
+          
+                        response = PhysicalMail.objects.create(
+                            mail_type = 'outgoing' if mail.mail_type == 'incoming' else 'incoming',
+                            subject=f"Re: {mail.subject}",
+                            description=fake.paragraph(nb_sentences=3),
+                            date_sent= response_date,
+                            department=department,
+                            priority=mail.priority,
+                            confidential=mail.confidential,
+                            file_number=mail.file_number,
+                            status='dispatched',
+                            created_by=creator,
+                            created_at=base_date,
+                            updated_at=base_date,
+                            sender_name=mail.recipient_name,
+                            sender_address=mail.recipient_address,
+                            sender_phone= mail.recipient_phone,
+                            recipient_name=mail.sender_name,
+                            recipient_address=mail.sender_address,
+                            recipient_phone=mail.sender_phone,
+                            requires_response=False,
+                            response_deadline=None,
+          
+                        )
+                        mail.response_mail = response
+                        mail.save()
+          
+          
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded mail data'))
+
+    . models.py
+      Content:
+      # apps/mail/models.py
+      from django.db import models 
+      from django.conf import settings
+      from apps.document_management.models import Document
+      from apps.organization.models import Department
+      from django.utils import timezone
+      
+      class PhysicalMail(models.Model):
+          MAIL_TYPE_CHOICES = [
+              ('incoming', 'Incoming'),
+              ('outgoing', 'Outgoing'),
+          ]
+          
+          MAIL_STATUS_CHOICES = [
+              ('received', 'Received at Registry'),
+              ('in_transit', 'In Transit'),
+              ('delivered', 'Delivered'),
+              ('pending_dispatch', 'Pending Dispatch'),
+              ('dispatched', 'Dispatched'),
+              ('acknowledged', 'Acknowledgment Received'),
+              ('archived', 'Archived'),
+          ]
+      
+          PRIORITY_CHOICES = [
+              ('normal', 'Normal'),
+              ('express', 'Express'),
+              ('urgent', 'Urgent'),
+          ]
+      
+          DELIVERY_METHOD_CHOICES = [
+              ('hand_delivery', 'Hand Delivery'),
+              ('postal', 'Postal Service'),
+              ('courier', 'Courier Service'),
+              ('diplomatic_bag', 'Diplomatic Bag'),
+          ]
+      
+          # Basic Information
+          tracking_number = models.CharField(max_length=100, unique=True)
+          mail_type = models.CharField(max_length=20, choices=MAIL_TYPE_CHOICES)
+          subject = models.CharField(max_length=255)
+          description = models.TextField(help_text="Brief description of mail contents")
+          date_received = models.DateTimeField(null=True, blank=True)
+          date_sent = models.DateTimeField(null=True, blank=True)
+          
+          # Classification and Routing
+          department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='physical_mails')
+          priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal')
+          confidential = models.BooleanField(default=False)
+          file_number = models.CharField(max_length=100, help_text="Physical file reference number")
+          
+          # Physical Mail Specific
+          delivery_method = models.CharField(max_length=50, choices=DELIVERY_METHOD_CHOICES)
+          weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Weight in grams")
+          postage_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+          courier_name = models.CharField(max_length=100, blank=True)
+          courier_tracking_number = models.CharField(max_length=100, blank=True)
+          
+          # Metadata
+          status = models.CharField(max_length=20, choices=MAIL_STATUS_CHOICES)
+          created_by = models.ForeignKey(
+              settings.AUTH_USER_MODEL,
+              on_delete=models.CASCADE,
+              related_name='created_physical_mails'
+          )
+          created_at = models.DateTimeField(auto_now_add=True)
+          updated_at = models.DateTimeField(auto_now=True)
+          
+          # External Party Information
+          sender_name = models.CharField(max_length=255)
+          sender_address = models.TextField()
+          sender_phone = models.CharField(max_length=50, blank=True)
+          
+          recipient_name = models.CharField(max_length=255)
+          recipient_address = models.TextField()
+          recipient_phone = models.CharField(max_length=50, blank=True)
+          
+          # Response Tracking
+          requires_response = models.BooleanField(default=False)
+          response_deadline = models.DateField(null=True, blank=True)
+          response_mail = models.ForeignKey(
+              'self',
+              null=True,
+              blank=True,
+              on_delete=models.SET_NULL,
+              related_name='original_mail'
+          )
+      
+          class Meta:
+              ordering = ['-created_at']
+              permissions = [
+                  ("can_mark_confidential", "Can mark mail as confidential"),
+                  ("view_confidential_mail", "Can view confidential mail"),
+                  ("process_incoming_mail", "Can process incoming mail"),
+                  ("dispatch_outgoing_mail", "Can dispatch outgoing mail"),
+              ]
+      
+          def __str__(self):
+              return f"{self.tracking_number} - {self.subject}"
+      
+      class MailAttachment(models.Model):
+          """Physical attachments to mail"""
+          mail = models.ForeignKey(PhysicalMail, on_delete=models.CASCADE, related_name='attachments')
+          name = models.CharField(max_length=255)
+          description = models.TextField()
+          attachment_type = models.CharField(max_length=100, help_text="Type of physical attachment")
+          quantity = models.PositiveIntegerField(default=1)
+          condition = models.CharField(max_length=100, help_text="Condition of the attachment")
+          
+          # If there's a digital copy
+          digital_copy = models.ForeignKey(
+              Document, 
+              on_delete=models.SET_NULL,
+              null=True,
+              blank=True,
+              related_name='physical_attachments'
+          )
+          
+          class Meta:
+              ordering = ['name']
+      
+      class MailMovement(models.Model):
+          """Track physical movement of mail"""
+          mail = models.ForeignKey(PhysicalMail, on_delete=models.CASCADE, related_name='movements')
+          from_location = models.CharField(max_length=255)
+          to_location = models.CharField(max_length=255)
+          handler = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+          timestamp = models.DateTimeField(auto_now_add=True)
+          notes = models.TextField(blank=True)
+          received_by = models.CharField(max_length=255, blank=True)
+          received_at = models.DateTimeField(null=True, blank=True)
+      
+          class Meta:
+              ordering = ['-timestamp']
+      
+      class MailActivity(models.Model):
+          """Track all mail-related activities"""
+          ACTION_CHOICES = [
+              ('receive', 'Received at Registry'),
+              ('register', 'Registered'),
+              ('assign', 'Assigned'),
+              ('forward', 'Forwarded'),
+              ('process', 'Processed'),
+              ('dispatch', 'Dispatched'),
+              ('deliver', 'Delivered'),
+              ('archive', 'Archived'),
+          ]
+      
+          mail = models.ForeignKey(PhysicalMail, on_delete=models.CASCADE, related_name='activities')
+          user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+          action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+          notes = models.TextField(blank=True)
+          timestamp = models.DateTimeField(auto_now_add=True)
+          location = models.CharField(max_length=255, help_text="Physical location where activity occurred")
+          
+          class Meta:
+              ordering = ['-timestamp']
+              verbose_name_plural = 'Mail Activities'
+      
+      class MailAssignment(models.Model):
+          """Track mail assignments to users"""
+          mail = models.ForeignKey(PhysicalMail, on_delete=models.CASCADE, related_name='assignments')
+          assigned_to = models.ForeignKey(
+              settings.AUTH_USER_MODEL,
+              on_delete=models.CASCADE,
+              related_name='assigned_mails'
+          )
+          assigned_by = models.ForeignKey(
+              settings.AUTH_USER_MODEL,
+              on_delete=models.CASCADE,
+              related_name='mail_assignments_given'
+          )
+          assigned_at = models.DateTimeField(auto_now_add=True)
+          due_date = models.DateField(null=True, blank=True)
+          completed = models.BooleanField(default=False)
+          completed_at = models.DateTimeField(null=True, blank=True)
+          notes = models.TextField(blank=True)
+          
+          # Physical handling
+          current_location = models.CharField(max_length=255, help_text="Current physical location of the mail")
+          acknowledgment_required = models.BooleanField(default=True)
+          acknowledged = models.BooleanField(default=False)
+          acknowledged_at = models.DateTimeField(null=True, blank=True)
+          acknowledged_by = models.CharField(max_length=255, blank=True)
+      
+          class Meta:
+              ordering = ['-assigned_at']
+      
+      # utils.py functions for tracking number generation
+      def generate_tracking_number():
+          """Generate a unique tracking number for physical mail"""
+          year = timezone.now().year
+          month = timezone.now().month
+          # Get count of mail for current month
+          count = PhysicalMail.objects.filter(
+              created_at__year=year,
+              created_at__month=month
+          ).count() + 1
+          return f"PM/{year}/{month:02d}/{count:04d}"
+
+    . signals.py
+      Content:
+      
+      # apps/mail/signals.py
+      from django.db.models.signals import post_save, pre_save
+      from django.dispatch import receiver
+      from .models import PhysicalMail, MailActivity, MailAssignment, generate_tracking_number  # Import models
+      from django.utils import timezone
+      
+      @receiver(post_save, sender=PhysicalMail)
+      def create_mail_activity(sender, instance, created, **kwargs):
+          if created:
+              MailActivity.objects.create(
+                  mail=instance,
+                  user=instance.created_by,
+                  action='register',
+                  location=instance.department.name,  # Assuming location is department
+                  notes=f'Mail registered with tracking number {instance.tracking_number}'
+              )
+      
+      @receiver(pre_save, sender=PhysicalMail)
+      def set_tracking_number(sender, instance, **kwargs):
+           if not instance.tracking_number:
+              instance.tracking_number = generate_tracking_number()
+
+    . tests.py
+      Content:
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . urls.py
+      Content:
+      # apps/mail/urls.py
+      from django.urls import path
+      from . import views
+      
+      app_name = 'mail'
+      
+      urlpatterns = [
+          path('physical/', views.mail_dashboard, name='mail_dashboard'),
+          path('physical/register/', views.register_mail, name='register_mail'),
+          path('physical/<int:pk>/', views.mail_detail, name='mail_detail'),  # Added
+          path('physical/<int:pk>/movement/', views.record_mail_movement, name='record_movement'),
+          path('physical/movement-report/', views.mail_movement_report, name='mail_movement_report'),
+          path('physical/<int:pk>/dispatch/', views.dispatch_mail, name='dispatch_mail'),
+      ]
+
+    . views.py
+      Content:
+            
+      # apps/mail/views.py
+      from django.shortcuts import render, get_object_or_404, redirect
+      from django.contrib.auth.decorators import login_required
+      from django.contrib import messages
+      from django.db.models import Count, Q, Avg, F  # Import Avg and F
+      from django.utils import timezone
+      from django.http import HttpResponseNotFound  # Import for 404
+      from .models import PhysicalMail, MailActivity, MailMovement, generate_tracking_number
+      from .forms import (
+          PhysicalMailForm, MailReceiptForm, MailDispatchForm,
+          MailMovementForm
+      )
+      
+      @login_required
+      def mail_dashboard(request):
+          """Main dashboard for physical mail handling"""
+          today = timezone.now().date()
+          department = request.user.department
+      
+          # Get statistics
+          stats = {
+              'total_mail': PhysicalMail.objects.filter(department=department).count(),
+              'pending_receipt': PhysicalMail.objects.filter(
+                  department=department,
+                  status='received'
+              ).count(),
+              'in_transit': PhysicalMail.objects.filter(
+                  department=department,
+                  status='in_transit'
+              ).count(),
+              'dispatched_today': PhysicalMail.objects.filter(
+                  department=department,
+                  status='dispatched',
+                  date_sent__date=today
+              ).count()
+          }
+      
+          # Recent activities
+          recent_activities = MailActivity.objects.filter(
+              mail__department=department
+          ).select_related('mail', 'user').order_by('-timestamp')[:10]
+      
+          # Pending mail
+          pending_mail = PhysicalMail.objects.filter(
+              department=department,
+              status__in=['received', 'pending_dispatch']
+          ).order_by('-created_at')[:5]
+      
+          context = {
+              'stats': stats,
+              'recent_activities': recent_activities,
+              'pending_mail': pending_mail
+          }
+          return render(request, 'mail/dashboard.html', context)
+      
+      @login_required
+      def register_mail(request):
+          """Register new physical mail"""
+          if request.method == 'POST':
+              form = PhysicalMailForm(request.POST)
+              if form.is_valid():
+                  mail = form.save(commit=False)
+                  mail.created_by = request.user
+                  mail.department = request.user.department
+                  # mail.tracking_number = generate_tracking_number() # No longer need as moved to signals
+                  mail.save()
+      
+                  # Record activity - Now in signals
+                  # MailActivity.objects.create(
+                  #     mail=mail,
+                  #     user=request.user,
+                  #     action='register',
+                  #     location=request.user.department.name
+                  # )
+      
+                  messages.success(request, 'Mail registered successfully.')
+                  return redirect('mail:mail_detail', pk=mail.pk)  # Correct redirect
+          else:
+              form = PhysicalMailForm()
+      
+          return render(request, 'mail/register_mail.html', {'form': form})
+      
+      
+      
+      @login_required
+      def mail_detail(request, pk):
+          """View details of a specific mail item."""
+          try:
+              mail = PhysicalMail.objects.get(pk=pk)
+          except PhysicalMail.DoesNotExist:
+              return HttpResponseNotFound("Mail item not found.")  # Use HttpResponseNotFound
+      
+          # Check if the user has permission to view this mail
+          if mail.department != request.user.department and not request.user.has_perm('mail.view_confidential_mail'):
+              messages.error(request, "You do not have permission to view this mail item.")
+              return redirect('mail:mail_dashboard')  # Or another appropriate view
+      
+          activities = MailActivity.objects.filter(mail=mail).order_by('-timestamp')
+          movements = MailMovement.objects.filter(mail=mail).order_by('-timestamp')
+          # Add other related data as needed (e.g., attachments)
+      
+          context = {
+              'mail': mail,
+              'activities': activities,
+              'movements': movements,
+              # Add other context variables here
+          }
+          return render(request, 'mail/mail_detail.html', context)
+      @login_required
+      def record_mail_movement(request, pk):
+          """Record movement of physical mail"""
+          mail = get_object_or_404(PhysicalMail, pk=pk)
+      
+          if request.method == 'POST':
+              form = MailMovementForm(request.POST)
+              if form.is_valid():
+                  movement = form.save(commit=False)
+                  movement.mail = mail
+                  movement.handler = request.user
+                  movement.save()
+      
+                  # Update mail status
+                  mail.status = 'in_transit'
+                  mail.save()
+      
+                  # Record activity
+                  MailActivity.objects.create(
+                      mail=mail,
+                      user=request.user,
+                      action='forward',
+                      location=movement.to_location
+                  )
+      
+                  messages.success(request, 'Mail movement recorded successfully.')
+                  return redirect('mail:mail_detail', pk=mail.pk)
+          else:
+              form = MailMovementForm()
+      
+          context = {
+              'form': form,
+              'mail': mail
+          }
+          return render(request, 'mail/record_movement.html', context)
+      
+      @login_required
+      def mail_movement_report(request):
+          """Generate report for mail movement"""
+          department = request.user.department
+      
+          # Filter parameters
+          date_from = request.GET.get('date_from')
+          date_to = request.GET.get('date_to')
+          status = request.GET.get('status')
+      
+          movements = MailMovement.objects.filter(
+              mail__department=department
+          ).select_related('mail', 'handler')
+      
+          if date_from:
+              movements = movements.filter(timestamp__date__gte=date_from)
+          if date_to:
+              movements = movements.filter(timestamp__date__lte=date_to)
+          if status:
+              movements = movements.filter(mail__status=status)
+      
+          # Summary statistics  CORRECTED HERE
+          summary = {
+              'total_movements': movements.count(),
+              'avg_delivery_time': movements.aggregate(avg_delivery_time=Avg(F('received_at') - F('mail__date_sent'))),
+              'by_status': movements.values('mail__status').annotate(
+                  count=Count('id')
+              )
+          }
+      
+          context = {
+              'movements': movements,
+              'summary': summary,
+              'date_from': date_from,
+              'date_to': date_to,
+              'status': status
+          }
+          return render(request, 'mail/movement_report.html', context)
+      
+      @login_required
+      def dispatch_mail(request, pk):
+          """Dispatch physical mail"""
+          mail = get_object_or_404(PhysicalMail, pk=pk)
+      
+          if request.method == 'POST':
+              form = MailDispatchForm(request.POST)
+              if form.is_valid():
+                  # Update mail details
+                  mail.status = 'dispatched'
+                  mail.date_sent = form.cleaned_data['dispatch_date']
+                  mail.delivery_method = form.cleaned_data['delivery_method']
+                  mail.courier_name = form.cleaned_data['courier_name']
+                  mail.courier_tracking_number = form.cleaned_data['tracking_number']
+                  mail.save()
+      
+                  # Record activity
+                  MailActivity.objects.create(
+                      mail=mail,
+                      user=request.user,
+                      action='dispatch',
+                      notes=form.cleaned_data['notes']
+                  )
+      
+                  messages.success(request, 'Mail dispatched successfully.')
+                  return redirect('mail:mail_detail', pk=mail.pk)
+          else:
+              form = MailDispatchForm()
+      
+          context = {
+              'form': form,
+              'mail': mail
+          }
+          return render(request, 'mail/dispatch_mail.html', context)
+      
 
   . meetings/
     . __init__.py
@@ -1748,11 +2536,12 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       from django import forms
       from .models import Memo, MemoTemplate, MemoComment
       from apps.document_management.models import Document
+      from django.db.models import Q # Import Q
       
       class MemoForm(forms.ModelForm):
           document = forms.FileField(required=False)
           template = forms.ModelChoiceField(
-              queryset=MemoTemplate.objects.none(),
+              queryset=MemoTemplate.objects.none(),  # Start with an empty queryset
               required=False,
               empty_label="Select a template"
           )
@@ -1776,25 +2565,30 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               }
       
           def __init__(self, *args, **kwargs):
-              user = kwargs.pop('user', None)
+              user = kwargs.pop('user', None)  # Get the user from kwargs
               super().__init__(*args, **kwargs)
-              
+      
               if user:
-                  # Filter templates based on user's department
+                  # Filter templates based on user's department (or global templates)
                   self.fields['template'].queryset = MemoTemplate.objects.filter(
-                      models.Q(department=user.department) | 
-                      models.Q(department__isnull=True)
+                      Q(department=user.department) | Q(department__isnull=True)
                   )
+      
       
           def clean(self):
               cleaned_data = super().clean()
               memo_type = cleaned_data.get('memo_type')
               external_recipient = cleaned_data.get('external_recipient')
       
+              # Add validation logic here if needed, based on memo_type and external_recipient
+      
+              return cleaned_data # important
+      
+      
       class MemoTemplateForm(forms.ModelForm):
           class Meta:
               model = MemoTemplate
-              fields = ['name', 'content', 'department']
+              fields = ['name', 'content', 'department'] # added department
               widgets = {
                   'content': forms.Textarea(attrs={'rows': 10, 'class': 'rich-text-editor'}),
               }
@@ -1810,6 +2604,102 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                       'placeholder': 'Enter your comment'
                   }),
               }
+
+    . management/
+      . commands/
+        . seed_memos.py
+          Content:
+          # apps/memos/management/commands/seed_memos.py
+          from django.core.management.base import BaseCommand
+          from django.contrib.auth import get_user_model
+          from django.utils import timezone
+          from apps.memos.models import Memo, MemoTemplate
+          from apps.organization.models import Department
+          from faker import Faker
+          import random
+          
+          User = get_user_model()
+          fake = Faker()
+          
+          class Command(BaseCommand):
+              help = 'Seeds sample memos data, making them visible to all users and departments.'
+          
+              def handle(self, *args, **kwargs):
+                  self.stdout.write('Seeding memos data...')
+          
+                  departments = Department.objects.all()
+                  if not departments.exists():
+                      self.stdout.write(self.style.ERROR('No departments found. Run seed_organization first.'))
+                      return
+          
+                  users = User.objects.all()
+                  if not users.exists():
+                      self.stdout.write(self.style.ERROR('No users found. Run seed_organization first.'))
+                      return
+          
+                  # --- Sample Data ---
+                  memo_subjects = [
+                      'Budget Allocation Update', 'Staff Meeting Schedule', 'Policy Changes Notification',
+                      'Training Program Announcement', 'Quarterly Performance Review', 'Office Closure Notice',
+                      'IT System Maintenance', 'Holiday Schedule', 'Project Timeline Update', 'Employee Wellness Program'
+                  ]
+                  memo_types = ['internal', 'external', 'circular']
+                  statuses = ['draft', 'pending_approval', 'approved', 'published', 'archived']  # Include 'published'
+          
+                  # Get or create a default template.  It's good to have *at least* one.
+                  default_template, _ = MemoTemplate.objects.get_or_create(
+                      name="Default Template",
+                      defaults={
+                          'memo_type': 'internal',
+                          'description': 'A default memo template.',
+                          'content': 'This is a default memo template. Please replace this content.',
+                          'department': departments.first(),  # Associate with *a* department.
+                          'created_by': users.first(),       # Associate with *a* user.
+                          'is_active': True,
+                      }
+                  )
+          
+                  # --- Create Memos ---
+                  for i in range(50):  # Create 50 sample memos
+                      creator = random.choice(users)
+                      department = random.choice(departments)  # The department *creating* the memo
+                      memo_type = random.choice(memo_types)
+                      status = random.choice(statuses)
+                      if status == 'published':
+                          published_at = timezone.now()
+                      else:
+                          published_at = None
+          
+                      memo = Memo.objects.create(
+                          title=random.choice(memo_subjects),
+                          reference_number=f"MEMO/{fake.unique.random_number(digits=6)}/{timezone.now().year}",
+                          memo_type=memo_type,
+                          template=default_template,  # Use the default template
+                          content=fake.paragraph(nb_sentences=5),
+                          department=department,  # Department *creating* the memo
+                          status=status,
+                          created_by=creator,
+                          is_confidential=random.choice([True, False]),
+                          file_number=f"FILE/{fake.unique.random_number(digits=4)}/{timezone.now().year}",
+                          tags=','.join(fake.words(nb=3)),
+                          version_number=1,
+                          published_at = published_at
+                      )
+                      # --- Permissions (Two Approaches) ---
+          
+                      # Approach 1: Add all departments as recipients (Easiest)
+                      memo.recipient_departments.set(departments)  # Add *all* departments
+                      memo.recipient_users.set(users)          # Add *all* users
+          
+                      # Approach 2: (More Granular, using Permissions - Requires more setup)
+                      #   - You would need to create a custom permission (e.g., 'view_all_memos') in your
+                      #     `apps/memos/models.py` (Meta.permissions).
+                      #   - Then, in your seed_organization command, grant this permission to all users.
+                      #   - Here, you would check:  if request.user.has_perm('memos.view_all_memos'): ...
+          
+                      self.stdout.write(self.style.SUCCESS(f'Created memo: {memo.title}'))
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded memos data'))
 
     . models.py
       Content:
@@ -2144,17 +3034,18 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           }
           return render(request, 'memos/dashboard.html', context)
       
+          
       @login_required
       def memo_create(request):
           """Create a new memo"""
           if request.method == 'POST':
-              form = MemoForm(request.POST, request.FILES)
+              form = MemoForm(request.POST, request.FILES, user=request.user)  # Pass user to the form
               if form.is_valid():
                   memo = form.save(commit=False)
                   memo.created_by = request.user
                   memo.department = request.user.department
                   memo.save()
-                  form.save_m2m()
+                  form.save_m2m()  # Save ManyToMany fields
       
                   # Handle document creation if file is uploaded
                   if request.FILES.get('document'):
@@ -2163,7 +3054,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                   messages.success(request, 'Memo created successfully.')
                   return redirect('memos:memo_detail', pk=memo.pk)
           else:
-              form = MemoForm()
+              form = MemoForm(user=request.user) # Pass the user to the form!
       
           templates = MemoTemplate.objects.filter(
               Q(department=request.user.department) | Q(department__isnull=True)
@@ -2172,8 +3063,12 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           return render(request, 'memos/memo_form.html', {
               'form': form,
               'templates': templates,
-              'action': 'Create'
+              'action': 'Create'  # Add action for dynamic text
           })
+      
+          
+      
+      
       
       @login_required
       def memo_detail(request, pk):
@@ -2573,8 +3468,17 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     . admin.py
       Content:
       from django.contrib import admin
+      from .models import Department, Role, UserRole
+      #from django.contrib.auth.admin import UserAdmin # No longer needed here
+      #from authentication.models import CustomUser  # No longer needed here.
       
-      # Register your models here.
+      class RoleAdmin(admin.ModelAdmin):
+          list_display = ('title', 'department', 'job_group', 'is_active')
+          search_fields = ('title', 'department__name', 'job_group')
+          list_filter = ('department', 'job_group', 'is_active')
+          filter_horizontal = ('permissions',)  # Use filter_horizontal for ManyToMany
+      
+      admin.site.register(Role, RoleAdmin)
 
     . apps.py
       Content:
@@ -2622,23 +3526,28 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                   departments = {
                       'directors_office': Department.objects.create(
                           name="Director's Office",
-                          description="Office of the Director of Strategy, Planning and Organizational Performance"
+                          description="Office of the Director of Strategy, Planning and Organizational Performance",
+                          is_active=True
                       ),
                       'performance': Department.objects.create(
                           name="Performance Coordination",
-                          description="Performance monitoring and coordination"
+                          description="Performance monitoring and coordination",
+                          is_active=True
                       ),
                       'planning': Department.objects.create(
                           name="Planning, Monitoring & Evaluation",
-                          description="Planning, monitoring and evaluation activities"
+                          description="Planning, monitoring and evaluation activities",
+                          is_active=True
                       ),
                       'research': Department.objects.create(
                           name="Research & Statistics",
-                          description="Research and statistical analysis"
+                          description="Research and statistical analysis",
+                          is_active=True
                       ),
                       'quality': Department.objects.create(
                           name="Quality Assurance & Innovation",
-                          description="Quality assurance and innovation initiatives"
+                          description="Quality assurance and innovation initiatives",
+                          is_active=True
                       )
                   }
           
@@ -2690,36 +3599,65 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           
                   self.stdout.write('Creating staff users...')
                   for staff in staff_data:
-                      user = User.objects.create(
-                          username=f"{staff['name'].lower().replace(' ', '.')}",
-                          first_name=staff['name'].split()[0],
-                          last_name=staff['name'].split()[-1],
-                          email=f"{staff['name'].lower().replace(' ', '.')}@judiciary.go.ke",
-                          pj_number=staff['pj']
+                      username = staff['name'].lower().replace(' ', '.')
+                      email = f"{username}@judiciary.go.ke"
+                      first_name = staff['name'].split()[0]
+                      last_name = ' '.join(staff['name'].split()[1:])  # Handle multi-part last names
+                      user, created = User.objects.get_or_create(
+                          username=username,
+                          defaults={
+                              'email': email,
+                              'first_name': first_name,
+                              'last_name': last_name,
+                              'pj_number': staff['pj'],
+                              'is_staff': True,  # Important: Mark users as staff
+                          }
                       )
-                      user.set_password('Password123!')
-                      user.save()
+                      if created:
+                          user.set_password('Password123!')  # ALWAYS set a password
+                          user.save()
+          
           
                       role_key = f"{staff['title']}_{staff['dept'].name}".lower().replace(' ', '_').replace(',', '').replace('&', 'and')
-                      role = roles[role_key]
-                      
-                      UserRole.objects.create(
-                          user=user,
-                          role=role,
-                          is_active=True
-                      )
+          
+                      #CRITICAL FIX: Check if the role exists!
+                      if role_key in roles:
+                          role = roles[role_key]
+                          # Associate user with department directly.
+                          user.departments.add(staff['dept']) #add the department to the user
+                          user.save()
+          
+                          UserRole.objects.create(
+                              user=user,
+                              role=role,
+                              is_active=True
+                           )
+                      else:
+                          self.stdout.write(self.style.ERROR(f"Role key '{role_key}' not found!"))
+          
+          
           
                   self.stdout.write('Creating director user...')
-                  director = User.objects.create(
+                  director, created = User.objects.get_or_create(
                       username='joseph.osewe',
-                      email='joseph.osewe@judiciary.go.ke',
-                      first_name='Joseph',
-                      last_name='Osewe',
-                      is_staff=True,
-                      is_superuser=True
+                      defaults={
+                          'email': 'joseph.osewe@judiciary.go.ke',
+                          'first_name': 'Joseph',
+                          'last_name': 'Osewe',
+                          'is_staff': True,
+                          'is_superuser': True  # Correctly sets superuser status
+                      }
                   )
-                  director.set_password('Admin123!')
-                  director.save()
+                  if created:
+                      director.set_password('Admin123!') #Always set a password
+                      director.save()
+                  # Assign the director to the director's office
+                  director.departments.add(departments['directors_office'])
+                  director_role_key = f"assistant_director_{departments['directors_office'].name}".lower()
+          
+                  if director_role_key in roles:
+                       director_role = roles[director_role_key]
+                       UserRole.objects.create(user = director, role = director_role, is_active = True)
           
                   self.stdout.write(self.style.SUCCESS('Successfully seeded organization data'))
 
@@ -2727,6 +3665,8 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       Content:
       from django.db import models
       from django.conf import settings
+      from django.contrib.auth.models import Permission  # Import Permission
+      
       
       class Department(models.Model):
           name = models.CharField(max_length=200)
@@ -2755,6 +3695,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           description = models.TextField(blank=True)
           is_active = models.BooleanField(default=True)
           created_at = models.DateTimeField(auto_now_add=True)
+          permissions = models.ManyToManyField(Permission, blank=True)  # ADD THIS LINE
       
           def __str__(self):
               return f"{self.title} ({self.department.name})"
@@ -2785,6 +3726,138 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       from django.shortcuts import render
       
       # Create your views here.
+
+  . permissions/
+    . __init__.py
+      Content:
+
+
+    . admin.py
+      Content:
+
+
+    . apps.py
+      Content:
+      from django.apps import AppConfig
+      
+      
+      class PermissionsConfig(AppConfig):
+          default_auto_field = "django.db.models.BigAutoField"
+          name = "apps.permissions"
+
+    . models.py
+      Content:
+      from django.db import models
+      
+      # Create your models here.
+
+    . templatetags/
+      .  __init__.py
+        Content:
+
+
+      . get_item.py
+        Content:
+        # apps/permissions/templatetags/get_item.py
+        from django import template
+        
+        register = template.Library()
+        
+        @register.filter
+        def get_item(dictionary, key):
+            return dictionary.get(key)
+
+    . tests.py
+      Content:
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . urls.py
+      Content:
+      # apps/permissions/urls.py
+      from django.urls import path
+      from . import views
+      
+      app_name = 'apps.permissions'
+      
+      urlpatterns = [
+          path('manage/', views.manage_permissions, name='manage_permissions'),
+      ]
+
+    . views.py
+      Content:
+      from django.shortcuts import render, redirect, get_object_or_404
+      from django.contrib.auth.decorators import login_required, permission_required
+      from django.contrib.auth.models import Permission
+      from django.contrib.contenttypes.models import ContentType
+      from apps.home.models import Module
+      from django.contrib.auth import get_user_model
+      from django.http import HttpResponseForbidden, HttpResponse
+      from django.contrib import messages
+      
+      User = get_user_model()
+      
+      @login_required
+      @permission_required('auth.change_permission', raise_exception=True)
+      def manage_permissions(request):
+          modules = Module.objects.all()
+          selected_module_id = None
+          selected_module = None
+          permissions = []  # Initialize permissions
+          users_with_permissions = []
+      
+          if request.method == 'POST':
+              selected_module_id = request.POST.get('module')
+          elif request.method == 'GET':
+              selected_module_id = request.GET.get('module')
+      
+          if selected_module_id:
+              selected_module = get_object_or_404(Module, pk=selected_module_id)
+              content_type = ContentType.objects.get_for_model(selected_module)
+              # --- CRUCIAL CHANGE: Filter permissions by content_type ---
+              permissions = Permission.objects.filter(content_type=content_type)
+              all_users = User.objects.all().prefetch_related('user_roles__role')
+      
+              for user in all_users:
+                  user_permissions = {perm.codename: False for perm in permissions}
+                  for user_role in user.user_roles.filter(is_active=True):
+                      for perm in user_role.role.permissions.all():
+                           if perm.content_type == content_type:  # IMPORTANT: Only consider relevant permissions
+                              user_permissions[perm.codename] = True
+      
+                  users_with_permissions.append({
+                      'user': user,
+                      'permissions': user_permissions,
+                  })
+          if request.method == 'POST':
+              if not selected_module:
+                   return HttpResponse("No module selected.", status=400)
+      
+              for user_data in users_with_permissions:
+                  user = user_data['user']
+                  for perm_codename, has_perm in user_data['permissions'].items():
+                    permission = Permission.objects.get(codename=perm_codename, content_type=content_type)
+                    user_roles = user.user_roles.filter(is_active=True)
+      
+                    for user_role in user_roles:
+                      if request.POST.get(f'user_{user.id}_perm_{permission.id}') == 'on':
+                        if permission not in user_role.role.permissions.all():
+                          user_role.role.permissions.add(permission)
+                      elif permission in user_role.role.permissions.all():
+                          user_role.role.permissions.remove(permission)
+      
+              messages.success(request, 'Permissions updated successfully.')
+              return redirect('permissions:manage_permissions') #, module=selected_module.pk)  # Stay on the same module
+      
+      
+          context = {
+              'modules': modules,
+              'selected_module': selected_module,
+              'users_with_permissions': users_with_permissions,
+              'permissions': permissions,  # Pass the *filtered* permissions
+          }
+          return render(request, 'permissions/manage_permissions.html', context)
 
   . statistics/
     . __init__.py
@@ -3944,7 +5017,10 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                 <section class="vh-lg-100 mt-5 mt-lg-0 bg-soft d-flex align-items-center">
                     <div class="container">
                         <p class="text-center">
-                            Open-source Django Dashboard
+                            <a href="#" class="d-flex align-items-center justify-content-center">
+                                <img src="{{ ASSETS_ROOT }}/img/brand/logo/logo.svg" class="me-2" height="50" alt="Volt Logo">
+                            </a>
+        
                         </p>
                         <div class="row justify-content-center form-bg-image" data-background-lg="{{ ASSETS_ROOT }}/img/illustrations/signin.svg">
                             <div class="col-12 d-flex align-items-center justify-content-center">
@@ -8047,14 +9123,11 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                         </a>
                       </li>
                       <li class="nav-item {% if 'transactions' in segment %} active {% endif %}">
-        
-                            <a href="report.html" class="nav-link">
-        
-        
+                        <a href="{% url 'permissions:manage_permissions' %}"> {# Changed to POST #}
                           <span class="sidebar-icon">
                             <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
                           </span>
-                          <span class="sidebar-text">Report</span>
+                          <span class="sidebar-text">Permissions </span>
                         </a>
                       </li>
         
@@ -8320,6 +9393,489 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               
         </body>
         </html>
+
+    . mail/
+      . dashboard.html
+        Content:
+        {% extends "layouts/base.html" %}
+            {% block title %}Mail Dashboard{% endblock %}
+            {% block content %}
+            <div class="container mt-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Physical Mail Dashboard</h2>
+                    <div>
+                        <a href="{% url 'mail:register_mail' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Register New Mail
+                        </a>
+                        <a href="{% url 'mail:mail_movement_report' %}" class="btn btn-secondary">
+                            <i class="fas fa-chart-line"></i> Movement Report
+                        </a>
+                    </div>
+                </div>
+            
+                <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Mail</h5>
+                            <h2 class="mb-0">{{ stats.total_mail }}</h2>
+                            <small>All time</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Pending Receipt</h5>
+                            <h2 class="mb-0">{{ stats.pending_receipt }}</h2>
+                            <small>Awaiting processing</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">In Transit</h5>
+                            <h2 class="mb-0">{{ stats.in_transit }}</h2>
+                            <small>Currently moving</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Dispatched Today</h5>
+                            <h2 class="mb-0">{{ stats.dispatched_today }}</h2>
+                            <small>Successfully sent</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Pending Mail -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Pending Mail</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Tracking #</th>
+                                            <th>Subject</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for mail in pending_mail %}
+                                        <tr>
+                                            <td>{{ mail.tracking_number }}</td>
+                                            <td>{{ mail.subject }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ mail.status|yesno:'warning,success' }}">
+                                                    {{ mail.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'mail:mail_detail' mail.pk %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center">No pending mail</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Recent Activities -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Recent Activities</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                {% for activity in recent_activities %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h3 class="timeline-title">
+                                            {{ activity.get_action_display }}
+                                        </h3>
+                                        <p>{{ activity.mail.subject }}</p>
+                                        <small class="text-muted">
+                                            By {{ activity.user.get_full_name }} -
+                                            {{ activity.timestamp|timesince }} ago at
+                                            {{ activity.location }}
+                                        </small>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="text-center">No recent activities</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            </div>
+            {% endblock content %}
+            {% block javascripts %}
+            <script>
+                // Add any custom JavaScript for the dashboard here
+            </script>
+            {% endblock javascripts %}
+
+      . dispatch_mail.html
+        Content:
+        {% extends "layouts/base.html" %}
+            {% block title %}Dispatch Mail{% endblock %}
+            
+            {% block content %}
+            <div class="container mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Dispatch Mail: {{ mail.subject }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    {{ form.as_p }}  {# Or use a loop for more control #}
+                                    <button type="submit" class="btn btn-primary">Dispatch Mail</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endblock %}
+
+      . mail_detail.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Mail Detail{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Mail Detail: {{ mail.tracking_number }}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Basic Information</h5>
+                            <p><strong>Subject:</strong> {{ mail.subject }}</p>
+                            <p><strong>Type:</strong> {{ mail.get_mail_type_display }}</p>
+                            <p><strong>Status:</strong> <span class="badge bg-info">{{ mail.get_status_display }}</span></p>
+                            <p><strong>Department:</strong> {{ mail.department.name }}</p>
+                            <p><strong>Priority:</strong> {{ mail.get_priority_display }}</p>
+                            <p><strong>File Number:</strong> {{ mail.file_number }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Sender/Recipient</h5>
+                            <p><strong>Sender:</strong> {{ mail.sender_name }}</p>
+                            <p><strong>Sender Address:</strong> {{ mail.sender_address|default:"-" }}</p>
+                            <p><strong>Recipient:</strong> {{ mail.recipient_name }}</p>
+                            <p><strong>Recipient Address:</strong> {{ mail.recipient_address|default:"-" }}</p>
+        
+                            {% if mail.date_received %}
+                                <p><strong>Date Received:</strong> {{ mail.date_received }}</p>
+                            {% endif %}
+                            {% if mail.date_sent %}
+                                <p><strong>Date Sent:</strong> {{ mail.date_sent }}</p>
+                            {% endif %}
+        
+                        </div>
+                    </div>
+        
+                    <hr>
+        
+                    <h5>Attachments</h5>
+                    {% if mail.attachments.all %}
+                        <ul>
+                        {% for attachment in mail.attachments.all %}
+                            <li>
+                                {{ attachment.name }} - {{ attachment.description }}
+                                {% if attachment.digital_copy %}
+                                <a href="{{ attachment.digital_copy.document.get_file_url }}" target="_blank">View Digital Copy</a>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No attachments.</p>
+                    {% endif %}
+        
+        
+                     <hr>
+        
+                    <h5>Movement History</h5>
+                   {% if movements %}
+                      <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Handler</th>
+                                    <th>Timestamp</th>
+                                    <th>Notes</th>
+                                    <th>Received By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for movement in movements %}
+                                <tr>
+                                    <td>{{ movement.from_location }}</td>
+                                    <td>{{ movement.to_location }}</td>
+                                    <td>{{ movement.handler.get_full_name }}</td>
+                                    <td>{{ movement.timestamp }}</td>
+                                    <td>{{ movement.notes|default:"-" }}</td>
+                                    <td>{{ movement.received_by|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                      </div>
+                      {% else %}
+                       <p>No movement history.</p>
+                      {% endif %}
+        
+        
+        
+                    <hr>
+                    <h5>Activity Log</h5>
+                      {% if activities %}
+        
+                        <div class="table-responsive">
+        
+                          <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Timestamp</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                              {% for activity in activities %}
+                              <tr>
+                                <td>{{ activity.user.get_full_name }}</td>
+                                <td>{{ activity.get_action_display }}</td>
+                                <td>{{ activity.timestamp }}</td>
+                                <td>{{ activity.notes|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+        
+                        </div>
+        
+                      {% else %}
+                       <p>No activity log.</p>
+                      {% endif %}
+        
+                </div>
+              </div>
+            <div class="text-center mt-3">
+              <a href="{% url 'mail:mail_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+            </div>
+        </div>
+        {% endblock %}
+
+      . movement_report.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Mail Movement Report{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <h2>Mail Movement Report</h2>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Filter Options</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="date_from" class="form-label">Date From:</label>
+                            <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_to" class="form-label">Date To:</label>
+                            <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status:</label>
+                            <select id="status" name="status" class="form-control">
+                                <option value="" {% if not status %}selected{% endif %}>All</option>
+                                {% for choice in movements.0.mail.get_status_display %}
+                                    <option value="{{ choice.0 }}" {% if status == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary">Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Movement Records</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Mail Subject</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Handler</th>
+                                <th>Timestamp</th>
+                                <th>Received By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movement in movements %}
+                            <tr>
+                                <td>{{ movement.mail.subject }}</td>
+                                <td>{{ movement.from_location }}</td>
+                                <td>{{ movement.to_location }}</td>
+                                <td>{{ movement.handler.get_full_name }}</td>
+                                <td>{{ movement.timestamp }}</td>
+                                <td>{{ movement.received_by|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No movement records found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        
+            <div class="mt-4">
+                <h4>Summary</h4>
+                <p>Total Movements: {{ summary.total_movements }}</p>
+                {# Add other summary statistics here, formatting as needed #}
+            </div>
+        </div>
+        {% endblock %}
+
+      . record_movement.html
+        Content:
+        {% extends "layouts/base.html" %}
+            {% block title %}Record Mail Movement{% endblock %}
+            
+            {% block content %}
+            <div class="container mt-4">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Record Mail Movement for {{ mail.subject }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    {{ form.as_p }}  {# Or use a loop like in register_mail.html for more control #}
+                                    <button type="submit" class="btn btn-primary">Record Movement</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endblock %}
+
+      . register_mail.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Register Mail{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">  {# Added styling #}
+                            <h5 class="mb-0">Register New Physical Mail</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" class="needs-validation" novalidate>  {# Added Bootstrap validation classes #}
+                                {% csrf_token %}
+        
+                                {% for field in form %}
+                                    <div class="mb-3">
+                                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.help_text %}
+                                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                                        {% endif %}
+                                        {% if field.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ field.errors|join:", " }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+        
+                                <button type="submit" class="btn btn-primary">Register Mail</button>
+                                 <a href="{% url 'mail:mail_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+        
+        {% block javascripts %}
+        <script>
+            // Example starter JavaScript for disabling form submissions if there are invalid fields (Bootstrap)
+            (function () {
+                'use strict'
+        
+                // Fetch all the forms we want to apply custom Bootstrap validation styles to
+                var forms = document.querySelectorAll('.needs-validation')
+        
+                // Loop over them and prevent submission
+                Array.prototype.slice.call(forms)
+                    .forEach(function (form) {
+                        form.addEventListener('submit', function (event) {
+                            if (!form.checkValidity()) {
+                                event.preventDefault()
+                                event.stopPropagation()
+                            }
+        
+                            form.classList.add('was-validated')
+                        }, false)
+                    })
+            })()
+        </script>
+        {% endblock %}
 
     . meetings/
       . dashboard.html
@@ -9684,6 +11240,86 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         </div>
         {% endblock %}
 
+    . permissions/
+      . manage_permissions.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% load get_item %}
+        {% block title %}Manage Permissions{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <h1>Manage Permissions</h1>
+        
+            <form method="get" action="{% url 'permissions:manage_permissions' %}" class="mb-3">
+                <div class="mb-3">
+                    <label for="module" class="form-label">Select Module:</label>
+                    <select name="module" id="module" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Select a Module --</option>
+                        {% for module in modules %}
+                            <option value="{{ module.pk }}" {% if module.pk|slugify == selected_module.pk|slugify %}selected{% endif %}>
+                                {{ module.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        
+            {% if selected_module %}
+                <form method="post" action="{% url 'permissions:manage_permissions' %}">
+                    {% csrf_token %}
+                     <input type="hidden" name="module" value="{{ selected_module.pk }}">  {# Keep selected module #}
+                    <h2>Permissions for: {{ selected_module.name }}</h2>
+        
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    {% for permission in permissions %}
+                                        <th>{{ permission.name }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for user_data in users_with_permissions %}
+                              <tr>
+                                <td>{{ user_data.user.get_full_name|default:user_data.user.username }}</td>
+                                {% for permission in permissions %}
+                                 <td>
+                                    <input type="checkbox"
+                                           name="user_{{ user_data.user.id }}_perm_{{ permission.id }}"
+                                           {% if user_data.permissions|get_item:permission.codename %}checked{% endif %}>
+                                  </td>
+                                {% endfor %}
+                              </tr>
+                            {% endfor %}
+        
+                            </tbody>
+                        </table>
+                        </div>
+        
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'permissions:manage_permissions' %}" class="btn btn-secondary">Cancel</a> {# Link back to itself #}
+                </form>
+            {% else %}
+                <p>Select a module to view and manage permissions.</p>
+            {% endif %}
+        </div>
+        {% endblock %}
+        {% block javascripts %}
+         <script>
+            function get_item(dict, key) {
+              return dict[key]
+            }
+          </script>
+          
+        {% endblock javascripts %}
+
+    . react.html
+      Content:
+
+
     . statistics/
       . case_summary.html
         Content:
@@ -10729,7 +12365,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     LOGIN_URL = '/accounts/login/' # Correct - explicitly specifies
     
     # allow all hosts in development
-    ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0']
+    ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost']
     
     
     # Application definition
@@ -10742,6 +12378,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         'django.contrib.messages',
         'django.contrib.staticfiles',
         'authentication', # added the authentication apps
+        'apps.permissions',
         'apps.home', 
         'django_unicorn',
         'apps.statistics',
@@ -10750,6 +12387,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         'apps.budget',
         'apps.meetings',
         'apps.memos',
+        'apps.mail',
         'debug_toolbar',
     
     ]
@@ -10919,6 +12557,21 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     # Google Drive settings
     GOOGLE_OAUTH_CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, 'client_secrets.json')
     GOOGLE_OAUTH_REDIRECT_URI = 'http://your-domain/documents/google-auth-callback/'
+    
+    
+    # Add Webpack loader settings
+    WEBPACK_LOADER = {
+        'DEFAULT': {
+            'BUNDLE_DIR_NAME': 'js/dist/',
+            'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.json'),
+        }
+    }
+    
+    
+    # Update STATICFILES_DIRS
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "static"),
+    ]
 
   . urls.py
     Content:
@@ -10928,17 +12581,21 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     from authentication import views
     from django.conf import settings
     from django.conf.urls.static import static
+    from django.views.generic import TemplateView
     
     urlpatterns = [
         path('admin/', admin.site.urls),
         path('accounts/', include('authentication.urls')),  # <--- Ensure THIS line is here
+        path('permissions/', include('apps.permissions.urls', namespace='permissions')), # ADD THIS
         path("statistics/", include("apps.statistics.urls", namespace="statistics")),
         path('login/', views.login_view, name='login'),
         path('budget/', include('apps.budget.urls', namespace='budget')),
         path('meetings/', include('apps.meetings.urls', namespace='meetings')),
         path('memos/', include('apps.memos.urls', namespace='memos')),
+        path('mail/', include('apps.mail.urls', namespace='mail')),
         path("unicorn/", include("django_unicorn.urls")),
         path("", include("apps.home.urls")),
+        path('react/', TemplateView.as_view(template_name='react.html'), name='react'),
     ]
     
     if settings.DEBUG:
@@ -11123,5 +12780,13 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
   pinecone-client
   langchain
   
+  
+  # react 
+  
+  django-webpack-loader==1.8.1
+  
+  # Faker
+  
+  Faker==19.13.0
   
 

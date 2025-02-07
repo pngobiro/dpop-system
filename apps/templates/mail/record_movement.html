@@ -1,0 +1,23 @@
+{% extends "layouts/base.html" %}
+    {% block title %}Record Mail Movement{% endblock %}
+    
+    {% block content %}
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Record Mail Movement for {{ mail.subject }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form.as_p }}  {# Or use a loop like in register_mail.html for more control #}
+                            <button type="submit" class="btn btn-primary">Record Movement</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}

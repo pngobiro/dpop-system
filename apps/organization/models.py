@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import Permission  # Import Permission
+
 
 class Department(models.Model):
     name = models.CharField(max_length=200)
@@ -28,6 +30,7 @@ class Role(models.Model):
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    permissions = models.ManyToManyField(Permission, blank=True)  # ADD THIS LINE
 
     def __str__(self):
         return f"{self.title} ({self.department.name})"

@@ -36,8 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-     'webpack_loader',
     'authentication', # added the authentication apps
+    'apps.permissions',
     'apps.home', 
     'django_unicorn',
     'apps.statistics',
@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'apps.budget',
     'apps.meetings',
     'apps.memos',
+    'apps.mail',
     'debug_toolbar',
 
 ]

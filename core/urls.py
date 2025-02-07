@@ -9,11 +9,13 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('authentication.urls')),  # <--- Ensure THIS line is here
+    path('permissions/', include('apps.permissions.urls', namespace='permissions')), # ADD THIS
     path("statistics/", include("apps.statistics.urls", namespace="statistics")),
     path('login/', views.login_view, name='login'),
     path('budget/', include('apps.budget.urls', namespace='budget')),
     path('meetings/', include('apps.meetings.urls', namespace='meetings')),
     path('memos/', include('apps.memos.urls', namespace='memos')),
+    path('mail/', include('apps.mail.urls', namespace='mail')),
     path("unicorn/", include("django_unicorn.urls")),
     path("", include("apps.home.urls")),
     path('react/', TemplateView.as_view(template_name='react.html'), name='react'),

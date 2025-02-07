@@ -43,17 +43,18 @@ def department_dashboard(request):
     }
     return render(request, 'memos/dashboard.html', context)
 
+    
 @login_required
 def memo_create(request):
     """Create a new memo"""
     if request.method == 'POST':
-        form = MemoForm(request.POST, request.FILES)
+        form = MemoForm(request.POST, request.FILES, user=request.user)  # Pass user to the form
         if form.is_valid():
             memo = form.save(commit=False)
             memo.created_by = request.user
             memo.department = request.user.department
             memo.save()
-            form.save_m2m()
+            form.save_m2m()  # Save ManyToMany fields
 
             # Handle document creation if file is uploaded
             if request.FILES.get('document'):
@@ -62,7 +63,7 @@ def memo_create(request):
             messages.success(request, 'Memo created successfully.')
             return redirect('memos:memo_detail', pk=memo.pk)
     else:
-        form = MemoForm()
+        form = MemoForm(user=request.user) # Pass the user to the form!
 
     templates = MemoTemplate.objects.filter(
         Q(department=request.user.department) | Q(department__isnull=True)
@@ -71,8 +72,12 @@ def memo_create(request):
     return render(request, 'memos/memo_form.html', {
         'form': form,
         'templates': templates,
-        'action': 'Create'
+        'action': 'Create'  # Add action for dynamic text
     })
+
+    
+
+
 
 @login_required
 def memo_detail(request, pk):

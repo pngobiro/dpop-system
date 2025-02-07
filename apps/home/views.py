@@ -8,6 +8,8 @@ from django.urls import reverse
 from django.shortcuts import render
 from apps.organization.models import Department
 from apps.home.models import Module # Import Module model
+from django.db.models import Q  # Import Q objects
+
 
 
 def react_view(request):
@@ -45,20 +47,20 @@ def pages(request):
         html_template = loader.get_template('home/page-500.html')
         return HttpResponse(html_template.render(context, request))
 
+
 @login_required
 def department_modules(request, department_id):
     department = get_object_or_404(Department, id=department_id)
-    # all_modules = Module.objects.filter(department=department) # Get all modules for the department
-    all_modules = Module.objects.all()
+    all_modules = Module.objects.filter(departments=department)  # Corrected field name
     permitted_modules = []
 
     for module in all_modules:
-        permission_codename = f'home.{module.permission_codename}' # Construct full permission codename (app_label.codename)
-        if request.user.has_perm(permission_codename): # Check if user has permission
+        permission_codename = f'home.{module.permission_codename}'
+        if request.user.has_perm(permission_codename):
             permitted_modules.append(module)
 
     context = {
         'department': department,
-        'modules': permitted_modules, # Pass only permitted modules to the template
+        'modules': permitted_modules,
     }
     return render(request, "home/department_modules.html", context)

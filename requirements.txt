@@ -43,3 +43,7 @@ langchain
 
 django-webpack-loader==1.8.1
 
+# Faker
+
+Faker==19.13.0
+

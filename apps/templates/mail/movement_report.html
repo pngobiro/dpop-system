@@ -1,0 +1,80 @@
+{% extends "layouts/base.html" %}
+{% block title %}Mail Movement Report{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Mail Movement Report</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Filter Options</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">Date From:</label>
+                    <input type="date" id="date_from" name="date_from" value="{{ date_from }}" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">Date To:</label>
+                    <input type="date" id="date_to" name="date_to" value="{{ date_to }}" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status:</label>
+                    <select id="status" name="status" class="form-control">
+                        <option value="" {% if not status %}selected{% endif %}>All</option>
+                        {% for choice in movements.0.mail.get_status_display %}
+                            <option value="{{ choice.0 }}" {% if status == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Movement Records</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Mail Subject</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Handler</th>
+                        <th>Timestamp</th>
+                        <th>Received By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movement in movements %}
+                    <tr>
+                        <td>{{ movement.mail.subject }}</td>
+                        <td>{{ movement.from_location }}</td>
+                        <td>{{ movement.to_location }}</td>
+                        <td>{{ movement.handler.get_full_name }}</td>
+                        <td>{{ movement.timestamp }}</td>
+                        <td>{{ movement.received_by|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No movement records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h4>Summary</h4>
+        <p>Total Movements: {{ summary.total_movements }}</p>
+        {# Add other summary statistics here, formatting as needed #}
+    </div>
+</div>
+{% endblock %}
