@@ -1,172 +1,160 @@
 {% extends "layouts/base.html" %}
 
-{% block stylesheets %}
-<!-- Bootstrap CSS -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
-
-{% endblock %}
+{% block title %} Upload DCRT Data {% endblock %}
 
 {% block content %}
+<div class="container mt-4">
+    <!-- Header and Navigation -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Upload DCRT Data</h2>
+            <h5 class="text-muted">
+                {{ unit.name }} - {{ month.name }} - FY {{ financial_year.name }} - {{ financial_quarter.name }}
+            </h5>
+        </div>
+        <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id unit.id division.id %}" 
+           class="btn btn-outline-primary">
+            Back to Months
+        </a>
+    </div>
 
-<div class="container my-5">
+    <!-- Upload Card -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Upload Excel File</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4 text-center p-4 bg-light border rounded">
+                            <div class="mb-3">
+                                <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx,.xls">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                Upload DCRT Data
+                            </button>
+                        </div>
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Dashboard</h2>
-    <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id unit.id division.id  %}" class="btn btn-primary btn-sm">
-      <i class="fas fa-arrow-left"></i> Go Back
-    </a> 
-   
-  </div>
-
-  <h3>{{ unit.name }} - {{ month.name }}</h3>
-
-  <h4>{{ unit_rank.name }} - FY {{ financial_year.name }} - {{ financial_quarter.name }}</h4>
-
-  <div class="row">
-
-    <div class="col-md-6">
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-upload"></i>
-            Upload DCRT Returns
-          </h3>
-
-          <!-- Form for uploading DCRT Returns -->
-          <form method="post" enctype="multipart/form-data" action="{% url 'statistics:upload_unit_monthly_dcrt_excel' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}">
-            {% csrf_token %}
-            <div class="form-group">
-              <label for="excelFile">Select Excel File:</label>
-              <input type="file" name="excelFile" class="form-control-file" id="excelFile" required>
+                        <!-- Guidelines -->
+                        <div class="alert alert-info">
+                            <h6>Upload Guidelines:</h6>
+                            <ul class="mb-0">
+                                <li>Only Excel files (.xlsx, .xls) are accepted</li>
+                                <li>Maximum file size: 10MB</li>
+                                <li>Ensure your Excel follows the DCRT template format</li>
+                                <li>All required fields must be filled</li>
+                                <li>Data should correspond to {{ month.name }} {{ financial_year.name }}</li>
+                            </ul>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-upload"></i>
-              Upload
-            </button>
-          </form>
         </div>
-      </div>
 
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-chart-bar"></i>
-            Data Summary  
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_case_summary' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View Summary
-          </a>
+        <!-- Quick Links -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <!-- Case Analysis -->
+                        <a href="{% url 'statistics:monthly_unit_case_summary' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                          class="list-group-item list-group-item-action">
+                            View Case Summary
+                        </a>
+                        
+                        <!-- Data Quality Links -->
+                        <a href="{% url 'statistics:monthly_unit_missing_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                          class="list-group-item list-group-item-action">
+                            Check Missing Data
+                        </a>
+                        <a href="{% url 'statistics:monthly_unit_duplicate_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                          class="list-group-item list-group-item-action">
+                            View Duplicate Data
+                        </a>
+                        <a href="{% url 'statistics:monthly_unit_outliers' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                          class="list-group-item list-group-item-action">
+                            Analyze Outliers
+                        </a>
+                        <a href="{% url 'statistics:monthly_unit_incomplete_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                          class="list-group-item list-group-item-action">
+                            Check Incomplete Records
+                        </a>
+
+                        <!-- Case Statistics -->
+                        <a href="{% url 'statistics:monthly_unit_registered_cases' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                          class="list-group-item list-group-item-action">
+                            View Registered Cases
+                        </a>
+                        <a href="{% url 'statistics:monthly_unit_resolved_cases' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                          class="list-group-item list-group-item-action">
+                            View Resolved Cases
+                        </a>
+                        <a href="{% url 'statistics:monthly_unit_matters_handled' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                          class="list-group-item list-group-item-action">
+                            View Matters Handled
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
 
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-list"></i>
-            DCRT Data
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_case_summary' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View DCRT Data
-          </a>
+            <!-- Status Card -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Current Status</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Unit:</th>
+                            <td>{{ unit.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Month:</th>
+                            <td>{{ month.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Financial Year:</th>
+                            <td>{{ financial_year.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Quarter:</th>
+                            <td>{{ financial_quarter.name }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
         </div>
-      </div>
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-copy"></i>
-            Duplicate Data
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_duplicate_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View Duplicate Data
-          </a>
-        </div>
-      </div>
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-chart-line"></i>
-            Data Outliers
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_outliers' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View Outliers  
-          </a>
-        </div>
-      </div>
-
     </div>
-
-    <div class="col-md-6">
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-exclamation-circle"></i>
-            Missing Data
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_missing_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View Missing Data
-          </a>
-        </div>
-      </div>
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-clipboard-list"></i> 
-            Registered Cases
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_registered_cases' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View Registered Cases
-          </a>
-        </div>
-      </div>
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-check-square"></i>
-            Resolved Cases
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_resolved_cases' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View Resolved Cases
-          </a>
-        </div>
-      </div>
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-balance-scale"></i>
-            Matters Handled
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_matters_handled' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View Matters Handled
-          </a>
-        </div>
-      </div>
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h3 class="card-title">
-            <i class="fas fa-exclamation-triangle"></i>
-            Incomplete Data
-          </h3>
-          <a href="{% url 'statistics:monthly_unit_incomplete_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-            View Incomplete Data
-          </a>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
 </div>
+{% endblock content %}
 
-{% endblock %}
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('excelFile');
+    const submitButton = document.querySelector('button[type="submit"]');
+
+    fileInput.addEventListener('change', function() {
+        // Enable submit button only if a file is selected
+        submitButton.disabled = !this.files.length;
+
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            // Check file size (10MB limit)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit');
+                this.value = '';
+                submitButton.disabled = true;
+            }
+        }
+    });
+});
+</script>
+{% endblock javascripts %}
