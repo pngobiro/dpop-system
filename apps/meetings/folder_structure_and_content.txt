@@ -1,0 +1,962 @@
+Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/meetings
+
+. __init__.py
+  Content:
+
+
+. admin.py
+  Content:
+  # apps/meetings/admin.py
+  from django.contrib import admin
+  from .models import Meeting, MeetingParticipant, MeetingDocument
+  
+  class MeetingParticipantInline(admin.TabularInline):
+      model = MeetingParticipant
+      extra = 1
+  
+  class MeetingDocumentInline(admin.TabularInline):
+      model = MeetingDocument
+      extra = 1
+  
+  @admin.register(Meeting)
+  class MeetingAdmin(admin.ModelAdmin):
+      list_display = ('title', 'department', 'date', 'meeting_type', 'meeting_mode', 'status')
+      list_filter = ('department', 'meeting_type', 'meeting_mode', 'status', 'date')
+      search_fields = ('title', 'agenda', 'department__name')
+      date_hierarchy = 'date'
+      inlines = [MeetingParticipantInline, MeetingDocumentInline]
+      
+      fieldsets = (
+          ('Basic Information', {
+              'fields': ('title', 'department', 'meeting_type', 'meeting_mode', 'status')
+          }),
+          ('Timing', {
+              'fields': ('date', 'start_time', 'end_time')
+          }),
+          ('Location', {
+              'fields': ('physical_location',)
+          }),
+          ('Virtual Meeting Details', {
+              'fields': ('virtual_platform', 'virtual_meeting_url', 'virtual_meeting_id', 'virtual_meeting_password'),
+              'classes': ('collapse',)
+          }),
+          ('Content', {
+              'fields': ('agenda', 'minutes')
+          }),
+          ('Recording', {
+              'fields': ('recording_url', 'has_recording'),
+              'classes': ('collapse',)
+          }),
+      )
+
+. apps.py
+  Content:
+  from django.apps import AppConfig
+  
+  
+  
+  class MeetingsConfig(AppConfig):
+      default_auto_field = 'django.db.models.BigAutoField'
+      name = 'apps.meetings'
+      label = 'meetings'
+      
+
+. calendar.py
+  Content:
+  # apps/meetings/views/calendar.py
+  from django.shortcuts import render
+  from django.contrib.auth.decorators import login_required
+  from django.utils import timezone
+  from django.db.models import Q
+  from calendar import monthcalendar
+  import calendar
+  from datetime import datetime, date, timedelta
+  from ..models import Meeting
+  from apps.organization.models import Department, FinancialYear, FinancialQuarter
+  from django.utils.safestring import mark_safe
+  
+  class Calendar:
+      def __init__(self, year=None, month=None):
+          self.year = year or timezone.now().year
+          self.month = month or timezone.now().month
+          
+      def formatday(self, day, meetings):
+          """Format a day with its meetings."""
+          meetings_per_day = meetings.filter(date__day=day)
+          d = ''
+          for meeting in meetings_per_day:
+              meeting_class = 'text-primary'
+              if meeting.meeting_type == 'director':
+                  meeting_class = 'text-danger'
+              elif meeting.meeting_type == 'committee':
+                  meeting_class = 'text-success'
+                  
+              d += f'''<div class="mb-2">
+                  <a href="/meetings/{meeting.pk}/" 
+                     class="text-decoration-none {meeting_class}">
+                      {meeting.start_time.strftime('%H:%M')} - {meeting.title[:30]}...
+                  </a>
+              </div>'''
+              
+          if day != 0:
+              today_class = 'table-primary' if date.today() == date(self.year, self.month, day) else ''
+              return f"""
+                  <td class="align-top p-3 {today_class}" style="height: 180px; min-width: 200px;">
+                      <div class="fs-4 fw-bold mb-3">{day}</div>
+                      <div class="overflow-hidden">{d}</div>
+                  </td>
+              """
+          return '<td class="bg-light"></td>'
+  
+      def formatweek(self, week, meetings):
+          """Format a complete week."""
+          week_days = ''
+          for day in week:
+              week_days += self.formatday(day, meetings)
+          return f'<tr>{week_days}</tr>'
+  
+      def formatmonth(self, meetings):
+          """Format the entire month."""
+          cal = monthcalendar(self.year, self.month)
+          
+          month_header = f'''
+          <thead>
+              <tr>
+                  <th colspan="7" class="bg-primary text-white text-center p-4 fs-3">
+                      {calendar.month_name[self.month]} {self.year}
+                  </th>
+              </tr>
+              <tr>
+                  <th class="text-center p-3 fs-5">Mon</th>
+                  <th class="text-center p-3 fs-5">Tue</th>
+                  <th class="text-center p-3 fs-5">Wed</th>
+                  <th class="text-center p-3 fs-5">Thu</th>
+                  <th class="text-center p-3 fs-5">Fri</th>
+                  <th class="text-center p-3 fs-5">Sat</th>
+                  <th class="text-center p-3 fs-5">Sun</th>
+              </tr>
+          </thead>
+          '''
+          
+          weeks = ''
+          for week in cal:
+              weeks += self.formatweek(week, meetings)
+              
+          return mark_safe(f'<table class="table table-bordered table-lg mb-0">{month_header}<tbody>{weeks}</tbody></table>')
+  
+  def get_current_financial_quarter():
+      """Get current financial quarter"""
+      today = timezone.now().date()
+      
+      current_fy = FinancialYear.objects.filter(
+          start_date__lte=today,
+          end_date__gte=today
+      ).first()
+      
+      if current_fy:
+          current_quarter = FinancialQuarter.objects.filter(
+              financial_year=current_fy,
+              start_date__lte=today,
+              end_date__gte=today
+          ).first()
+          
+          if current_quarter:
+              return current_quarter.quarter_number
+      
+      return None
+  
+  @login_required
+  def calendar_view(request):
+      # Get current date
+      d = timezone.now().date()
+      
+      # Get current financial year
+      current_fy = FinancialYear.objects.filter(
+          start_date__lte=d,
+          end_date__gte=d
+      ).first()
+      
+      # Get default quarter
+      default_quarter = get_current_financial_quarter()
+      selected_quarter = request.GET.get('quarter', default_quarter)
+      
+      # Get selected month and year
+      if selected_quarter and not request.GET.get('month'):
+          # If quarter is selected but month isn't, show first month of quarter
+          quarter_start = FinancialQuarter.objects.get(
+              financial_year=current_fy,
+              quarter_number=int(selected_quarter)
+          ).start_date
+          month = quarter_start.month
+          year = quarter_start.year
+      else:
+          month = int(request.GET.get('month', d.month))
+          year = int(request.GET.get('year', d.year))
+      
+      department_id = request.GET.get('department')
+      
+      # Filter meetings based on permissions
+      user = request.user
+      if user.has_perm('meetings.view_all_meetings'):
+          meetings = Meeting.objects.all()
+      else:
+          meetings = Meeting.objects.filter(
+              Q(department=user.department) | Q(participants=user)
+          ).distinct()
+      
+      # Apply filters
+      if department_id and user.has_perm('meetings.view_all_meetings'):
+          meetings = meetings.filter(department_id=department_id)
+      
+      if selected_quarter and current_fy:
+          quarter = FinancialQuarter.objects.get(
+              financial_year=current_fy,
+              quarter_number=int(selected_quarter)
+          )
+          meetings = meetings.filter(
+              date__range=[quarter.start_date, quarter.end_date]
+          )
+      
+      meetings = meetings.filter(date__year=year, date__month=month)
+      
+      # Navigation links
+      prev_month = month - 1 if month > 1 else 12
+      prev_year = year if month > 1 else year - 1
+      next_month = month + 1 if month < 12 else 1
+      next_year = year if month < 12 else year + 1
+      
+      # Create calendar
+      cal = Calendar(year, month)
+      calendar_html = cal.formatmonth(meetings)
+      
+      # Get departments
+      departments = None
+      if user.has_perm('meetings.view_all_meetings'):
+          departments = Department.objects.all()
+      
+      # Get quarters
+      quarters = []
+      if current_fy:
+          quarters = [(q.quarter_number, f'Quarter {q.quarter_number} ({q.start_date.strftime("%b")} - {q.end_date.strftime("%b")})')
+                     for q in FinancialQuarter.objects.filter(financial_year=current_fy).order_by('quarter_number')]
+      
+      context = {
+          'calendar': calendar_html,
+          'prev_month': prev_month,
+          'prev_year': prev_year,
+          'next_month': next_month,
+          'next_year': next_year,
+          'current_month': calendar.month_name[month],
+          'current_year': year,
+          'departments': departments,
+          'selected_department': department_id,
+          'quarters': quarters,
+          'selected_quarter': selected_quarter,
+          'current_fy': current_fy,
+      }
+      
+      return render(request, 'meetings/calendar.html', context)
+
+. forms.py
+  Content:
+  # apps/meetings/forms.py
+  from django import forms
+  from .models import Meeting, MeetingParticipant, MeetingDocument, MeetingAction
+  
+  class MeetingForm(forms.ModelForm):
+      def __init__(self, *args, **kwargs):
+          super().__init__(*args, **kwargs)
+          self.fields['date'].widget = forms.DateInput(attrs={'type': 'date'})
+          self.fields['start_time'].widget = forms.TimeInput(attrs={'type': 'time'})
+          self.fields['end_time'].widget = forms.TimeInput(attrs={'type': 'time'})
+          self.fields['participants'].widget.attrs['class'] = 'form-control select2'
+          
+          # Make virtual meeting fields not required initially
+          self.fields['virtual_meeting_url'].required = False
+          self.fields['virtual_meeting_id'].required = False
+          self.fields['virtual_meeting_password'].required = False
+          self.fields['physical_location'].required = False
+  
+      def clean(self):
+          cleaned_data = super().clean()
+          meeting_mode = cleaned_data.get('meeting_mode')
+  
+          # Validate based on meeting mode
+          if meeting_mode == 'virtual' or meeting_mode == 'hybrid':
+              if not cleaned_data.get('virtual_meeting_url'):
+                  self.add_error('virtual_meeting_url', 'Virtual meeting URL is required for virtual/hybrid meetings')
+  
+          if meeting_mode == 'physical' or meeting_mode == 'hybrid':
+              if not cleaned_data.get('physical_location'):
+                  self.add_error('physical_location', 'Physical location is required for physical/hybrid meetings')
+  
+          return cleaned_data
+  
+      class Meta:
+          model = Meeting
+          fields = [
+              'title', 'department', 'meeting_type', 'meeting_mode',
+              'date', 'start_time', 'end_time',
+              'physical_location', 'virtual_platform',
+              'virtual_meeting_url', 'virtual_meeting_id',
+              'virtual_meeting_password', 'agenda', 'participants'
+          ]
+          widgets = {
+              'agenda': forms.Textarea(attrs={'rows': 4}),
+          }
+          
+  class MeetingActionForm(forms.ModelForm):
+      class Meta:
+          model = MeetingAction
+          fields = ['description', 'assigned_to', 'due_date']
+          widgets = {
+              'description': forms.Textarea(attrs={
+                  'rows': 3,
+                  'class': 'form-control',
+                  'placeholder': 'Enter action item description'
+              }),
+              'assigned_to': forms.Select(attrs={
+                  'class': 'form-control'
+              }),
+              'due_date': forms.DateInput(attrs={
+                  'class': 'form-control',
+                  'type': 'date'
+              })
+          }
+  
+      def __init__(self, *args, **kwargs):
+          super().__init__(*args, **kwargs)
+          self.fields['description'].label = 'Action Item Description'
+          self.fields['assigned_to'].label = 'Assign To'
+          self.fields['due_date'].label = 'Due Date'
+          
+          
+  
+  # apps/meetings/forms.py
+  
+  class MeetingDocumentForm(forms.ModelForm):
+      DOCUMENT_TYPES = [
+          ('agenda', 'Agenda'),
+          ('minutes', 'Minutes'),
+          ('presentation', 'Presentation'),
+          ('report', 'Report'),
+          ('other', 'Other')
+      ]
+      
+      document_type = forms.ChoiceField(
+          choices=DOCUMENT_TYPES,
+          widget=forms.Select(attrs={'class': 'form-control'})
+      )
+      file = forms.FileField(
+          widget=forms.FileInput(attrs={'class': 'form-control'})
+      )
+      notes = forms.CharField(
+          required=False,
+          widget=forms.Textarea(attrs={
+              'class': 'form-control',
+              'rows': 3,
+              'placeholder': 'Optional notes about this document'
+          })
+      )
+  
+      class Meta:
+          model = MeetingDocument
+          fields = ['document_type', 'file', 'notes']
+          
+      def save(self, meeting, commit=True):
+          instance = super().save(commit=False)
+          instance.meeting = meeting
+          
+          if commit:
+              instance.save()
+          return instance
+
+. management/
+  . commands/
+    . seed_meetings.py
+      Content:
+      # apps/meetings/management/commands/seed_meetings.py
+      from django.core.management.base import BaseCommand
+      from django.contrib.auth import get_user_model
+      from django.utils import timezone
+      from apps.meetings.models import Meeting, MeetingParticipant
+      from apps.organization.models import Department
+      from datetime import timedelta
+      
+      User = get_user_model()
+      
+      class Command(BaseCommand):
+          help = 'Seeds sample meetings for each department'
+      
+          def handle(self, *args, **kwargs):
+              self.stdout.write('Seeding meetings data...')
+      
+              # Get departments
+              departments = Department.objects.all()
+              try:
+                  director = User.objects.get(username='joseph.osewe')
+              except User.DoesNotExist:
+                  self.stdout.write('Creating director user...')
+                  director = User.objects.create_user(
+                      username='joseph.osewe',
+                      email='joseph.osewe@judiciary.go.ke',
+                      first_name='Joseph',
+                      last_name='Osewe',
+                      is_staff=True,
+                      is_superuser=True
+                  )
+                  director.set_password('Admin123!')
+                  director.save()
+      
+              meeting_types = {
+                  'Department Internal': [
+                      'Monthly Performance Review',
+                      'Staff Meeting',
+                      'Team Building',
+                      'Strategy Session'
+                  ],
+                  'With Director': [
+                      'Quarterly Review',
+                      'Budget Planning',
+                      'Performance Assessment',
+                      'Strategic Planning'
+                  ],
+                  'Committee': [
+                      'Technical Committee',
+                      'Quality Assurance',
+                      'Research Committee',
+                      'Innovation Committee'
+                  ]
+              }
+      
+              for department in departments:
+                  self.stdout.write(f'Creating meetings for {department.name}')
+                  
+                  # Get department head - first user in department with Assistant Director role
+                  dept_head = User.objects.filter(departments=department).first()
+                  
+                  if not dept_head:
+                      continue
+      
+                  # Create meetings for each type
+                  for meeting_type, titles in meeting_types.items():
+                      for title in titles:
+                          # Create future meeting
+                          days_ahead = 14 if meeting_type == 'Department Internal' else 30
+                          meeting_date = timezone.now().date() + timedelta(days=days_ahead)
+                          
+                          meeting = Meeting.objects.create(
+                              title=f"{department.name} - {title}",
+                              department=department,
+                              meeting_type=meeting_type,
+                              date=meeting_date,
+                              start_time='10:00',
+                              end_time='11:30',
+                              meeting_mode='hybrid',
+                              physical_location='Conference Room A',
+                              virtual_platform='teams',
+                              virtual_meeting_url='https://teams.microsoft.com/meeting',
+                              agenda=f"""
+                              1. Opening Remarks
+                              2. Previous Action Items Review
+                              3. {title} Main Agenda
+                              4. Department Updates
+                              5. Way Forward
+                              6. AOB
+                              """,
+                              status='scheduled',
+                              organizer=dept_head if meeting_type == 'Department Internal' else director
+                          )
+      
+                          # Add participants
+                          dept_staff = User.objects.filter(departments=department).distinct()
+      
+                          for staff in dept_staff:
+                              MeetingParticipant.objects.create(
+                                  meeting=meeting,
+                                  participant=staff,
+                                  role='attendee'
+                              )
+      
+                          # Add director for director meetings
+                          if meeting_type == 'With Director':
+                              MeetingParticipant.objects.create(
+                                  meeting=meeting,
+                                  participant=director,
+                                  role='organizer'
+                              )
+      
+              self.stdout.write(self.style.SUCCESS('Successfully seeded meetings data'))
+
+. models.py
+  Content:
+  # apps/meetings/models.py
+  from django.db import models
+  from django.conf import settings
+  from apps.organization.models import Department
+  from apps.document_management.models import Document
+  
+  
+  class MeetingAction(models.Model):
+      meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
+      description = models.TextField()
+      assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+      due_date = models.DateField()
+  
+      class Meta:
+          verbose_name = 'Meeting Action Item'
+          verbose_name_plural = 'Meeting Action Items'
+  
+      def __str__(self):
+          return f"{self.description} - {self.meeting.title}"
+      
+      
+  
+  class MeetingDocument(models.Model):
+      DOCUMENT_TYPES = [
+          ('agenda', 'Agenda'),
+          ('minutes', 'Minutes'),
+          ('presentation', 'Presentation'),
+          ('report', 'Report'),
+          ('other', 'Other')
+      ]
+  
+      meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
+      document = models.ForeignKey(Document, on_delete=models.CASCADE)
+      document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
+      notes = models.TextField(blank=True, help_text="Additional notes about the document")
+      uploaded_at = models.DateTimeField(auto_now_add=True)
+      updated_at = models.DateTimeField(auto_now=True)
+  
+      class Meta:
+          unique_together = ['meeting', 'document']
+          verbose_name = 'Meeting Document'
+          verbose_name_plural = 'Meeting Documents'
+          ordering = ['-uploaded_at']
+  
+      def __str__(self):
+          return f"{self.get_document_type_display()} for {self.meeting}"
+  
+  
+  
+  class MeetingParticipant(models.Model):
+      PARTICIPANT_ROLE = [
+          ('organizer', 'Organizer'),
+          ('attendee', 'Attendee'),
+          ('guest', 'Guest')
+      ]
+  
+      meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
+      participant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+      role = models.CharField(max_length=20, choices=PARTICIPANT_ROLE, default='attendee')
+  
+      class Meta:
+          unique_together = ['meeting', 'participant']
+          verbose_name = 'Meeting Participant'
+          verbose_name_plural = 'Meeting Participants'
+  
+      def __str__(self):
+          return f"{self.participant.get_full_name()} - {self.get_role_display()}"
+      
+      
+  
+  class Meeting(models.Model):
+      MEETING_STATUS = [
+          ('scheduled', 'Scheduled'),
+          ('in_progress', 'In Progress'),
+          ('completed', 'Completed'),
+          ('cancelled', 'Cancelled')
+      ]
+  
+      MEETING_TYPE = [
+          ('department', 'Department Internal'),
+          ('director', 'With Director'),
+          ('committee', 'Committee Meeting'),
+          ('other', 'Other')
+      ]
+      
+      MEETING_MODE = [
+          ('physical', 'Physical'),
+          ('virtual', 'Virtual'),
+          ('hybrid', 'Hybrid')
+      ]
+  
+      # Basic Info
+      title = models.CharField(max_length=255)
+      department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='meetings')
+      meeting_type = models.CharField(max_length=20, choices=MEETING_TYPE)
+      date = models.DateField()
+      start_time = models.TimeField()
+      end_time = models.TimeField()
+      
+      # Location/Mode
+      meeting_mode = models.CharField(max_length=20, choices=MEETING_MODE, default='physical')
+      physical_location = models.CharField(max_length=255, blank=True, null=True)
+      virtual_meeting_url = models.URLField(blank=True, null=True)
+      virtual_meeting_id = models.CharField(max_length=100, blank=True, null=True, help_text="Meeting ID for virtual platform")
+      virtual_meeting_password = models.CharField(max_length=50, blank=True, null=True, help_text="Password for virtual meeting")
+      virtual_platform = models.CharField(
+          max_length=50, 
+          blank=True, 
+          null=True,
+          choices=[
+              ('zoom', 'Zoom'),
+              ('teams', 'Microsoft Teams'),
+              ('meet', 'Google Meet'),
+              ('other', 'Other Platform')
+          ]
+      )
+  
+      # Content
+      agenda = models.TextField()
+      minutes = models.TextField(blank=True, null=True)
+      status = models.CharField(max_length=20, choices=MEETING_STATUS, default='scheduled')
+      
+      # Meeting organization
+      organizer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='organized_meetings')
+      participants = models.ManyToManyField(settings.AUTH_USER_MODEL, through='MeetingParticipant', related_name='meetings')
+      
+      # Recording (for virtual meetings)
+      recording_url = models.URLField(blank=True, null=True)
+      has_recording = models.BooleanField(default=False)
+      
+      # Timestamps
+      created_at = models.DateTimeField(auto_now_add=True)
+      updated_at = models.DateTimeField(auto_now=True)
+  
+      class Meta:
+          ordering = ['-date', '-start_time']
+          permissions = [
+              ("view_all_meetings", "Can view all meetings across departments"),
+              ("manage_department_meetings", "Can manage department meetings"),
+          ]
+  
+      def __str__(self):
+          return f"{self.title} - {self.department.name} ({self.date})"
+      
+      def get_meeting_location(self):
+          """Returns formatted meeting location/link based on meeting mode"""
+          if self.meeting_mode == 'physical':
+              return self.physical_location
+          elif self.meeting_mode == 'virtual':
+              return self.virtual_meeting_url
+          else:  # hybrid
+              return f"Physical: {self.physical_location}\nVirtual: {self.virtual_meeting_url}"
+  
+      def get_meeting_access_info(self):
+          """Returns formatted virtual meeting access information"""
+          if self.meeting_mode in ['virtual', 'hybrid']:
+              info = []
+              if self.virtual_platform:
+                  info.append(f"Platform: {self.get_virtual_platform_display()}")
+              if self.virtual_meeting_url:
+                  info.append(f"URL: {self.virtual_meeting_url}")
+              if self.virtual_meeting_id:
+                  info.append(f"Meeting ID: {self.virtual_meeting_id}")
+              if self.virtual_meeting_password:
+                  info.append(f"Password: {self.virtual_meeting_password}")
+              return "\n".join(info)
+          return ""
+
+. tests.py
+  Content:
+  from django.test import TestCase
+  
+  # Create your tests here.
+
+. urls.py
+  Content:
+  # apps/meetings/urls.py
+  from django.urls import path
+  from . import views
+  
+  app_name = 'meetings'
+  
+  urlpatterns = [
+      path('calendar/', views.calendar_view, name='calendar'),  # Add this line
+      path('', views.dashboard, name='dashboard'),
+      path('director/', views.director_dashboard, name='director_dashboard'),
+      path('list/', views.meeting_list, name='meeting_list'),
+      path('create/', views.meeting_create, name='meeting_create'),
+      path('<int:pk>/', views.meeting_detail, name='meeting_detail'),
+      path('<int:pk>/edit/', views.meeting_update, name='meeting_update'),
+      path('<int:pk>/delete/', views.meeting_delete, name='meeting_delete'),
+  ]
+
+. views/
+  . __init__.py
+    Content:
+    # apps/meetings/views/__init__.py
+    from .base import dashboard, director_dashboard
+    from .crud import (
+        meeting_create,
+        meeting_detail,
+        meeting_update,
+        meeting_delete
+    )
+    from .lists import meeting_list
+    from .calendar import calendar_view
+    
+    __all__ = [
+        'dashboard',
+        'director_dashboard',
+        'meeting_create',
+        'meeting_detail',
+        'meeting_update',
+        'meeting_delete',
+        'meeting_list',
+        'calendar_view'
+    ]
+
+  . base.py
+    Content:
+    # apps/meetings/views/base.py
+    from django.shortcuts import render, redirect
+    from django.contrib.auth.decorators import login_required
+    from django.contrib import messages
+    from django.db.models import Q
+    from django.utils import timezone
+    from apps.meetings.models import Meeting, MeetingParticipant
+    from apps.organization.models import Department
+    
+    @login_required 
+    def dashboard(request):
+        user = request.user
+        today = timezone.now().date()
+        thirty_days_ago = today - timezone.timedelta(days=30)
+        thirty_days_ahead = today + timezone.timedelta(days=30)
+    
+        # Base query for user's meetings
+        base_query = Q(department=user.department) | Q(participants=user)
+    
+        # Get today's meetings
+        todays_meetings = Meeting.objects.filter(
+            date=today,
+            status='scheduled'
+        ).filter(base_query).distinct().order_by('start_time')
+    
+        # Get upcoming meetings (excluding today)
+        upcoming_meetings = Meeting.objects.filter(
+            date__gt=today,
+            date__lte=thirty_days_ahead,
+            status='scheduled'
+        ).filter(base_query).distinct().order_by('date', 'start_time')[:5]
+    
+        # Calculate statistics
+        stats = {
+            'total_meetings': Meeting.objects.filter(base_query).distinct().count(),
+            'upcoming_count': Meeting.objects.filter(
+                date__gte=today,
+                status='scheduled'
+            ).filter(base_query).distinct().count(),
+            'completed_count': Meeting.objects.filter(
+                status='completed',
+                date__gte=thirty_days_ago
+            ).filter(base_query).distinct().count(),
+            'my_meetings_count': Meeting.objects.filter(
+                Q(organizer=user) | Q(participants=user)
+            ).distinct().count()
+        }
+    
+        context = {
+            'stats': stats,
+            'todays_meetings': todays_meetings,
+            'upcoming_meetings': upcoming_meetings,
+        }
+        return render(request, 'meetings/dashboard.html', context)
+    
+    @login_required
+    def director_dashboard(request):
+        if not request.user.is_superuser:
+            messages.error(request, "Access denied")
+            return redirect('meetings:dashboard')
+    
+        today = timezone.now().date()
+        departments = Department.objects.all()
+        dept_meetings = {}
+    
+        for dept in departments:
+            dept_meetings[dept] = {
+                'upcoming': Meeting.objects.filter(
+                    department=dept,
+                    date__gte=today,
+                    status='scheduled'
+                ).order_by('date')[:5],
+                'recent': Meeting.objects.filter(
+                    department=dept,
+                    date__lt=today
+                ).order_by('-date')[:5],
+                'stats': {
+                    'total': Meeting.objects.filter(department=dept).count(),
+                    'scheduled': Meeting.objects.filter(
+                        department=dept, 
+                        status='scheduled'
+                    ).count(),
+                    'completed': Meeting.objects.filter(
+                        department=dept,
+                        status='completed'
+                    ).count()
+                }
+            }
+    
+        context = {
+            'dept_meetings': dept_meetings,
+            'total_meetings': Meeting.objects.count(),
+            'total_participants': MeetingParticipant.objects.count()
+        }
+        
+        return render(request, 'meetings/director_dashboard.html', context)
+
+  . crud.py
+    Content:
+    # apps/meetings/views/crud.py
+    from django.shortcuts import render, get_object_or_404, redirect
+    from django.contrib.auth.decorators import login_required
+    from django.contrib import messages
+    from django.utils import timezone
+    from apps.meetings.models import Meeting, MeetingParticipant
+    from apps.meetings.forms import MeetingForm
+    
+    @login_required
+    def meeting_create(request):
+        """Create a new meeting"""
+        if request.method == 'POST':
+            form = MeetingForm(request.POST)
+            if form.is_valid():
+                meeting = form.save(commit=False)
+                meeting.organizer = request.user
+                meeting.department = request.user.department
+                meeting.save()
+                form.save_m2m()
+    
+                # Create participant entries
+                for user_participant in form.cleaned_data['participants']:
+                    MeetingParticipant.objects.create(
+                        meeting=meeting,
+                        participant=user_participant
+                    )
+    
+                messages.success(request, 'Meeting created successfully.')
+                return redirect('meetings:meeting_detail', pk=meeting.pk)
+        else:
+            form = MeetingForm()
+    
+        return render(request, 'meetings/meeting_form.html', {
+            'form': form, 
+            'action': 'Create'
+        })
+    
+    @login_required
+    def meeting_detail(request, pk):
+        """View meeting details"""
+        meeting = get_object_or_404(Meeting, pk=pk)
+        user = request.user
+    
+        # Check permissions
+        if not (user == meeting.organizer or
+                user.department == meeting.department or
+                meeting.participants.filter(id=user.id).exists()):
+            messages.error(request, "You don't have permission to view this meeting.")
+            return redirect('meetings:dashboard')
+    
+        context = {
+            'meeting': meeting,
+            'participants': MeetingParticipant.objects.filter(meeting=meeting),
+            'can_edit': user == meeting.organizer or user.has_perm('meetings.change_meeting')
+        }
+        return render(request, 'meetings/meeting_detail.html', context)
+    
+    @login_required
+    def meeting_update(request, pk):
+        """Update existing meeting"""
+        meeting = get_object_or_404(Meeting, pk=pk)
+        user = request.user
+    
+        if not (user == meeting.organizer or user.has_perm('meetings.change_meeting')):
+            messages.error(request, "You don't have permission to edit this meeting.")
+            return redirect('meetings:meeting_detail', pk=pk)
+    
+        if request.method == 'POST':
+            form = MeetingForm(request.POST, instance=meeting)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Meeting updated successfully.')
+                return redirect('meetings:meeting_detail', pk=pk)
+        else:
+            form = MeetingForm(instance=meeting)
+    
+        return render(request, 'meetings/meeting_form.html', {
+            'form': form,
+            'meeting': meeting,
+            'action': 'Update'
+        })
+    
+    @login_required
+    def meeting_delete(request, pk):
+        """Delete a meeting"""
+        meeting = get_object_or_404(Meeting, pk=pk)
+        user = request.user
+    
+        if not (user == meeting.organizer or user.has_perm('meetings.delete_meeting')):
+            messages.error(request, "You don't have permission to delete this meeting.")
+            return redirect('meetings:meeting_detail', pk=pk)
+    
+        if request.method == 'POST':
+            meeting.delete()
+            messages.success(request, 'Meeting deleted successfully.')
+            return redirect('meetings:dashboard')
+    
+        return render(request, 'meetings/meeting_confirm_delete.html', {
+            'meeting': meeting
+        })
+
+  . lists.py
+    Content:
+    # apps/meetings/views/lists.py
+    from django.shortcuts import render
+    from django.contrib.auth.decorators import login_required
+    from django.db.models import Q
+    from django.core.paginator import Paginator
+    from apps.meetings.models import Meeting
+    from apps.organization.models import Department
+    
+    @login_required
+    def meeting_list(request):
+        """View for listing meetings based on user's role and department"""
+        user = request.user
+        
+        # Check if user can view all meetings
+        can_view_all = user.has_perm('meetings.view_all_meetings')
+        
+        if can_view_all:
+            meetings = Meeting.objects.all()
+        else:
+            # Department users see only their department meetings
+            meetings = Meeting.objects.filter(
+                Q(department=user.department) | Q(participants=user)
+            ).distinct()
+    
+        # Filter options
+        status = request.GET.get('status')
+        meeting_type = request.GET.get('meeting_type')
+        department_id = request.GET.get('department')
+    
+        if status:
+            meetings = meetings.filter(status=status)
+        if meeting_type:
+            meetings = meetings.filter(meeting_type=meeting_type)
+        if department_id and can_view_all:
+            meetings = meetings.filter(department_id=department_id)
+    
+        # Pagination
+        paginator = Paginator(meetings.order_by('-date'), 10)
+        page = request.GET.get('page')
+        meetings = paginator.get_page(page)
+    
+        context = {
+            'meetings': meetings,
+            'departments': Department.objects.all() if can_view_all else None,
+            'can_view_all': can_view_all,
+        }
+        return render(request, 'meetings/meeting_list.html', context)
+
