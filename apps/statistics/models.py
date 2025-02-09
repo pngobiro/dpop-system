@@ -7,11 +7,17 @@ from django.db import models
 class UnitRank(models.Model):
     name = models.CharField(max_length=255)
     is_court = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.name
 
 class FinancialYear(models.Model):
     name = models.CharField(max_length=255)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    
+    def __str__(self):
+        return self.name
 
 class FinancialQuarter(models.Model):
     name = models.CharField(max_length=255)
@@ -47,6 +53,10 @@ class Unit(models.Model):
     is_court = models.BooleanField(default=False)
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
+    
+    
+    def __str__(self):
+        return self.name
 
 class Months(models.Model):
     name = models.CharField(max_length=255)

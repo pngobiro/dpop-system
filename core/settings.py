@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'apps.organization',
     'apps.budget',
     'apps.meetings',
+    'apps.innovations',
     'apps.memos',
     'apps.mail',
     'debug_toolbar',

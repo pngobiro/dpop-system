@@ -1,0 +1,140 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Innovation Detail: {{ innovation.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between">
+            <h2 class="h4 mb-0">{{ innovation.title }}</h2>
+            <div>
+                {% if perms.innovations.change_innovation and innovation.submitted_by == request.user or user.is_superuser  %}
+                    <a href="{% url 'innovations:edit_innovation' innovation.pk %}" class="btn btn-sm btn-warning" title="Edit">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                {% endif %}
+                {% if perms.innovations.delete_innovation and innovation.submitted_by == request.user or user.is_superuser %}
+                    <a href="{% url 'innovations:delete_innovation' innovation.pk %}" class="btn btn-sm btn-danger" title="Delete">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+        <div class="card-body">
+
+             <div class="mb-3">
+                <strong>Status:</strong>
+                {% if innovation.status == 'innovation' %}
+                    <span class="badge bg-primary">Innovation</span>
+                {% elif innovation.status == 'best_practice' %}
+                    <span class="badge bg-success">Best Practice</span>
+                {% elif innovation.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                {% endif %}
+            </div>
+
+
+            <div class="mb-3">
+                <strong>Court/Station:</strong> {{ innovation.court.name }}, {{ innovation.station }}
+            </div>
+            <div class="mb-3">
+                <strong>Financial Year:</strong> {{ innovation.financial_year.name }}
+            </div>
+            <div class="mb-3">
+                <strong>Submitted By:</strong> {{ innovation.submitted_by.get_full_name|default:innovation.submitted_by.username }}
+            </div>
+            <div class="mb-3">
+                <strong>Submitted At:</strong> {{ innovation.submitted_at|date:"F j, Y, g:i a" }}
+            </div>
+            
+            {% if innovation.approved_by %}
+             <div class="mb-3">
+               <strong>Approved By:</strong> {{ innovation.approved_by.get_full_name|default:innovation.approved_by.username }}
+             </div>
+            {% endif %}
+
+           {% if innovation.approved_at %}
+              <div class="mb-3">
+                <strong>Approved At:</strong> {{ innovation.approved_at|date:"F j, Y, g:i a" }}
+              </div>
+           {% endif %}
+           
+
+            {% if innovation.is_replication %}
+            <div class="mb-3">
+                <strong>Replication:</strong> Yes
+                <br>
+                <strong>Source Court:</strong> {{ innovation.source_court }}
+            </div>
+            {% else %}
+            <div class="mb-3">
+                <strong>Replication:</strong> No
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <strong>Category:</strong> {{ innovation.category }}
+            </div>
+
+            <div class="mb-3">
+                <strong>Situation Before:</strong>
+                <p>{{ innovation.situation_before|linebreaksbr }}</p>
+            </div>
+            <div class="mb-3">
+                <strong>Description:</strong>
+                <p>{{ innovation.description|linebreaksbr }}</p>
+            </div>
+            <div class="mb-3">
+                <strong>Solution:</strong>
+                <p>{{ innovation.solution|linebreaksbr }}</p>
+            </div>
+            <div class="mb-3">
+                <strong>Replication Potential:</strong>
+                <p>{{ innovation.replication_potential|linebreaksbr }}</p>
+            </div>
+            <div class="mb-3">
+                <strong>Individuals Involved:</strong>
+                <p>{{ innovation.individuals_involved|linebreaksbr }}</p>
+            </div>
+            <div class="mb-3">
+                <strong>Stakeholders Affected:</strong>
+                <p>{{ innovation.stakeholders_affected|linebreaksbr }}</p>
+            </div>
+            
+            {% if innovation.status == 'innovation' and user.is_superuser %}
+                 <div class="mb-3">
+
+                     <form method="post" action="{% url 'innovations:approve_innovation' innovation.pk %}" class="d-inline">
+                         {% csrf_token %}
+                         <button type="submit" class="btn btn-success">Approve</button>
+                     </form>
+                    <form method="post" action="{% url 'innovations:reject_innovation' innovation.pk %}" class="d-inline">
+                         {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                    </form>
+                </div>
+            {% endif %}
+            <hr>
+
+            <h5>Attachments</h5>
+            {% if innovation.attachments.all %}
+                <ul>
+                    {% for attachment in innovation.attachments.all %}
+                        <li>
+                            <a href="{% url 'innovations:download_attachment' attachment.pk %}" target="_blank">
+                                {{ attachment.file.name }}
+                            </a> (Uploaded by: {{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.username }}
+                             on {{attachment.uploaded_at|date:"M d, Y" }})
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No attachments.</p>
+            {% endif %}
+
+             <a href="{% url 'innovations:innovation_list' %}" class="btn btn-primary">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

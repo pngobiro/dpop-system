@@ -16,6 +16,7 @@ urlpatterns = [
     path('meetings/', include('apps.meetings.urls', namespace='meetings')),
     path('memos/', include('apps.memos.urls', namespace='memos')),
     path('mail/', include('apps.mail.urls', namespace='mail')),
+    path('innovations/', include('apps.innovations.urls', namespace='innovations')),
     path("unicorn/", include("django_unicorn.urls")),
     path("", include("apps.home.urls")),
     path('react/', TemplateView.as_view(template_name='react.html'), name='react'),
