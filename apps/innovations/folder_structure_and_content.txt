@@ -1,0 +1,565 @@
+Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/innovations
+
+. __init__.py
+  Content:
+
+
+. admin.py
+  Content:
+  # apps/innovations/admin.py
+  from django.contrib import admin
+  from .models import Innovation, InnovationAttachment
+  
+  class InnovationAttachmentInline(admin.TabularInline):  # Or StackedInline, if you prefer
+      model = InnovationAttachment
+      extra = 1  # Number of empty forms to show
+  
+  @admin.register(Innovation)
+  class InnovationAdmin(admin.ModelAdmin):
+      list_display = ('title', 'court', 'station', 'financial_year', 'status', 'submitted_by', 'submitted_at')
+      list_filter = ('status', 'financial_year', 'court__unit_rank', 'is_replication') # Added filters
+      search_fields = ('title', 'description', 'court__name', 'station')
+      inlines = [InnovationAttachmentInline]
+      readonly_fields = ('submitted_at', 'approved_at')  # Make timestamps read-only
+      fieldsets = (
+          (None, {
+              'fields': (
+                  'court',
+                  'station',
+                  'financial_year',
+                  'title',
+                  'status', # status is also here
+                  'submitted_by',  # Added submitted_by
+                  'submitted_at',
+              )
+          }),
+          ('Replication Information', {
+              'fields': ('is_replication', 'source_court'),
+              'classes': ('collapse',),  # Optional: Collapsible section
+          }),
+          ('Categorization', {
+              'fields': ('category',),  # Added category
+          }),
+          ('Details', {
+              'fields': (
+                  'situation_before',
+                  'description',
+                  'solution',
+                  'replication_potential',
+                  'individuals_involved',
+                  'stakeholders_affected',
+              ),
+          }),
+  
+          ('Approval', {  # Approval section
+              'fields': ('approved_by', 'approved_at'),
+               'classes': ('collapse',),
+          }),
+  
+      )
+      
+      def save_model(self, request, obj, form, change):
+        if not change:  # New object
+            obj.submitted_by = request.user # auto-populate on initial save
+        super().save_model(request, obj, form, change)
+
+. apps.py
+  Content:
+  from django.apps import AppConfig
+  
+  
+  class InnovationsConfig(AppConfig):
+      default_auto_field = 'django.db.models.BigAutoField'
+      name = 'apps.innovations'
+      label = "innovations"
+
+. forms.py
+  Content:
+  # apps/innovations/forms.py
+  from django import forms
+  from .models import Innovation, InnovationAttachment
+  from django.forms import inlineformset_factory
+  
+  
+  class InnovationForm(forms.ModelForm):
+      class Meta:
+          model = Innovation
+          fields = [
+              'court',
+              'station',
+              'financial_year',
+              'title',
+              'is_replication',
+              'source_court',
+              'category',
+              'situation_before',
+              'description',
+              'solution',
+              'replication_potential',
+              'individuals_involved',
+              'stakeholders_affected',
+              'status', # status in the form
+          ]
+  
+          widgets = {
+              'situation_before': forms.Textarea(attrs={'rows': 3}),
+              'description': forms.Textarea(attrs={'rows': 5}),
+              'solution': forms.Textarea(attrs={'rows': 5}),
+              'replication_potential': forms.Textarea(attrs={'rows': 3}),
+              'individuals_involved': forms.Textarea(attrs={'rows': 3}),
+              'stakeholders_affected': forms.Textarea(attrs={'rows': 3}),
+  
+              'court': forms.Select(attrs={'class': 'form-control'}),
+              'station': forms.TextInput(attrs={'class': 'form-control'}),
+              'financial_year': forms.Select(attrs={'class': 'form-control'}),
+              'title': forms.TextInput(attrs={'class': 'form-control'}),
+              'source_court': forms.TextInput(attrs={'class': 'form-control'}),
+              'category': forms.Select(attrs={'class': 'form-control'}), # Added category
+               'status': forms.Select(attrs={'class': 'form-control'}),# added ststus in the form
+          }
+  
+          # help text
+          help_texts = {
+            'is_replication': 'Check this box if this innovation is a replication of an existing innovation.',
+            'source_court': 'If this is a replication, specify the original court/tribunal/directorate/registry.',
+          }
+        
+      def __init__(self, *args, **kwargs):
+         super().__init__(*args, **kwargs)
+         # Set up choices for the 'category' field, based on SECTION II of your form.
+         self.fields['category'].choices = [
+            ('', 'Select Category'),  # Add a blank option at the top
+            ('efficiency', 'Initiatives that improve efficiency and effectiveness in service delivery (Court user satisfaction)'),
+            ('vulnerable', 'Initiatives that are responsive to vulnerable and marginalised groups'),
+            ('security', 'Initiatives that enhance security, safety and convenience'),
+            ('access', 'Initiatives that enhance expansion of doorways to Justice'),
+            ('partnerships', 'Initiatives in partnerships with other stakeholders in justice chain'),
+            ('mentorship', 'Initiatives that enhance mentorship, leadership and governance'),
+            ('financial', 'Initiatives that improve financial management and save cost'),
+            ('employee', 'Initiatives that improve employee satisfaction and mental wellness'),
+            ('environment', 'Initiatives that improve work environment and/or mitigate effects of climate change'),
+            ('other', 'Others (specify)'),
+          ]
+          
+      # def clean, to check the required based on a selection
+  
+      def clean(self):
+        cleaned_data = super().clean()
+        is_replication = cleaned_data.get('is_replication')
+        source_court = cleaned_data.get('source_court')
+  
+        if is_replication and not source_court:
+            self.add_error('source_court', 'Source court is required if this is a replication.')
+  
+        return cleaned_data
+  
+  class InnovationAttachmentForm(forms.ModelForm):
+      class Meta:
+          model = InnovationAttachment
+          fields = ['file']
+  
+  # Create an inline formset for attachments
+  InnovationAttachmentFormSet = inlineformset_factory(
+      Innovation,
+      InnovationAttachment,
+      form=InnovationAttachmentForm,
+      extra=1,  # Number of empty forms to display
+      can_delete=True,  # Allow deleting existing attachments
+  )
+
+. management/
+  . commands/
+    . seed_innovations.py
+      Content:
+      # apps/innovations/management/commands/seed_innovations.py
+      from django.core.management.base import BaseCommand
+      from django.contrib.auth import get_user_model
+      from apps.innovations.models import Innovation, InnovationAttachment
+      from apps.statistics.models import Unit, FinancialYear
+      from faker import Faker
+      import random
+      
+      User = get_user_model()
+      
+      class Command(BaseCommand):
+          help = 'Seeds the Innovation model with sample data'
+      
+          def handle(self, *args, **kwargs):
+              self.stdout.write('Seeding Innovation data...')
+      
+              # --- Prerequisites ---
+              users = User.objects.all()
+              if not users.exists():
+                  self.stdout.write(self.style.ERROR('No users found. Run seed_organization first.'))
+                  return
+      
+              units = Unit.objects.all()
+              if not units.exists():
+                  self.stdout.write(self.style.ERROR('No units found. Run seed_statistics first.'))
+                  return
+      
+              financial_years = FinancialYear.objects.all()
+              if not financial_years.exists():
+                  self.stdout.write(self.style.ERROR('No financial years found. Run seed_organization first.'))
+                  return
+      
+              # --- Sample Data ---
+              fake = Faker()
+              categories = [
+                  'efficiency', 'vulnerable', 'security', 'access', 'partnerships',
+                  'mentorship', 'financial', 'employee', 'environment', 'other'
+              ]
+              statuses = ['innovation', 'best_practice', 'rejected']
+      
+              # --- Create Innovations ---
+              for _ in range(30):  # Create 30 innovations
+                  submitted_by = random.choice(users)
+                  court = random.choice(units)
+                  financial_year = random.choice(financial_years)
+                  is_replication = random.choice([True, False])
+                  source_court = fake.company() if is_replication else None
+                  category = random.choice(categories)
+                  status = random.choice(statuses) #random choice of the status
+                  approved_by = random.choice(users) if status == 'best_practice' else None #approved by a random user
+      
+                  innovation = Innovation.objects.create(
+                      court=court,
+                      station=fake.city(),
+                      financial_year=financial_year,
+                      title=fake.catch_phrase(),
+                      is_replication=is_replication,
+                      source_court=source_court,
+                      category=category,
+                      situation_before=fake.paragraph(nb_sentences=3),
+                      description=fake.paragraph(nb_sentences=5),
+                      solution=fake.paragraph(nb_sentences=5),
+                      replication_potential=fake.paragraph(nb_sentences=2),
+                      individuals_involved=', '.join([fake.name() for _ in range(random.randint(1, 5))]),
+                      stakeholders_affected=', '.join([fake.word() for _ in range(random.randint(1, 3))]),
+                      status=status,
+                      submitted_by=submitted_by,
+                      approved_by = approved_by # assigned approved by
+                  )
+                  # create attachments
+                  for _ in range(random.randint(0, 3)):  # 0-3 attachments
+                      try:
+                          InnovationAttachment.objects.create(
+                              innovation=innovation,
+                              file=f"dummy_file_{random.randint(1,100)}.txt",  # Dummy filename, as we're not really uploading.
+                              uploaded_by=submitted_by,
+                      )
+                      except Exception as e:
+                          print(e)
+                          continue
+      
+                  self.stdout.write(self.style.SUCCESS(f'Created innovation: {innovation.title}'))
+      
+              self.stdout.write(self.style.SUCCESS('Successfully seeded Innovation data'))
+
+. models.py
+  Content:
+        
+  # apps/innovations/models.py
+  from django.db import models
+  from django.conf import settings
+  from apps.statistics.models import Unit, FinancialYear, FinancialQuarter
+  from apps.organization.models import Department  # Assuming Department model is here
+  
+  class Innovation(models.Model):
+      STATUS_CHOICES = [
+          ('innovation', 'Innovation'),
+          ('best_practice', 'Best Practice'),
+          ('rejected', 'Rejected'),
+      ]
+  
+      court = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name="innovations") # FK
+      station = models.CharField(max_length=255)
+      financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE) # FK
+      title = models.CharField(max_length=255)
+      is_replication = models.BooleanField(default=False)
+      source_court = models.CharField(max_length=255, blank=True, null=True)  # If replication
+      category = models.CharField(max_length=100)  # Store the choice here as text
+      situation_before = models.TextField()
+      description = models.TextField()
+      solution = models.TextField()
+      replication_potential = models.TextField()
+      individuals_involved = models.TextField()  # Consider ManyToManyField to User model
+      stakeholders_affected = models.TextField()
+      status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='innovation')  # innovation, best_practice, rejected
+      submitted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='submitted_innovations')
+      submitted_at = models.DateTimeField(auto_now_add=True)
+      approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_innovations')
+      approved_at = models.DateTimeField(null=True, blank=True)
+  
+  
+      def __str__(self):
+          return self.title
+      
+      class Meta:
+                permissions = [
+              ("view_all_innovations", "Can view all innovations"),  # Keep this one
+              ("approve_innovation", "Can approve innovation"),
+              ("reject_innovation", "Can reject innovation"),
+              # Renamed permissions:
+              ("can_view_innovation", "Can view innovation"),
+              ("can_change_innovation", "Can change innovation"),
+              ("can_delete_innovation", "Can delete innovation"),
+          ]
+          
+  
+  class InnovationAttachment(models.Model):
+      innovation = models.ForeignKey(Innovation, on_delete=models.CASCADE, related_name='attachments')
+      file = models.FileField(upload_to='innovation_attachments/%Y/%m/%d/')
+      uploaded_at = models.DateTimeField(auto_now_add=True)
+      uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+  
+      def __str__(self):
+          return f"Attachment for {self.innovation.title}"
+  
+      
+
+. tests.py
+  Content:
+  from django.test import TestCase
+  
+  # Create your tests here.
+
+. urls.py
+  Content:
+  # apps/innovations/urls.py
+  from django.urls import path
+  from . import views
+  
+  app_name = 'apps.innovations'
+  
+  urlpatterns = [
+      path('submit/', views.submit_innovation, name='submit_innovation'),
+      path('list/', views.innovation_list, name='innovation_list'),
+      path('approve/<int:pk>/', views.approve_innovation, name='approve_innovation'),
+      path('reject/<int:pk>/', views.reject_innovation, name='reject_innovation'),
+      path('detail/<int:pk>/', views.innovation_detail, name='innovation_detail'),
+      path('edit/<int:pk>/', views.edit_innovation, name='edit_innovation'),
+      path('delete/<int:pk>/', views.delete_innovation, name='delete_innovation'),
+      path('download/<int:attachment_id>/', views.download_attachment, name='download_attachment'),
+      path('', views.dashboard, name='dashboard'),  # Add the dashboard URL
+  ]
+
+. views.py
+  Content:
+  
+  from django.shortcuts import render, redirect, get_object_or_404
+  from django.contrib.auth.decorators import login_required, permission_required
+  from django.db.models import Q, Count  # Import Count
+  from apps.statistics.models import FinancialYear  # Import FinancialYear
+  from .forms import InnovationForm, InnovationAttachmentFormSet
+  from .models import Innovation, InnovationAttachment
+  from django.contrib.auth.decorators import login_required
+  from django.contrib import messages  # Import the messages framework
+  from django.utils import timezone #import timezone
+  from django.http import HttpResponseForbidden, HttpResponse
+  
+  
+  
+  @login_required
+  @permission_required('innovations.view_innovation', raise_exception=True) #add permissions
+  def dashboard(request):
+      # Get the selected financial year from the request, or default to the current year
+      current_fy = FinancialYear.objects.order_by('-start_date').first()  # Get *latest* FY
+      selected_fy_id = request.GET.get('financial_year', current_fy.pk if current_fy else None) # None if no FY at all
+  
+      try:
+          selected_fy = FinancialYear.objects.get(pk=selected_fy_id)
+      except FinancialYear.DoesNotExist:
+          selected_fy = current_fy  # Fallback to current, or could return a 404/error
+      
+      # Base query, filtered by user permissions
+      if request.user.is_superuser:
+          base_query = Q(financial_year=selected_fy)
+      else:
+         base_query = Q(financial_year=selected_fy) & (Q(submitted_by=request.user) | Q(court__in=request.user.departments.all())) # Use court, not department
+  
+      # Calculate statistics
+      stats = {
+          'total': Innovation.objects.filter(base_query).count(),
+          'innovations': Innovation.objects.filter(base_query, status='innovation').count(),
+          'best_practices': Innovation.objects.filter(base_query, status='best_practice').count(),
+          'rejected': Innovation.objects.filter(base_query, status='rejected').count(),
+      }
+  
+      # Get recent innovations (limit to, say, the last 5)
+      recent_innovations = Innovation.objects.filter(base_query).order_by('-submitted_at')[:5]
+  
+  
+      financial_years = FinancialYear.objects.all()  # Get all financial years for the dropdown
+  
+      context = {
+          'stats': stats,
+          'recent_innovations': recent_innovations,
+          'financial_years': financial_years,
+          'selected_fy': selected_fy,  # Pass the *selected* financial year object
+      }
+      return render(request, 'innovations/dashboard.html', context)
+  
+  
+  @login_required
+  def submit_innovation(request):
+      if request.method == 'POST':
+          form = InnovationForm(request.POST)
+          formset = InnovationAttachmentFormSet(request.POST, request.FILES)
+  
+          if form.is_valid() and formset.is_valid():
+              innovation = form.save(commit=False)
+              innovation.submitted_by = request.user
+              innovation.save()
+  
+              for form in formset:
+                  if form.cleaned_data:  # Avoid processing empty forms
+                    attachment = form.save(commit=False)
+                    attachment.innovation = innovation
+                    attachment.uploaded_by = request.user
+                    attachment.save()
+  
+              messages.success(request, 'Innovation submitted successfully!')  # Success message
+              return redirect('innovations:innovation_list')  # Redirect after successful submission
+  
+          else: # Display form errors with Bootstrap formatting
+            for field, errors in form.errors.items():
+              for error in errors:
+                  messages.error(request, f"{form.fields[field].label}: {error}")
+  
+            for error in formset.non_form_errors():
+              messages.error(request, error)
+  
+      else:
+          form = InnovationForm()
+          formset = InnovationAttachmentFormSet(queryset=InnovationAttachment.objects.none())  # Empty initial formset
+  
+      return render(request, 'innovations/submit_innovation.html', {'form': form, 'formset': formset})
+  
+  
+  
+  @login_required
+  @permission_required('innovations.can_view_innovation', raise_exception=True)
+  def innovation_list(request):
+      # Filter innovations based on user's permissions and department
+      if request.user.is_superuser:
+          innovations = Innovation.objects.all()  # Superuser can see all
+      else:
+         # User sees their submissions and department innovations
+          innovations = Innovation.objects.filter(
+          Q(submitted_by=request.user) | Q(court__in=request.user.departments.all())
+           ).distinct()
+  
+      return render(request, 'innovations/innovation_list.html', {'innovations': innovations})
+  
+  
+  @login_required
+  def innovation_detail(request, pk):
+      innovation = get_object_or_404(Innovation, pk=pk)
+      # Check permissions
+      if not request.user.is_superuser and request.user != innovation.submitted_by and request.user.department != innovation.court.department: #changed to court as it is now a foreign key
+  
+          return HttpResponseForbidden("You don't have permission to view this innovation.") # used HttpResponseForbidden
+  
+      return render(request, 'innovations/innovation_detail.html', {'innovation': innovation})
+  
+  
+  
+  @login_required
+  def approve_innovation(request, pk):
+      innovation = get_object_or_404(Innovation, pk=pk)
+      # Check permission to approve. Use the new helper function
+      if not request.user.is_superuser:
+          return HttpResponseForbidden("Only admins can approve.")
+  
+      if request.method == 'POST':
+          innovation.status = 'best_practice'  # Approve
+          innovation.approved_by = request.user
+          innovation.approved_at = timezone.now() # use timezone.now()
+          innovation.save()
+          messages.success(request, 'Innovation approved!')  # Provide feedback
+          return redirect('innovations:innovation_list')
+  
+      return render(request, 'innovations/approve_innovation.html', {'innovation': innovation})
+  
+  
+  @login_required
+  def reject_innovation(request, pk):
+      innovation = get_object_or_404(Innovation, pk=pk)
+  
+      # Check permission to reject. Only admins can reject:
+      if not request.user.is_superuser:
+        return HttpResponseForbidden("Only admins can reject.")
+  
+  
+      if request.method == 'POST':
+          innovation.status = 'rejected'
+          innovation.save()
+          messages.success(request, 'Innovation rejected.')
+          return redirect('innovations:innovation_list')  # Redirect after rejection
+      return render(request, 'innovations/reject_innovation.html', {'innovation': innovation})
+  
+  
+  
+  @login_required
+  @permission_required('innovations.can_change_innovation', raise_exception=True)
+  def edit_innovation(request, pk):
+      innovation = get_object_or_404(Innovation, pk=pk)
+  
+      # Check if the user has permission to edit
+      if request.user != innovation.submitted_by and not request.user.is_superuser:
+        return HttpResponseForbidden("You do not have permission to edit this innovation.")
+  
+  
+      if request.method == 'POST':
+          form = InnovationForm(request.POST, instance=innovation)
+          formset = InnovationAttachmentFormSet(request.POST, request.FILES, instance=innovation)
+  
+          if form.is_valid() and formset.is_valid():
+              form.save()
+              formset.save()
+              messages.success(request, 'Innovation updated successfully!')
+              return redirect('innovations:innovation_detail', pk=innovation.pk)
+          else: #added form errors to template
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{form.fields[field].label}: {error}")
+            for error in formset.non_form_errors():
+              messages.error(request, error)
+      else:
+          form = InnovationForm(instance=innovation)
+          formset = InnovationAttachmentFormSet(instance=innovation)
+  
+      return render(request, 'innovations/edit_innovation.html', {'form': form, 'formset': formset, 'innovation': innovation})
+  
+  
+  @login_required
+  def delete_innovation(request, pk):
+      innovation = get_object_or_404(Innovation, pk=pk)
+  
+      #check permission
+      if request.user != innovation.submitted_by and not request.user.is_superuser: # added superuser
+          return HttpResponseForbidden("You do not have permission to delete this innovation.")
+  
+  
+      if request.method == 'POST':
+          innovation.delete()
+          messages.success(request, 'Innovation deleted successfully!') # added form errors
+          return redirect('innovations:innovation_list')
+  
+      return render(request, 'innovations/innovation_confirm_delete.html', {'innovation': innovation})
+  
+  
+  @login_required
+  def download_attachment(request, attachment_id):
+      attachment = get_object_or_404(InnovationAttachment, pk=attachment_id)
+  
+      # Check if user has permission to download:
+      if not request.user.is_superuser and request.user != attachment.innovation.submitted_by and request.user.department != attachment.innovation.court.department: # use court instead of department
+          return HttpResponseForbidden("You don't have permission to download this file.")
+  
+      # Serve the file using Django's built-in static files handling:
+      response = HttpResponse(attachment.file, content_type='application/octet-stream')
+      response['Content-Disposition'] = f'attachment; filename="{attachment.file.name}"'
+      return response
+

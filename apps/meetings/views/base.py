@@ -12,9 +12,25 @@ def dashboard(request):
     user = request.user
     today = timezone.now().date()
     thirty_days_ago = today - timezone.timedelta(days=30)
+    thirty_days_ahead = today + timezone.timedelta(days=30)
 
+    # Base query for user's meetings
     base_query = Q(department=user.department) | Q(participants=user)
 
+    # Get today's meetings
+    todays_meetings = Meeting.objects.filter(
+        date=today,
+        status='scheduled'
+    ).filter(base_query).distinct().order_by('start_time')
+
+    # Get upcoming meetings (excluding today)
+    upcoming_meetings = Meeting.objects.filter(
+        date__gt=today,
+        date__lte=thirty_days_ahead,
+        status='scheduled'
+    ).filter(base_query).distinct().order_by('date', 'start_time')[:5]
+
+    # Calculate statistics
     stats = {
         'total_meetings': Meeting.objects.filter(base_query).distinct().count(),
         'upcoming_count': Meeting.objects.filter(
@@ -24,16 +40,15 @@ def dashboard(request):
         'completed_count': Meeting.objects.filter(
             status='completed',
             date__gte=thirty_days_ago
-        ).filter(base_query).distinct().count()
+        ).filter(base_query).distinct().count(),
+        'my_meetings_count': Meeting.objects.filter(
+            Q(organizer=user) | Q(participants=user)
+        ).distinct().count()
     }
-
-    upcoming_meetings = Meeting.objects.filter(
-        date__gte=today,
-        status='scheduled'
-    ).filter(base_query).distinct().order_by('date', 'start_time')[:5]
 
     context = {
         'stats': stats,
+        'todays_meetings': todays_meetings,
         'upcoming_meetings': upcoming_meetings,
     }
     return render(request, 'meetings/dashboard.html', context)

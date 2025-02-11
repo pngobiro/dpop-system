@@ -5,6 +5,7 @@ from . import views
 app_name = 'meetings'
 
 urlpatterns = [
+    path('calendar/', views.calendar_view, name='calendar'),  # Add this line
     path('', views.dashboard, name='dashboard'),
     path('director/', views.director_dashboard, name='director_dashboard'),
     path('list/', views.meeting_list, name='meeting_list'),

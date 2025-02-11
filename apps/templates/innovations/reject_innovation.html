@@ -1,0 +1,25 @@
+{# apps/innovations/templates/innovations/reject_innovation.html #}
+
+{% extends "layouts/base.html" %}
+
+{% block title %}Reject Innovation{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h2 class="h4 mb-0">Reject Innovation</h2>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to reject the innovation "{{ innovation.title }}"?</p>
+            <p>Rejecting this innovation will change its status to "Rejected".</p>
+
+            <form method="post" action="{% url 'innovations:reject_innovation' innovation.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Reject</button>
+                <a href="{% url 'innovations:innovation_detail' innovation.pk %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

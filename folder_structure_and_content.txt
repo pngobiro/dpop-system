@@ -717,14 +717,8 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       from django.contrib import admin
       from django.contrib.auth.admin import UserAdmin
       from .models import Module
+      from apps.organization.models import Department, Role, UserRole  # Import other models
       from authentication.models import CustomUser  # Import CustomUser
-      
-      class ModuleAdmin(admin.ModelAdmin):
-          list_display = ('name', 'description', 'icon_class', 'url_name', 'permission_codename', 'department') #Added Department
-          search_fields = ('name', 'description', 'url_name', 'permission_codename')
-          list_filter = ('department',)  # Add filtering by department
-      
-      admin.site.register(Module, ModuleAdmin)
       
       
       class CustomUserAdmin(UserAdmin):
@@ -745,6 +739,42 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           get_departments.short_description = 'Departments'
       
       admin.site.register(CustomUser, CustomUserAdmin)
+      
+      class DepartmentAdmin(admin.ModelAdmin):
+          list_display = ('name', 'description', 'is_active')
+          search_fields = ('name', 'description')
+          list_filter = ('is_active',)
+      
+      admin.site.register(Department, DepartmentAdmin)
+      
+      class RoleAdmin(admin.ModelAdmin):
+          list_display = ('title', 'department', 'job_group', 'is_active')
+          search_fields = ('title', 'department__name', 'job_group')
+          list_filter = ('department', 'job_group', 'is_active')
+          filter_horizontal = ('permissions',)  # Use filter_horizontal for ManyToMany
+      
+      admin.site.register(Role, RoleAdmin)
+      
+      class UserRoleAdmin(admin.ModelAdmin):
+          list_display = ('user', 'role', 'assigned_at', 'is_active')
+          search_fields = ('user__username', 'role__title', 'role__department__name')
+          list_filter = ('role__department', 'role', 'is_active')
+          raw_id_fields = ('user', 'role')  # Use raw_id_fields for better performance with many users/roles
+      
+      admin.site.register(UserRole, UserRoleAdmin)
+      
+      
+      class ModuleAdmin(admin.ModelAdmin):
+          list_display = ('name', 'description', 'display_departments', 'icon_class', 'url_name')  # Keep display_departments
+          search_fields = ('name', 'description', 'url_name')
+          list_filter = ('departments',)  # Keep list_filter
+          filter_horizontal = ('departments',) # Add filter_horizontal
+      
+          def display_departments(self, obj):
+              return ", ".join([dept.name for dept in obj.departments.all()])
+          display_departments.short_description = 'Departments'
+      
+      admin.site.register(Module, ModuleAdmin)
 
     . components/
       . __init__.py
@@ -857,6 +887,20 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                           'url_name': 'mail:physical_list',
                           'permission_codename': 'access_mail'
           
+                      },
+                      {
+                          'name': 'Surveys',
+                          'description': 'Create and manage surveys',
+                          'icon_class': 'fas fa-poll',
+                          'url_name': 'surveys:dashboard',
+                          'permission_codename': 'access_surveys'
+                      },
+                      {
+                          'name': 'PMMU Evaluation and Target Setting',
+                          'description': 'PMMU Evaluation and Target Setting',
+                          'icon_class': 'fas fa-chart-line',
+                          'url_name': 'pmmu_evaluation:dashboard',
+                          'permission_codename': 'access_pmmu_evaluation'
                       }
                   ]
           
@@ -904,27 +948,21 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       from django.contrib.auth.models import User
       from apps.organization.models import Department
       
+      
       class Module(models.Model):
           name = models.CharField(max_length=100, unique=True)
           description = models.TextField(blank=True)
           icon_class = models.CharField(max_length=100, blank=True, help_text="Font Awesome icon class (e.g., 'fas fa-file-alt')")
           url_name = models.CharField(max_length=200, blank=True, help_text="Name of the URL pattern for this module (e.g., 'document_module_view')")
-          department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='modules') # Optional: Link to Department
-          permission_codename = models.CharField(max_length=150, unique=True, blank=True, help_text="Codename for permission to access this module (e.g., 'access_documents')") # NEW FIELD
+          departments = models.ManyToManyField(Department, related_name='modules', blank=True)  # Changed to ManyToManyField
+          permission_codename = models.CharField(max_length=150, unique=True, blank=True, help_text="Codename for permission to access this module (e.g., 'access_documents')")
       
           def __str__(self):
               return self.name
       
           class Meta:
-              ordering = ['name'] # Default ordering by name
-              permissions = [  # Define custom permissions here
-                  # Permissions will be dynamically added in the seeder
-              ]
-      
-          
-      
-      
-      
+              ordering = ['name']
+              permissions = []  # Custom permissions handled by seeder
 
     . tests.py
       Content:
@@ -963,6 +1001,8 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       from django.shortcuts import render
       from apps.organization.models import Department
       from apps.home.models import Module # Import Module model
+      from django.db.models import Q  # Import Q objects
+      
       
       
       def react_view(request):
@@ -1000,21 +1040,21 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               html_template = loader.get_template('home/page-500.html')
               return HttpResponse(html_template.render(context, request))
       
+      
       @login_required
       def department_modules(request, department_id):
           department = get_object_or_404(Department, id=department_id)
-          # all_modules = Module.objects.filter(department=department) # Get all modules for the department
-          all_modules = Module.objects.all()
+          all_modules = Module.objects.filter(departments=department)  # Corrected field name
           permitted_modules = []
       
           for module in all_modules:
-              permission_codename = f'home.{module.permission_codename}' # Construct full permission codename (app_label.codename)
-              if request.user.has_perm(permission_codename): # Check if user has permission
+              permission_codename = f'home.{module.permission_codename}'
+              if request.user.has_perm(permission_codename):
                   permitted_modules.append(module)
       
           context = {
               'department': department,
-              'modules': permitted_modules, # Pass only permitted modules to the template
+              'modules': permitted_modules,
           }
           return render(request, "home/department_modules.html", context)
 
@@ -3467,18 +3507,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
     . admin.py
       Content:
-      from django.contrib import admin
-      from .models import Department, Role, UserRole
-      #from django.contrib.auth.admin import UserAdmin # No longer needed here
-      #from authentication.models import CustomUser  # No longer needed here.
-      
-      class RoleAdmin(admin.ModelAdmin):
-          list_display = ('title', 'department', 'job_group', 'is_active')
-          search_fields = ('title', 'department__name', 'job_group')
-          list_filter = ('department', 'job_group', 'is_active')
-          filter_horizontal = ('permissions',)  # Use filter_horizontal for ManyToMany
-      
-      admin.site.register(Role, RoleAdmin)
+
 
     . apps.py
       Content:
@@ -3515,13 +3544,28 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           from django.core.management.base import BaseCommand
           from django.contrib.auth import get_user_model
           from apps.organization.models import Department, Role, UserRole
+          from django.contrib.auth.models import Permission
+          from django.contrib.contenttypes.models import ContentType
+          from apps.home.models import Module
+          from apps.statistics.models import FinancialYear, FinancialQuarter # Import
+          from datetime import datetime
+          from django.utils import timezone
           
           User = get_user_model()
           
           class Command(BaseCommand):
-              help = 'Seeds organization structure and users'
+              help = 'Seeds organization structure, users, roles, and permissions'
           
               def handle(self, *args, **kwargs):
+          
+                  # --- Clear Existing Data ---
+                  self.stdout.write('Clearing existing organization data...')
+                  UserRole.objects.all().delete()
+                  Role.objects.all().delete()
+                  Department.objects.all().delete()
+                  User.objects.all().delete()  # Be *very* careful with this in production!
+          
+                  # --- Departments ---
                   self.stdout.write('Creating departments...')
                   departments = {
                       'directors_office': Department.objects.create(
@@ -3551,6 +3595,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                       )
                   }
           
+                  # --- Roles ---
                   self.stdout.write('Creating base roles...')
                   base_roles = [
                       ("Assistant Director", 'JSG3'),
@@ -3573,8 +3618,10 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                               job_group=job_group
                           )
           
+                  # --- Staff Data ---
                   staff_data = [
-                      {'name': 'George Obai', 'pj': '64282', 'title': 'Assistant Director', 'dept': departments['performance']},
+                      # ... (Your existing staff data - as before) ...
+                       {'name': 'George Obai', 'pj': '64282', 'title': 'Assistant Director', 'dept': departments['performance']},
                       {'name': 'Dominic Nyambane', 'pj': '64739', 'title': 'Assistant Director', 'dept': departments['planning']},
                       {'name': 'Gilbert Kipkirui', 'pj': '69727', 'title': 'Assistant Director', 'dept': departments['research']},
                       {'name': 'Victor Lumwamu', 'pj': '62751', 'title': 'Economist I', 'dept': departments['quality']},
@@ -3627,14 +3674,31 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                           user.departments.add(staff['dept']) #add the department to the user
                           user.save()
           
-                          UserRole.objects.create(
+                          user_role = UserRole.objects.create(
                               user=user,
                               role=role,
                               is_active=True
                            )
+                          # --- Grant Permissions ---
+                          # Get all content types for the apps you want to manage
+                          content_types = ContentType.objects.filter(
+                              app_label__in=['budget', 'document_management', 'meetings', 'memos', 'mail', 'statistics']  # Add your app labels here
+                          )
+          
+                          # Get all permissions for those content types
+                          permissions = Permission.objects.filter(content_type__in=content_types)
+          
+                          # Assign permissions based on role (Example)
+                          if role.title == "Assistant Director":
+                              # Grant all permissions to Assistant Directors
+                              role.permissions.set(permissions) # important, use .set()
+                          elif role.title.startswith("Court Assistant"):
+                              # Grant view permissions to Court Assistants.  This is a very basic example.
+                              for perm in permissions:
+                                  if 'view' in perm.codename:
+                                      role.permissions.add(perm)
                       else:
                           self.stdout.write(self.style.ERROR(f"Role key '{role_key}' not found!"))
-          
           
           
                   self.stdout.write('Creating director user...')
@@ -3649,17 +3713,70 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                       }
                   )
                   if created:
-                      director.set_password('Admin123!') #Always set a password
+                      director.set_password('Admin123!')
                       director.save()
-                  # Assign the director to the director's office
-                  director.departments.add(departments['directors_office'])
+                  director.departments.add(departments['directors_office']) # Assign director to a dept.
                   director_role_key = f"assistant_director_{departments['directors_office'].name}".lower()
           
                   if director_role_key in roles:
                        director_role = roles[director_role_key]
                        UserRole.objects.create(user = director, role = director_role, is_active = True)
-          
+                       # --- Grant Permissions to Director---
+                       module_content_type = ContentType.objects.get_for_model(Module)
+                       module_permissions = Permission.objects.filter(content_type=module_content_type)
+                       for perm in module_permissions:
+                          director_role.permissions.add(perm)
+                  # --- Seed Financial Data ---
+                  self.seed_financial_periods()
                   self.stdout.write(self.style.SUCCESS('Successfully seeded organization data'))
+          
+              def seed_financial_periods(self):
+                  financial_years = [
+                      {'name': '2018/2019', 'start_date': '2018-07-01', 'end_date': '2019-06-30'},
+                      {'name': '2019/2020', 'start_date': '2019-07-01', 'end_date': '2020-06-30'},
+                      {'name': '2020/2021', 'start_date': '2020-07-01', 'end_date': '2021-06-30'},
+                      {'name': '2021/2022', 'start_date': '2021-07-01', 'end_date': '2022-06-30'},
+                       {'name': '2022/2023', 'start_date': '2022-07-01', 'end_date': '2023-06-30'},
+                      {'name': '2023/2024', 'start_date': '2023-07-01', 'end_date': '2024-06-30'},
+                  ]
+          
+                  for fy_data in financial_years:
+                      financial_year, created = FinancialYear.objects.get_or_create(
+                          name=fy_data['name'],
+                          defaults={
+                              'start_date': timezone.make_aware(datetime.strptime(fy_data['start_date'], '%Y-%m-%d')),
+                              'end_date': timezone.make_aware(datetime.strptime(fy_data['end_date'], '%Y-%m-%d')),
+                          }
+                      )
+                      if created:
+                        self.stdout.write(f'Created financial year: {financial_year.name}')
+          
+          
+                      quarters = [
+                          {'name': 'Quarter 1', 'start_date': '07-01', 'end_date': '09-30', 'quarter_number': 1},
+                          {'name': 'Quarter 2', 'start_date': '10-01', 'end_date': '12-31', 'quarter_number': 2},
+                          {'name': 'Quarter 3', 'start_date': '01-01', 'end_date': '03-31', 'quarter_number': 3},
+                          {'name': 'Quarter 4', 'start_date': '04-01', 'end_date': '06-30', 'quarter_number': 4},
+                      ]
+          
+                      for quarter_data in quarters:
+                          start_date = timezone.make_aware(datetime.strptime(f"{financial_year.start_date.year}-{quarter_data['start_date']}", '%Y-%m-%d'))
+                          # Handle year rollover for Q3 and Q4
+                          end_year = financial_year.end_date.year
+                          end_date = timezone.make_aware(datetime.strptime(f"{end_year}-{quarter_data['end_date']}", '%Y-%m-%d'))
+          
+                          quarter, created = FinancialQuarter.objects.get_or_create(
+                              financial_year=financial_year,
+                              quarter_number=quarter_data['quarter_number'],
+                              defaults={
+                                  'name': quarter_data['name'],
+                                  'start_date': start_date,
+                                  'end_date': end_date,
+                              }
+          
+                          )
+                          if created:
+                               self.stdout.write(f'Created quarter: {quarter.name}')
 
     . models.py
       Content:
@@ -3783,10 +3900,13 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       
       urlpatterns = [
           path('manage/', views.manage_permissions, name='manage_permissions'),
+          path('assign-departments/', views.assign_departments, name='assign_departments'),  # New URL
       ]
 
     . views.py
       Content:
+      # apps/permissions/views.py
+      
       from django.shortcuts import render, redirect, get_object_or_404
       from django.contrib.auth.decorators import login_required, permission_required
       from django.contrib.auth.models import Permission
@@ -3795,11 +3915,14 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       from django.contrib.auth import get_user_model
       from django.http import HttpResponseForbidden, HttpResponse
       from django.contrib import messages
+      from apps.organization.models import Department  # Import Department
+      from django.forms import modelformset_factory # Import
       
       User = get_user_model()
       
+      
       @login_required
-      @permission_required('auth.change_permission', raise_exception=True)
+      @permission_required('auth.change_permission', raise_exception=True)  # Require permission to change permissions
       def manage_permissions(request):
           modules = Module.objects.all()
           selected_module_id = None
@@ -3817,13 +3940,13 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               content_type = ContentType.objects.get_for_model(selected_module)
               # --- CRUCIAL CHANGE: Filter permissions by content_type ---
               permissions = Permission.objects.filter(content_type=content_type)
-              all_users = User.objects.all().prefetch_related('user_roles__role')
+              all_users = User.objects.all().prefetch_related('user_roles__role__permissions') # added permission to prefetch
       
               for user in all_users:
                   user_permissions = {perm.codename: False for perm in permissions}
-                  for user_role in user.user_roles.filter(is_active=True):
-                      for perm in user_role.role.permissions.all():
-                           if perm.content_type == content_type:  # IMPORTANT: Only consider relevant permissions
+                  for user_role in user.user_roles.filter(is_active=True): # Filter for active roles
+                       for perm in user_role.role.permissions.all():
+                          if perm.content_type == content_type:  # IMPORTANT: Only consider relevant permissions
                               user_permissions[perm.codename] = True
       
                   users_with_permissions.append({
@@ -3838,17 +3961,17 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                   user = user_data['user']
                   for perm_codename, has_perm in user_data['permissions'].items():
                     permission = Permission.objects.get(codename=perm_codename, content_type=content_type)
-                    user_roles = user.user_roles.filter(is_active=True)
+                    user_roles = user.user_roles.filter(is_active=True) # get the user roles
       
                     for user_role in user_roles:
                       if request.POST.get(f'user_{user.id}_perm_{permission.id}') == 'on':
                         if permission not in user_role.role.permissions.all():
                           user_role.role.permissions.add(permission)
                       elif permission in user_role.role.permissions.all():
-                          user_role.role.permissions.remove(permission)
+                          user_role.role.permissions.remove(permission) # remove all permission if not selected.
       
               messages.success(request, 'Permissions updated successfully.')
-              return redirect('permissions:manage_permissions') #, module=selected_module.pk)  # Stay on the same module
+              return redirect('permissions:manage_permissions')  # Redirect after POST
       
       
           context = {
@@ -3858,6 +3981,25 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               'permissions': permissions,  # Pass the *filtered* permissions
           }
           return render(request, 'permissions/manage_permissions.html', context)
+      
+      @login_required
+      @permission_required('home.change_module', raise_exception=True) # Require permission to change module
+      def assign_departments(request):
+          ModuleFormSet = modelformset_factory(Module, fields=('departments',), extra=0)
+      
+          if request.method == 'POST':
+              formset = ModuleFormSet(request.POST, queryset=Module.objects.all())
+              if formset.is_valid():
+                  formset.save()
+                  messages.success(request, "Department assignments updated successfully.")
+                  return redirect('permissions:assign_departments')  # Redirect after saving
+              else:
+                  messages.error(request, "There was a problem updating the assignments.")  # For debugging
+                  print(formset.errors)
+          else:
+              formset = ModuleFormSet(queryset=Module.objects.all())
+      
+          return render(request, 'permissions/assign_departments.html', {'formset': formset})
 
   . statistics/
     . __init__.py
@@ -3918,11 +4060,8 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
       . dashboard.py
         Content:
-        # views.py
         from django_unicorn.components import UnicornView
         from django.shortcuts import redirect
-        
-        # import models
         from apps.statistics.models import UnitRank, FinancialYear, FinancialQuarter
         
         class DashboardView(UnicornView):
@@ -3930,31 +4069,35 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
             financial_year = None
             quarter = None
             unit_ranks = None
-            financial_years = FinancialYear.objects.all()
-            financial_quarters = FinancialQuarter.objects.filter(financial_year=financial_year)
+            financial_years = None
+            financial_quarters = None
         
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
-                self.unit_ranks =  UnitRank.objects.all()
+                self.unit_ranks = UnitRank.objects.all()
+                self.financial_years = FinancialYear.objects.all()
                 
-        
             def changeCourtRank(self):
                 if self.court_rank:
                     self.financial_years = FinancialYear.objects.all()
                     self.financial_year = None
                     self.quarter = None
                     self.financial_quarters = None
-           
-        
+            
             def changeFinancialYear(self):
                 if self.financial_year:
-                    self.financial_quarters = FinancialQuarter.objects.filter(financial_year=self.financial_year)
+                    # Get quarters and ensure dates are properly formatted
+                    self.financial_quarters = FinancialQuarter.objects.filter(
+                        financial_year=self.financial_year
+                    ).order_by('quarter_number')
                     self.quarter = None
-        
+            
             def changeQuarter(self):
-                print(self.quarter)
                 if self.quarter:
-                    return redirect('statistics:rank_units', self.court_rank, self.financial_year, self.quarter)
+                    return redirect('statistics:rank_units', 
+                                  self.court_rank, 
+                                  self.financial_year, 
+                                  self.quarter)
 
       . hello_magic.py
         Content:
@@ -4225,13 +4368,24 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           name = models.CharField(max_length=255)
           start_date = models.DateField()
           end_date = models.DateField()
-          financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE)
-          quarter_number = models.IntegerField(help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4')
-      
-          # show the name - start_date - end_date as get_quarter_name in date format dd/mm/yyyy
+          financial_year = models.ForeignKey('FinancialYear', on_delete=models.CASCADE)
+          quarter_number = models.IntegerField(
+              help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4'
+          )
       
           def get_quarter_name(self):
-              return self.name + ' - ' + str(self.start_date.strftime('%d/%m/%Y')) + ' - ' + str(self.end_date.strftime('%d/%m/%Y'))
+              """Format quarter name with dates in dd/mm/yyyy format"""
+              if isinstance(self.start_date, str):
+                  return f"{self.name} ({self.start_date} - {self.end_date})"
+              
+              return "{} ({} - {})".format(
+                  self.name,
+                  self.start_date.strftime('%d/%m/%Y') if self.start_date else 'N/A',
+                  self.end_date.strftime('%d/%m/%Y') if self.end_date else 'N/A'
+              )
+      
+          def __str__(self):
+              return self.get_quarter_name()
           
       class Unit(models.Model):
           name = models.CharField(max_length=255)
@@ -4327,16 +4481,13 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
     . seeder/
       . financial_seeder.py
         Content:
-        # seeds/financial.py
-        
         from datetime import datetime
-        
         from django.utils import timezone
-        
         from apps.statistics.models import FinancialYear, FinancialQuarter
         
-        
         def seed_financial_periods():
+            """Seed financial years and quarters with proper date handling"""
+            
             financial_years = [
                 {'name': '2018/2019', 'start_date': '2018-07-01', 'end_date': '2019-06-30', 'id': 1},
                 {'name': '2019/2020', 'start_date': '2019-07-01', 'end_date': '2020-06-30', 'id': 2},
@@ -4346,40 +4497,55 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                 {'name': '2023/2024', 'start_date': '2023-07-01', 'end_date': '2024-06-30', 'id': 6},
                 {'name': '2024/2025', 'start_date': '2024-07-01', 'end_date': '2025-06-30', 'id': 7},
                 {'name': '2025/2026', 'start_date': '2025-07-01', 'end_date': '2026-06-30', 'id': 8},
-                {'name': '2026/2027', 'start_date': '2026-07-01', 'end_date': '2027-06-30', 'id': 9},
-                {'name': '2027/2028', 'start_date': '2027-07-01', 'end_date': '2028-06-30', 'id': 10},
-                {'name': '2028/2029', 'start_date': '2028-07-01', 'end_date': '2029-06-30', 'id': 11},
-                {'name': '2029/2030', 'start_date': '2029-07-01', 'end_date': '2030-06-30', 'id': 12},
-                
             ]
             
             for fy_data in financial_years:
+                # Create financial year with datetime objects
                 financial_year = FinancialYear.objects.create(
                     name=fy_data['name'],
-                    start_date=datetime.strptime(fy_data['start_date'], '%Y-%m-%d').date(), 
+                    start_date=datetime.strptime(fy_data['start_date'], '%Y-%m-%d').date(),
                     end_date=datetime.strptime(fy_data['end_date'], '%Y-%m-%d').date()
                 )
                 
+                # Define quarters
                 quarters = [
-                    {'name': 'Quarter 1', 'start_date': '07-01', 'end_date': '09-30','quarter_number':1}, # 'quarter_number':1
-                    {'name': 'Quarter 2', 'start_date': '10-01', 'end_date': '12-31','quarter_number':2}, # 'quarter_number':2
-                    {'name': 'Quarter 3', 'start_date': '01-01', 'end_date': '03-31','quarter_number':3}, # 'quarter_number':3
-                    {'name': 'Quarter 4', 'start_date': '04-01', 'end_date': '06-30','quarter_number':4}, # 'quarter_number':4
+                    {
+                        'name': 'Quarter 1',
+                        'start_date': f"{financial_year.start_date.year}-07-01",
+                        'end_date': f"{financial_year.start_date.year}-09-30",
+                        'quarter_number': 1
+                    },
+                    {
+                        'name': 'Quarter 2',
+                        'start_date': f"{financial_year.start_date.year}-10-01",
+                        'end_date': f"{financial_year.start_date.year}-12-31",
+                        'quarter_number': 2
+                    },
+                    {
+                        'name': 'Quarter 3',
+                        'start_date': f"{financial_year.end_date.year}-01-01",
+                        'end_date': f"{financial_year.end_date.year}-03-31",
+                        'quarter_number': 3
+                    },
+                    {
+                        'name': 'Quarter 4',
+                        'start_date': f"{financial_year.end_date.year}-04-01",
+                        'end_date': f"{financial_year.end_date.year}-06-30",
+                        'quarter_number': 4
+                    }
                 ]
                 
+                # Create quarters with proper date handling
                 for quarter_data in quarters:
-                    start_date = datetime.strptime(f"{financial_year.start_date.year}-{quarter_data['start_date']}", '%Y-%m-%d').date()
-                    end_date = datetime.strptime(f"{financial_year.end_date.year}-{quarter_data['end_date']}", '%Y-%m-%d').date()
-                
                     FinancialQuarter.objects.create(
                         name=quarter_data['name'],
-                        start_date=start_date,
-                        end_date=end_date,
+                        start_date=datetime.strptime(quarter_data['start_date'], '%Y-%m-%d').date(),
+                        end_date=datetime.strptime(quarter_data['end_date'], '%Y-%m-%d').date(),
                         financial_year=financial_year,
                         quarter_number=quarter_data['quarter_number']
                     )
-                    
-            print("Financial periods seeded.")
+            
+            print("Financial periods seeded successfully.")
 
     . templates/
       . unicorn/
@@ -4672,329 +4838,944 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           # Return the path where the file was saved
           return destination
 
-    . views.py
-      Content:
-      from django.shortcuts import render
-      from django.http import HttpResponse , HttpResponseRedirect
-      from django_pandas.io import read_frame
-      import urllib.request
-      from .utils import handle_uploaded_file
-      from apps.statistics.models import UnitRank , FinancialYear , FinancialQuarter , Unit , Months , DcrtData , Division
-      
-      
-      
-      def home(request):
-          context = {
-              'unit_ranks': UnitRank.objects.all(),
-              'total_units': Unit.objects.count(),
-              'active_divisions': Division.objects.filter(is_active=True).count(),
-              'court_units': Unit.objects.filter(is_court=True).count(),
-              'financial_year': FinancialYear.objects.first(),
-              'financial_quarter': FinancialQuarter.objects.first(),
-          }
-          return render(request, 'statistics/home.html', context)
-          
-      
-      def rank_units(request, id, financial_year_id, financial_quarter_id):
-          # Handle logic for rank units view here
-      
-          #  UnitRank
-      
-          unit_rank = UnitRank.objects.get(id=id)
-      
-          fy = FinancialYear.objects.get(id=financial_year_id)
-      
-          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
-      
-      
-      
-          context = {
-              'units': Unit.objects.filter(unit_rank=id),
-              'unit_rank': unit_rank,
-              'financial_year': fy,
-              'financial_quarter': fq,
-          }
-          return render(request, 'statistics/rank_units.html', context)
-      
-      def rank_unit_division_months(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
-          # Handle logic for rank unit months view here
-      
-          #  UnitRank
-          unit_rank = UnitRank.objects.get(id=id)
-      
-          fy = FinancialYear.objects.get(id=financial_year_id)
-      
-          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
-      
-          unit = Unit.objects.get(id=unit_id)
-      
-          division = Division.objects.get(id=25)
-           
-          context = {
-              'months': Months.objects.filter(financial_quarter=fq.quarter_number),
-              'unit_rank': unit_rank,
-              'financial_year': fy,
-              'financial_quarter': fq,
-              'unit': unit,
-              'division': division,
-              }
-            
-          return render(request, 'statistics/rank_unit_months.html', context)
-      
-      def rank_unit_month(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          #  months dictionary with e.g id 1 as key and January as value
-          unit_rank = UnitRank.objects.get(id=id)
-      
-          fy = FinancialYear.objects.get(id=financial_year_id)
-      
-          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
-      
-          unit = Unit.objects.get(id=unit_id)
-      
-          division = Division.objects.get(id=25)
-      
-          month = Months.objects.get(id=month_id)
-      
-      
+    . views/
+      . __init__.py
+        Content:
+        from django.shortcuts import render
+        from django.db.models import Count
+        from apps.statistics.models import (
+            UnitRank, FinancialYear, FinancialQuarter,
+            Unit, Division, DcrtData, Months
+        )
         
-      
-          context = {
-              'unit_rank': unit_rank,
-              'financial_year': fy,
-              'financial_quarter': fq,
-              'unit': unit,
-              'division': division,
-              'month': month,
-          }
-          return render(request, 'statistics/rank_unit_month.html', context)
-      
-      def rank_unit_division_month_cases_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          #  unit_rank = UnitRank.objects.get(id=id)
-          unit_rank = UnitRank.objects.get(id=id)
-          fy = FinancialYear.objects.get(id=financial_year_id)
-          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
-          unit = Unit.objects.get(id=unit_id)
-          division = Division.objects.get(id=25)
-          month = Months.objects.get(id=month_id)
-      
-          context = {
-              'unit_rank': unit_rank,
-              'financial_year': fy,
-              'financial_quarter': fq,
-              'unit': unit,
-              'division': division,
-              'month': month,
-          }
-          return render(request, 'statistics/rank_unit_division_month_cases_summary.html', context)
-      
-      def upload_unit_monthly_dcrt_excel(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          # Handle logic for upload unit monthly dcrt excel view here
-      
-          unit_rank = UnitRank.objects.get(id=id)
-          fy = FinancialYear.objects.get(id=financial_year_id)
-          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
-          unit = Unit.objects.get(id=unit_id)
-          division = Division.objects.get(id=25)
-          month = Months.objects.get(id=month_id)
-      
-      
-          if request.method == 'POST':
-              excel_file = request.FILES.get("excelFile")  # Get the uploaded file
-      
-              if excel_file:
-                  handle_uploaded_file(excel_file, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id)  # Call the function to handle the uploaded file
-                  # go to statistics:case_summary path
-                  return HttpResponseRedirect('/statistics/rank/' + str(id) + '/fy/' + str(financial_year_id) + '/fq/' + str(financial_quarter_id) + '/units/' + str(unit_id) + '/division/' + str(division_id) + '/months/' + str(month_id) + '/cases/case_summary')
-                 
-              else:
-                  return HttpResponse("No file uploaded.")
-          
-          else:
-      
-              context = {
-              'unit_rank': unit_rank,
-              'financial_year': fy,
-              'financial_quarter': fq,
-              'unit': unit,
-              'division': division,
-              'month': month,
-          }
-              
-              return render(request, 'statistics/upload_unit_monthly_dcrt_excel.html', context)
-          
-      def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          unit_rank = UnitRank.objects.get(id=id)
-          fy = FinancialYear.objects.get(id=financial_year_id)
-          fq = FinancialQuarter.objects.get(id=financial_quarter_id)
-          unit = Unit.objects.get(id=unit_id)
-          division = Division.objects.get(id=25)
-          month = Months.objects.get(id=month_id)
-          queryset = DcrtData.objects.filter(financial_year=financial_year_id, financial_quarter=financial_quarter_id, unit=unit_id, division=division_id, month=month_id)
-      
-          context = {
-              'unit_rank': unit_rank,
-              'financial_year': fy,
-              'financial_quarter': fq,
-              'unit': unit,
-              'division': division,
-              'month': month,
-          }
-          return render(request, 'statistics/case_summary.html', context)
-      
-      
-      
-      
-      
-      def monthly_unit_outliers(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          # Handle logic for remove missing values view here
-          context = {
-              'id': id,
-              'financial_year_id': financial_year_id,
-              'financial_quarter_id': financial_quarter_id,
-              'unit_id': unit_id,
-              'division_id': division_id,
-              'month_id': month_id,
-          }
-          return render(request, 'statistics/monthly_unit_outliers.html', context)
-      
-      
-      def monthly_unit_missing_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          # Handle logic for remove outliers view here
-          context = {
-              'id': id,
-              'financial_year_id': financial_year_id,
-              'financial_quarter_id': financial_quarter_id,
-              'unit_id': unit_id,
-              'division_id': division_id,
-              'month_id': month_id,
-          }
-          return render(request, 'statistics/monthly_unit_missing_data.html', context)
-      
-      
-      def monthly_unit_registered_cases(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          queryset = DcrtData.objects.all()
-          df = read_frame(queryset)
-           # count of registered cases . look for case_outcome with phrase 'Case Registered/Filed' . count them, skip null values
-      
-          registered_cases = df[df['case_outcome'].str.contains('Case Registered/Filed', na=False)].shape[0]
-      
-          # registered_cases by case_number_code and count each case_number_code
-      
-          registered_cases_group = df.groupby('case_number_code').count()
-      
-          context = {
-              'id': id,
-              'financial_year_id': financial_year_id,
-              'financial_quarter_id': financial_quarter_id,
-              'unit_id': unit_id,
-              'division_id': division_id,
-              'month_id': month_id,
-              'registered_cases': registered_cases,
-              'registered_cases_group': registered_cases_group,
-          }
-          return render(request, 'statistics/monthly_unit_registered_cases.html', context)
-      
-      
-      # monthly_unit_duplicate_data
-      
-      def monthly_unit_duplicate_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          
-      
-          queryset = DcrtData.objects.all()
-          df = read_frame(queryset)
-          context = {
-              'id': id,
-              'financial_year_id': financial_year_id,
-              'financial_quarter_id': financial_quarter_id,
-              'unit_id': unit_id,
-              'division_id': division_id,
-              'month_id': month_id,
-              'duplicate_cases': duplicate_cases,
-              'duplicate_cases_group': duplicate_cases_group,
-          }
-      
-          return render(request, 'statistics/monthly_unit_duplicate_data.html', context)
-      
-      
-      
-      
-      def monthly_unit_resolved_cases(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-          # Handle logic for view outliers view here
-          context = {
-              'id': id,
-              'financial_year_id': financial_year_id,
-              'financial_quarter_id': financial_quarter_id,
-              'unit_id': unit_id,
-              'division_id': division_id,
-              'month_id': month_id,
-          }
-          return render(request, 'statistics/monthly_unit_resolved_cases.html', context)
-      
-      
-      # unit_division_quarters
-      
-      def unit_division_quarters(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
-          # Handle logic for unit division quarters view here
-          context = {
-              'financial_years': FinancialYear.objects.all(),
-              'financial_quarters': FinancialQuarter.objects.all(),
-              'id': id,
-              'unit_id': unit_id,
-              'division_id': division_id,
-          }
-          return render(request, 'statistics/unit_division_quarters.html', context)
-      
-      
-      # monthly_unit_matters_handled
-      
-      def monthly_unit_matters_handled(request, id, financial_year_id, financial_quarter_id, unit_id , division_id , month_id):
-          # Handle logic for monthly unit matters handled view here
-          context = {
-              'financial_years': FinancialYear.objects.all(),
-              'financial_quarters': FinancialQuarter.objects.all(),
-              'id': id,
-              'unit_id': unit_id,
-          }
-          return render(request, 'statistics/monthly_unit_matters_handled.html', context)
-      
-      # monthly_unit_incomplete_data
-      
-      def monthly_unit_incomplete_data(request, id, financial_year_id, financial_quarter_id, unit_id , division_id , month_id):
-          # Handle logic for monthly unit incomplete data view here
-          context = {
-              'financial_years': FinancialYear.objects.all(),
-              'financial_quarters': FinancialQuarter.objects.all(),
-              'id': id,
-              'unit_id': unit_id,
-          }
-          return render(request, 'statistics/monthly_unit_incomplete_data.html', context)
-      
-      
-      # unit_division_fy
-      
-      def unit_division_fy(request, id, financial_year_id, financial_quarter_id, unit_id , division_id):
-          # Handle logic for unit division fy view here
-          context = {
-              'financial_years': FinancialYear.objects.all(),
-              'financial_quarters': FinancialQuarter.objects.all(),
-              'id': id,
-              'unit_id': unit_id,
-          }
-          return render(request, 'statistics/unit_division_fy.html', context)
-      
-      
-      # monthly_unit_duplicate_data
-      
-      def monthly_unit_duplicate_data(request, id, financial_year_id, financial_quarter_id, unit_id , division_id , month_id):
-          # Handle logic for monthly unit duplicate data view here
-          context = {
-              'financial_years': FinancialYear.objects.all(),
-              'financial_quarters': FinancialQuarter.objects.all(),
-              'id': id,
-              'unit_id': unit_id,
-          }
-          return render(request, 'statistics/monthly_unit_duplicate_data.html', context)
-      
+        def home(request):
+            """Dashboard view showing overall statistics and navigation options."""
+            context = {
+                'unit_ranks': UnitRank.objects.all(),
+                'total_units': Unit.objects.count(),
+                'active_divisions': Division.objects.filter(is_active=True).count(),
+                'court_units': Unit.objects.filter(is_court=True).count(),
+                'financial_year': FinancialYear.objects.first(),
+                'financial_quarter': FinancialQuarter.objects.first(),
+                
+                # Additional statistics
+                'total_cases': DcrtData.objects.count(),
+                'resolved_cases': DcrtData.objects.filter(
+                    case_outcome__icontains='Resolved'
+                ).count(),
+                'pending_cases': DcrtData.objects.exclude(
+                    case_outcome__icontains='Resolved'
+                ).count(),
+                
+                # Top case types
+                'top_case_types': DcrtData.objects.values(
+                    'specific_case_type'
+                ).annotate(
+                    count=Count('id')
+                ).order_by('-count')[:5],
+            }
+            return render(request, 'statistics/home.html', context)
+        
+        # Import views from modules
+        from .dashboard import (
+            rank_units,
+        )
+        
+        from .case_analysis import (
+            case_summary,
+            monthly_unit_registered_cases,
+            monthly_unit_resolved_cases,
+            rank_unit_division_month_cases_summary,
+        )
+        
+        from .unit_views import (
+            rank_unit_division_months,
+            unit_division_quarters,
+            unit_division_fy,
+            monthly_unit_matters_handled,
+            upload_unit_monthly_dcrt_excel,
+        )
+        
+        from .data_quality import (
+            monthly_unit_missing_data,
+            monthly_unit_duplicate_data,
+            monthly_unit_outliers,
+            monthly_unit_incomplete_data,
+        )
+        
+        # Export all views
+        __all__ = [
+            # Main view
+            'home',
+            
+            # Dashboard views
+            'rank_units',
+            
+            # Case analysis views
+            'case_summary',
+            'monthly_unit_registered_cases',
+            'monthly_unit_resolved_cases',
+            'rank_unit_division_month_cases_summary',
+            
+            # Unit views
+            'rank_unit_division_months',
+            'unit_division_quarters',
+            'unit_division_fy',
+            'monthly_unit_matters_handled',
+            'upload_unit_monthly_dcrt_excel',
+            
+            # Data quality views
+            'monthly_unit_missing_data',
+            'monthly_unit_duplicate_data',
+            'monthly_unit_outliers',
+            'monthly_unit_incomplete_data',
+        ]
+
+      . case_analysis.py
+        Content:
+        from django.shortcuts import render
+        from django_pandas.io import read_frame
+        from django.db.models import Count, Q
+        from apps.statistics.models import (
+            UnitRank, FinancialYear, FinancialQuarter,
+            Unit, Division, DcrtData, Months
+        )
+        
+        def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """
+            Comprehensive case summary and analysis view.
+            """
+            # Get base objects
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+        
+            # Get filtered queryset
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id
+            )
+        
+            # Convert to dataframe for analysis
+            df = read_frame(queryset)
+        
+            context = {
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+                
+                # Basic statistics
+                'total_cases': len(df),
+                'resolved_cases': len(df[df['case_outcome'].str.contains(
+                    'Resolved|Concluded|Completed', na=False, case=False, regex=True
+                )]),
+                'pending_cases': len(df[~df['case_outcome'].str.contains(
+                    'Resolved|Concluded|Completed', na=False, case=False, regex=True
+                )]),
+                
+                # Case types analysis
+                'case_types': [
+                    {
+                        'type': case_type,
+                        'count': count,
+                        'percentage': round(count/len(df)*100, 1)
+                    }
+                    for case_type, count in df['specific_case_type'].value_counts().items()
+                ],
+                
+                # Demographics
+                'plaintiff_stats': {
+                    'male': df['no_of_plaintiffs_or_appellants_male'].sum(),
+                    'female': df['no_of_plaintiffs_or_appellants_female'].sum(),
+                    'org': df['no_of_plaintiffs_or_appellants_organization'].sum(),
+                },
+                'defendant_stats': {
+                    'male': df['no_of_defendants_accused_male'].sum(),
+                    'female': df['no_of_defendants_accused_female'].sum(),
+                    'org': df['no_of_defendants_accused_organization'].sum(),
+                },
+            }
+            
+            return render(request, 'statistics/case_summary.html', context)
+        
+        def monthly_unit_registered_cases(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """
+            View for analyzing registered cases in a given month.
+            """
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id,
+                case_outcome__icontains='Case Registered/Filed'
+            )
+            
+            df = read_frame(queryset)
+            
+            context = {
+                'registered_cases': len(df),
+                'registered_cases_by_type': df.groupby('case_number_code').size().to_dict(),
+                'basic_info': {
+                    'unit_rank': UnitRank.objects.get(id=id),
+                    'financial_year': FinancialYear.objects.get(id=financial_year_id),
+                    'financial_quarter': FinancialQuarter.objects.get(id=financial_quarter_id),
+                    'unit': Unit.objects.get(id=unit_id),
+                    'division': Division.objects.get(id=division_id),
+                    'month': Months.objects.get(id=month_id),
+                }
+            }
+            
+            return render(request, 'statistics/monthly_unit_registered_cases.html', context)
+        
+        
+        def monthly_unit_resolved_cases(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """
+            View for analyzing resolved cases in a given month.
+            """
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id,
+                case_outcome__icontains='Resolved'
+            )
+            
+            df = read_frame(queryset)
+            
+            context = {
+                'resolved_cases': len(df),
+                'resolved_cases_by_type': df.groupby('case_number_code').size().to_dict(),
+                'basic_info': {
+                    'unit_rank': UnitRank.objects.get(id=id),
+                    'financial_year': FinancialYear.objects.get(id=financial_year_id),
+                    'financial_quarter': FinancialQuarter.objects.get(id=financial_quarter_id),
+                    'unit': Unit.objects.get(id=unit_id),
+                    'division': Division.objects.get(id=division_id),
+                    'month': Months.objects.get(id=month_id),
+                }
+            }
+            
+            return render(request, 'statistics/monthly_unit_resolved_cases.html', context)
+        
+        
+        def rank_unit_division_month_cases_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """
+            View for ranking unit-division-month cases summary.
+            """
+            # Get base objects
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+        
+            # Get filtered queryset
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id
+            )
+        
+            # Convert to dataframe for analysis
+            df = read_frame(queryset)
+        
+            context = {
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+        
+                # Basic statistics
+                'total_cases': len(df),
+                'resolved_cases': len(df[df['case_outcome'].str.contains(
+                    'Resolved|Concluded|Completed', na=False, case=False, regex=True
+                )]),
+                'pending_cases': len(df[~df['case_outcome'].str.contains(
+                    'Resolved|Concluded|Completed', na=False, case=False, regex=True
+                )]),
+        
+                # Case types analysis
+                'case_types': [
+                    {
+                        'type': case_type,
+                        'count': count,
+                        'percentage': round(count/len(df)*100, 1)
+                    }
+                    for case_type, count in df['specific_case_type'].value_counts().items()
+                ],
+        
+                # Demographics
+                'plaintiff_stats': {
+                    'male': df['no_of_plaintiffs_or_appellants_male'].sum(),
+                    'female': df['no_of_plaintiffs_or_appellants_female'].sum(),
+                    'org': df['no_of_plaintiffs_or_appellants_organization'].sum(),
+                    'total': df['no_of_plaintiffs_or_appellants_male'].sum() + 
+                            df['no_of_plaintiffs_or_appellants_female'].sum() +
+                            df['no_of_plaintiffs_or_appellants_organization'].sum()
+                },
+                'defendant_stats': {
+                    'male': df['no_of_defendants_accused_male'].sum(),
+                    'female': df['no_of_defendants_accused_female'].sum(),
+                    'org': df['no_of_defendants_accused_organization'].sum(),
+                    'total': df['no_of_defendants_accused_male'].sum() +
+                            df['no_of_defendants_accused_female'].sum() +
+                            df['no_of_defendants_accused_organization'].sum()
+                },
+        
+                # Legal representation
+                'legal_representation': {
+                    'with_representation': len(df[df['parties_have_legal_representation'].str.contains('Yes', na=False, case=False)]),
+                    'without_representation': len(df[df['parties_have_legal_representation'].str.contains('No', na=False, case=False)]),
+                    'not_specified': len(df[~df['parties_have_legal_representation'].str.contains('Yes|No', na=False, case=False, regex=True)])
+                },
+        
+                # Witness statistics
+                'witness_stats': {
+                    'defense': df['no_of_witnesses_in_court_d'].sum(),
+                    'prosecution': df['no_of_witnesses_in_court_w'].sum(),
+                    'total': df['no_of_witnesses_in_court_d'].sum() + df['no_of_witnesses_in_court_w'].sum()
+                },
+        
+                # Additional case statistics
+                'remand_stats': {
+                    'total_remanded': df['no_of_accused_remanded'].sum(),
+                    'cases_with_remand': len(df[df['no_of_accused_remanded'] > 0])
+                }
+            }
+        
+            return render(request, 'statistics/rank_unit_division_month_cases_summary.html', context)
+        
+        
+        def monthly_unit_matters_handled(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """
+            View for analyzing matters handled in a specific month by a unit.
+            Shows various case statistics and breakdowns.
+            """
+            # Get base objects
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+        
+            # Get filtered queryset
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id
+            )
+        
+            # Convert to dataframe for analysis
+            df = read_frame(queryset)
+        
+            # Calculate matters handled statistics
+            context = {
+                # Basic info
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+        
+                # Case statistics
+                'case_stats': {
+                    'total_matters': len(df),
+                    'new_cases': len(df[df['case_outcome'].str.contains('Registered|Filed', na=False, case=False, regex=True)]),
+                    'resolved_cases': len(df[df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]),
+                    'adjourned_cases': len(df[df['case_outcome'].str.contains('Adjourned', na=False, case=False)])
+                },
+        
+                # Case types breakdown
+                'case_types': [
+                    {
+                        'type': case_type,
+                        'count': count,
+                        'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+                    }
+                    for case_type, count in df['specific_case_type'].value_counts().items()
+                ],
+        
+                # Coming for analysis
+                'coming_for_analysis': [
+                    {
+                        'reason': reason,
+                        'count': count,
+                        'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+                    }
+                    for reason, count in df['case_coming_for'].value_counts().items()
+                ],
+        
+                # Adjournment reasons
+                'adjournment_reasons': [
+                    {
+                        'reason': reason,
+                        'count': count,
+                        'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+                    }
+                    for reason, count in df['adjournment_reason'].value_counts().items()
+                    if not pd.isna(reason)
+                ],
+        
+                # Judicial officer workload
+                'judicial_workload': {
+                    'officers_involved': len(df[[f'judicial_officer_{i}' for i in range(1, 9)]].notna().any(axis=1)),
+                    'cases_per_officer': round(len(df) / len(df[[f'judicial_officer_{i}' for i in range(1, 9)]].notna().any(axis=1)), 2)
+                    if len(df[[f'judicial_officer_{i}' for i in range(1, 9)]].notna().any(axis=1)) > 0 else 0
+                },
+        
+                # Representation statistics
+                'representation_stats': {
+                    'with_lawyers': len(df[df['parties_have_legal_representation'].str.contains('Yes', na=False, case=False)]),
+                    'without_lawyers': len(df[df['parties_have_legal_representation'].str.contains('No', na=False, case=False)]),
+                    'not_specified': len(df[~df['parties_have_legal_representation'].str.contains('Yes|No', na=False, case=False, regex=True)])
+                },
+        
+                # Party statistics
+                'party_stats': {
+                    'plaintiffs': {
+                        'male': df['no_of_plaintiffs_or_appellants_male'].sum(),
+                        'female': df['no_of_plaintiffs_or_appellants_female'].sum(),
+                        'organizations': df['no_of_plaintiffs_or_appellants_organization'].sum()
+                    },
+                    'defendants': {
+                        'male': df['no_of_defendants_accused_male'].sum(),
+                        'female': df['no_of_defendants_accused_female'].sum(),
+                        'organizations': df['no_of_defendants_accused_organization'].sum()
+                    }
+                },
+        
+                # Witness participation
+                'witness_stats': {
+                    'total_witnesses': df['no_of_witnesses_in_court_d'].sum() + df['no_of_witnesses_in_court_w'].sum(),
+                    'defense_witnesses': df['no_of_witnesses_in_court_d'].sum(),
+                    'prosecution_witnesses': df['no_of_witnesses_in_court_w'].sum(),
+                    'cases_with_witnesses': len(df[(df['no_of_witnesses_in_court_d'] > 0) | (df['no_of_witnesses_in_court_w'] > 0)])
+                },
+        
+                # Next activity analysis
+                'next_activity': {
+                    'scheduled': len(df[df['date_of_next_activity_day'].notna()]),
+                    'not_scheduled': len(df[df['date_of_next_activity_day'].isna()]),
+                },
+        
+                # Remand cases
+                'remand_stats': {
+                    'total_remanded': df['no_of_accused_remanded'].sum(),
+                    'cases_with_remand': len(df[df['no_of_accused_remanded'] > 0])
+                }
+            }
+        
+            return render(request, 'statistics/monthly_unit_matters_handled.html', context)
+        
+
+      . dashboard.py
+        Content:
+        from django.shortcuts import render
+        from django.db.models import Count, Q
+        from apps.statistics.models import (
+            UnitRank, FinancialYear, FinancialQuarter, 
+            Unit, Division, DcrtData, Months
+        )
+        
+        def home(request):
+            """
+            Dashboard view showing overall statistics and navigation options.
+            """
+            context = {
+                'unit_ranks': UnitRank.objects.all(),
+                'total_units': Unit.objects.count(),
+                'active_divisions': Division.objects.filter(is_active=True).count(),
+                'court_units': Unit.objects.filter(is_court=True).count(),
+                'financial_year': FinancialYear.objects.first(),
+                'financial_quarter': FinancialQuarter.objects.first(),
+                
+                # Add summary statistics
+                'total_cases': DcrtData.objects.count(),
+                'resolved_cases': DcrtData.objects.filter(
+                    case_outcome__icontains='Resolved'
+                ).count(),
+                'pending_cases': DcrtData.objects.exclude(
+                    case_outcome__icontains='Resolved'
+                ).count(),
+                
+                # Get top case types
+                'top_case_types': DcrtData.objects.values(
+                    'specific_case_type'
+                ).annotate(
+                    count=Count('id')
+                ).order_by('-count')[:5],
+            }
+            return render(request, 'statistics/home.html', context)
+        
+        def rank_units(request, id, financial_year_id, financial_quarter_id):
+            """
+            View for displaying units within a specific rank.
+            """
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+        
+            # Get units with their case counts
+            units = Unit.objects.filter(unit_rank=id).annotate(
+                total_cases=Count('dcrtdata', filter=Q(
+                    dcrtdata__financial_year=financial_year_id,
+                    dcrtdata__financial_quarter=financial_quarter_id
+                )),
+                resolved_cases=Count('dcrtdata', filter=Q(
+                    dcrtdata__financial_year=financial_year_id,
+                    dcrtdata__financial_quarter=financial_quarter_id,
+                    dcrtdata__case_outcome__icontains='Resolved'
+                ))
+            )
+        
+            context = {
+                'units': units,
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+            }
+            return render(request, 'statistics/rank_units.html', context)
+
+      . data_quality.py
+        Content:
+        # apps/statistics/views/data_quality.py
+        
+        from django.shortcuts import render, HttpResponse
+        from django_pandas.io import read_frame
+        import pandas as pd
+        from django.db.models import Count, Q
+        from apps.statistics.models import (
+            UnitRank, FinancialYear, FinancialQuarter,
+            Unit, Division, DcrtData, Months
+        )
+        
+        def monthly_unit_outliers(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """Analyze and display statistical outliers in the data."""
+            try:
+                # Get base objects
+                unit_rank = UnitRank.objects.get(id=id)
+                fy = FinancialYear.objects.get(id=financial_year_id)
+                fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+                unit = Unit.objects.get(id=unit_id)
+                division = Division.objects.get(id=division_id)
+                month = Months.objects.get(id=month_id)
+        
+                # Get filtered queryset
+                queryset = DcrtData.objects.filter(
+                    financial_year=financial_year_id,
+                    financial_quarter=financial_quarter_id,
+                    unit=unit_id,
+                    division=division_id,
+                    month=month_id
+                )
+        
+                df = read_frame(queryset)
+                
+                # Define numerical columns to check for outliers
+                numeric_columns = [
+                    'no_of_plaintiffs_or_appellants_male',
+                    'no_of_plaintiffs_or_appellants_female',
+                    'no_of_plaintiffs_or_appellants_organization',
+                    'no_of_defendants_accused_male',
+                    'no_of_defendants_accused_female',
+                    'no_of_defendants_accused_organization',
+                    'no_of_witnesses_in_court_d',
+                    'no_of_witnesses_in_court_w',
+                    'no_of_accused_remanded'
+                ]
+        
+                outliers = {}
+                for column in numeric_columns:
+                    if column in df.columns:
+                        # Calculate Q1, Q3, and IQR
+                        Q1 = df[column].quantile(0.25)
+                        Q3 = df[column].quantile(0.75)
+                        IQR = Q3 - Q1
+                        
+                        # Define outlier bounds
+                        lower_bound = Q1 - 1.5 * IQR
+                        upper_bound = Q3 + 1.5 * IQR
+                        
+                        # Find outliers
+                        outliers[column] = {
+                            'lower_bound': lower_bound,
+                            'upper_bound': upper_bound,
+                            'outliers': df[
+                                (df[column] < lower_bound) | 
+                                (df[column] > upper_bound)
+                            ][['case_number_code', column]].to_dict('records'),
+                            'count': len(df[
+                                (df[column] < lower_bound) | 
+                                (df[column] > upper_bound)
+                            ])
+                        }
+        
+                context = {
+                    'unit_rank': unit_rank,
+                    'financial_year': fy,
+                    'financial_quarter': fq,
+                    'unit': unit,
+                    'division': division,
+                    'month': month,
+                    'outliers': outliers,
+                    'total_records': len(df)
+                }
+                
+                return render(request, 'statistics/monthly_unit_outliers.html', context)
+                
+            except Exception as e:
+                return HttpResponse(f"An error occurred: {str(e)}", status=500)
+        
+        def monthly_unit_missing_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """Analyze and display missing data patterns."""
+            try:
+                # Get base objects and data
+                unit_rank = UnitRank.objects.get(id=id)
+                fy = FinancialYear.objects.get(id=financial_year_id)
+                fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+                unit = Unit.objects.get(id=unit_id)
+                division = Division.objects.get(id=division_id)
+                month = Months.objects.get(id=month_id)
+        
+                queryset = DcrtData.objects.filter(
+                    financial_year=financial_year_id,
+                    financial_quarter=financial_quarter_id,
+                    unit=unit_id,
+                    division=division_id,
+                    month=month_id
+                )
+        
+                df = read_frame(queryset)
+                
+                # Calculate missing values for each column
+                missing_data = {
+                    column: {
+                        'missing_count': df[column].isna().sum(),
+                        'missing_percentage': round(df[column].isna().sum() / len(df) * 100, 2),
+                        'examples': df[df[column].isna()]['case_number_code'].tolist()[:5]
+                    }
+                    for column in df.columns
+                    if df[column].isna().sum() > 0
+                }
+        
+                context = {
+                    'unit_rank': unit_rank,
+                    'financial_year': fy,
+                    'financial_quarter': fq,
+                    'unit': unit,
+                    'division': division,
+                    'month': month,
+                    'missing_data': missing_data,
+                    'total_records': len(df)
+                }
+                
+                return render(request, 'statistics/monthly_unit_missing_data.html', context)
+                
+            except Exception as e:
+                return HttpResponse(f"An error occurred: {str(e)}", status=500)
+        
+        def monthly_unit_duplicate_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """Identify and display duplicate records."""
+            try:
+                # Get base objects and data
+                unit_rank = UnitRank.objects.get(id=id)
+                fy = FinancialYear.objects.get(id=financial_year_id)
+                fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+                unit = Unit.objects.get(id=unit_id)
+                division = Division.objects.get(id=division_id)
+                month = Months.objects.get(id=month_id)
+        
+                queryset = DcrtData.objects.filter(
+                    financial_year=financial_year_id,
+                    financial_quarter=financial_quarter_id,
+                    unit=unit_id,
+                    division=division_id,
+                    month=month_id
+                )
+        
+                df = read_frame(queryset)
+                
+                # Find duplicates based on case number
+                duplicates = df[df.duplicated(subset=['case_number_code', 'case_number_number'], keep=False)]
+                
+                context = {
+                    'unit_rank': unit_rank,
+                    'financial_year': fy,
+                    'financial_quarter': fq,
+                    'unit': unit,
+                    'division': division,
+                    'month': month,
+                    'duplicate_count': len(duplicates),
+                    'duplicate_cases': duplicates.to_dict('records'),
+                    'total_records': len(df)
+                }
+                
+                return render(request, 'statistics/monthly_unit_duplicate_data.html', context)
+                
+            except Exception as e:
+                return HttpResponse(f"An error occurred: {str(e)}", status=500)
+        
+        def monthly_unit_incomplete_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """Analyze and display incomplete records."""
+            try:
+                # Get base objects and data
+                unit_rank = UnitRank.objects.get(id=id)
+                fy = FinancialYear.objects.get(id=financial_year_id)
+                fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+                unit = Unit.objects.get(id=unit_id)
+                division = Division.objects.get(id=division_id)
+                month = Months.objects.get(id=month_id)
+        
+                queryset = DcrtData.objects.filter(
+                    financial_year=financial_year_id,
+                    financial_quarter=financial_quarter_id,
+                    unit=unit_id,
+                    division=division_id,
+                    month=month_id
+                )
+        
+                df = read_frame(queryset)
+                
+                # Define required fields
+                required_fields = [
+                    'case_number_code',
+                    'case_number_number',
+                    'specific_case_type',
+                    'case_outcome'
+                ]
+                
+                # Find incomplete records
+                incomplete_records = df[df[required_fields].isna().any(axis=1)]
+                
+                context = {
+                    'unit_rank': unit_rank,
+                    'financial_year': fy,
+                    'financial_quarter': fq,
+                    'unit': unit,
+                    'division': division,
+                    'month': month,
+                    'incomplete_count': len(incomplete_records),
+                    'incomplete_cases': incomplete_records.to_dict('records'),
+                    'total_records': len(df),
+                    'required_fields': required_fields
+                }
+                
+                return render(request, 'statistics/monthly_unit_incomplete_data.html', context)
+                
+            except Exception as e:
+                return HttpResponse(f"An error occurred: {str(e)}", status=500)
+            
+            
+
+      . reports.py
+        Content:
+
+
+      . unit_views.py
+        Content:
+        # apps/statistics/views/unit_views.py
+        
+        from django.shortcuts import render, HttpResponse
+        from django_pandas.io import read_frame
+        import pandas as pd
+        from django.db.models import Count, Q, Sum
+        from apps.statistics.models import (
+            UnitRank, FinancialYear, FinancialQuarter,
+            Unit, Division, DcrtData, Months
+        )
+        
+        def rank_unit_division_months(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
+            """View for displaying months for a specific unit and division."""
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+        
+            context = {
+                'months': Months.objects.filter(financial_quarter=fq.quarter_number),
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+            }
+            return render(request, 'statistics/rank_unit_months.html', context)
+        
+        def unit_division_quarters(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
+            """View for quarterly statistics of a unit."""
+            context = {
+                'financial_years': FinancialYear.objects.all(),
+                'financial_quarters': FinancialQuarter.objects.all(),
+                'id': id,
+                'unit_id': unit_id,
+                'division_id': division_id,
+            }
+            return render(request, 'statistics/unit_division_quarters.html', context)
+        
+        def unit_division_fy(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
+            """View for financial year statistics of a unit."""
+            context = {
+                'financial_years': FinancialYear.objects.all(),
+                'financial_quarters': FinancialQuarter.objects.all(),
+                'id': id,
+                'unit_id': unit_id,
+            }
+            return render(request, 'statistics/unit_division_fy.html', context)
+        
+        def monthly_unit_matters_handled(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """
+            View for analyzing matters handled in a specific month by a unit.
+            Provides comprehensive analysis of case data.
+            """
+            try:
+                # Get base objects
+                unit_rank = UnitRank.objects.get(id=id)
+                fy = FinancialYear.objects.get(id=financial_year_id)
+                fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+                unit = Unit.objects.get(id=unit_id)
+                division = Division.objects.get(id=division_id)
+                month = Months.objects.get(id=month_id)
+        
+                # Get filtered queryset
+                queryset = DcrtData.objects.filter(
+                    financial_year=financial_year_id,
+                    financial_quarter=financial_quarter_id,
+                    unit=unit_id,
+                    division=division_id,
+                    month=month_id
+                )
+        
+                # Convert to dataframe for analysis
+                df = read_frame(queryset)
+        
+                # Calculate case statistics
+                context = {
+                    # Basic info
+                    'unit_rank': unit_rank,
+                    'financial_year': fy,
+                    'financial_quarter': fq,
+                    'unit': unit,
+                    'division': division,
+                    'month': month,
+        
+                    # Main case statistics
+                    'case_stats': {
+                        'total_matters': len(df),
+                        'new_cases': len(df[df['case_outcome'].str.contains('Registered|Filed', na=False, case=False, regex=True)]) if not df.empty else 0,
+                        'resolved_cases': len(df[df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]) if not df.empty else 0,
+                        'adjourned_cases': len(df[df['case_outcome'].str.contains('Adjourned', na=False, case=False)]) if not df.empty else 0
+                    },
+        
+                    # Case type analysis
+                    'case_types': [
+                        {
+                            'type': case_type,
+                            'count': count,
+                            'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+                        }
+                        for case_type, count in df['specific_case_type'].value_counts().items()
+                    ] if not df.empty else [],
+        
+                    # Party statistics
+                    'party_stats': {
+                        'plaintiffs': {
+                            'male': int(df['no_of_plaintiffs_or_appellants_male'].sum()),
+                            'female': int(df['no_of_plaintiffs_or_appellants_female'].sum()),
+                            'organizations': int(df['no_of_plaintiffs_or_appellants_organization'].sum())
+                        },
+                        'defendants': {
+                            'male': int(df['no_of_defendants_accused_male'].sum()),
+                            'female': int(df['no_of_defendants_accused_female'].sum()),
+                            'organizations': int(df['no_of_defendants_accused_organization'].sum())
+                        }
+                    },
+        
+                    # Witness statistics
+                    'witness_stats': {
+                        'total_witnesses': int(df['no_of_witnesses_in_court_d'].sum() + df['no_of_witnesses_in_court_w'].sum()),
+                        'defense_witnesses': int(df['no_of_witnesses_in_court_d'].sum()),
+                        'prosecution_witnesses': int(df['no_of_witnesses_in_court_w'].sum()),
+                        'cases_with_witnesses': len(df[(df['no_of_witnesses_in_court_d'] > 0) | (df['no_of_witnesses_in_court_w'] > 0)])
+                    },
+        
+                    # Legal representation
+                    'representation_stats': {
+                        'with_lawyers': len(df[df['parties_have_legal_representation'].str.contains('Yes', na=False, case=False)]) if not df.empty else 0,
+                        'without_lawyers': len(df[df['parties_have_legal_representation'].str.contains('No', na=False, case=False)]) if not df.empty else 0,
+                        'not_specified': len(df[~df['parties_have_legal_representation'].str.contains('Yes|No', na=False, case=False, regex=True)]) if not df.empty else 0
+                    },
+        
+                    # Remand statistics
+                    'remand_stats': {
+                        'total_remanded': int(df['no_of_accused_remanded'].sum()),
+                        'cases_with_remand': len(df[df['no_of_accused_remanded'] > 0])
+                    },
+        
+                    # Next activity scheduling
+                    'next_activity': {
+                        'scheduled': len(df[df['date_of_next_activity_day'].notna()]),
+                        'not_scheduled': len(df[df['date_of_next_activity_day'].isna()])
+                    }
+                }
+        
+                return render(request, 'statistics/monthly_unit_matters_handled.html', context)
+                
+            except (UnitRank.DoesNotExist, FinancialYear.DoesNotExist, 
+                    FinancialQuarter.DoesNotExist, Unit.DoesNotExist, 
+                    Division.DoesNotExist, Months.DoesNotExist) as e:
+                return HttpResponse(f"Error: {str(e)}", status=404)
+            except Exception as e:
+                return HttpResponse(f"An error occurred: {str(e)}", status=500)
+        
+        def upload_unit_monthly_dcrt_excel(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+            """Handle Excel file upload for monthly DCRT data."""
+            from apps.statistics.utils import handle_uploaded_file
+            
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+        
+            if request.method == 'POST':
+                excel_file = request.FILES.get("excelFile")
+                if excel_file:
+                    handle_uploaded_file(excel_file, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id)
+                    return redirect('statistics:monthly_unit_case_summary', id=id, financial_year_id=financial_year_id, 
+                                  financial_quarter_id=financial_quarter_id, unit_id=unit_id, division_id=division_id, month_id=month_id)
+                return HttpResponse("No file uploaded.")
+        
+            context = {
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+            }
+            return render(request, 'statistics/upload_unit_monthly_dcrt_excel.html', context)
 
   . templates/
     . .gitkeep
@@ -9070,125 +9851,106 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
 
       . sidebar.html
         Content:
-                <nav class="navbar navbar-dark navbar-theme-primary px-4 col-12 d-lg-none">
-                    <a class="navbar-brand me-lg-5" href="/">
-                        <img class="navbar-brand-dark" src="{{ ASSETS_ROOT }}/img/brand/light.svg" alt="Volt logo" /> <img class="navbar-brand-light" src="{{ ASSETS_ROOT }}/img/brand/dark.svg" alt="Volt logo" />
+              
+        <nav class="navbar navbar-dark navbar-theme-primary px-4 col-12 d-lg-none">
+          <a class="navbar-brand me-lg-5" href="/">
+              <img class="navbar-brand-dark" src="{{ ASSETS_ROOT }}/img/brand/light.svg" alt="Volt logo" /> <img class="navbar-brand-light" src="{{ ASSETS_ROOT }}/img/brand/dark.svg" alt="Volt logo" />
+          </a>
+          <div class="d-flex align-items-center">
+              <button class="navbar-toggler d-lg-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+          </div>
+        </nav>
+        
+        <nav id="sidebarMenu" class="sidebar d-lg-block bg-gray-800 text-white collapse" data-simplebar>
+        <div class="sidebar-inner px-4 pt-3">
+          <div class="user-card d-flex d-md-none align-items-center justify-content-between justify-content-md-center pb-4">
+            <div class="d-flex align-items-center">
+              <div class="avatar-lg me-4">
+                <img src="{{ ASSETS_ROOT }}/img/team/profile-picture-3.jpg" class="card-img-top rounded-circle border-white"
+                  alt="Bonnie Green">
+              </div>
+              <div class="d-block">
+                <h2 class="h5 mb-3">Hi, Jane</h2>
+                <a href="/page-sign-in.html" class="btn btn-secondary btn-sm d-inline-flex align-items-center">
+                  <svg class="icon icon-xxs me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                  Sign Out
+                </a>
+              </div>
+            </div>
+            <div class="collapse-close d-md-none">
+              <a href="#sidebarMenu" data-bs-toggle="collapse"
+                  data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="true"
+                  aria-label="Toggle navigation">
+                  <svg class="icon icon-xs" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </a>
+            </div>
+          </div>
+          <ul class="nav flex-column pt-3 pt-md-0">
+            <li class="nav-item">
+              <a href="/" class="nav-link d-flex align-items-center">
+                <span class="sidebar-icon">
+                  <img src="{{ ASSETS_ROOT }}/img/brand/light.svg" height="20" width="20" alt="Volt Logo">
+                </span>
+                <span class="mt-1 ms-1 sidebar-text">Menu</span>
+              </a>
+            </li>
+            <li class="nav-item {% if 'dashboard' in segment %} active {% endif %}">
+              <a href="/" class="nav-link">
+                <span class="sidebar-icon">
+                  <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
+                </span>
+                <span class="sidebar-text">Dashboard</span>
+              </a>
+            </li>
+        
+            <li class="nav-item">
+              <span class="nav-link collapsed d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#submenu-components">
+                <span>
+                  <span class="sidebar-icon"><i class="fas fa-cogs me-2"></i></span>
+                  <span class="sidebar-text">Settings</span>
+                </span>
+                <span class="link-arrow"><i class="fas fa-chevron-right"></i></span>
+              </span>
+              <div class="multi-level collapse" role="list" id="submenu-components" aria-expanded="false">
+                <ul class="flex-column nav">
+        
+                  <li class="nav-item">
+                     <a class="nav-link" href="{% url 'permissions:manage_permissions' %}">
+                     <span class="sidebar-icon"><i class="fas fa-user-shield"></i></span>
+                     <span class="sidebar-text">Permissions</span>
                     </a>
-                    <div class="d-flex align-items-center">
-                        <button class="navbar-toggler d-lg-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-                          <span class="navbar-toggler-icon"></span>
-                        </button>
-                    </div>
-                </nav>
+                  </li>
+                  
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'permissions:assign_departments' %}">
+                     <span class="sidebar-icon"><i class="fas fa-building"></i></span>
+                     <span class="sidebar-text">Assign Departments</span>
+                   </a>
+                  </li>
         
-                <nav id="sidebarMenu" class="sidebar d-lg-block bg-gray-800 text-white collapse" data-simplebar>
-                  <div class="sidebar-inner px-4 pt-3">
-                    <div class="user-card d-flex d-md-none align-items-center justify-content-between justify-content-md-center pb-4">
-                      <div class="d-flex align-items-center">
-                        <div class="avatar-lg me-4">
-                          <img src="{{ ASSETS_ROOT }}/img/team/profile-picture-3.jpg" class="card-img-top rounded-circle border-white"
-                            alt="Bonnie Green">
-                        </div>
-                        <div class="d-block">
-                          <h2 class="h5 mb-3">Hi, Jane</h2>
-                          <a href="/page-sign-in.html" class="btn btn-secondary btn-sm d-inline-flex align-items-center">
-                            <svg class="icon icon-xxs me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>            
-                            Sign Out
-                          </a>
-                        </div>
-                      </div>
-                      <div class="collapse-close d-md-none">
-                        <a href="#sidebarMenu" data-bs-toggle="collapse"
-                            data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="true"
-                            aria-label="Toggle navigation">
-                            <svg class="icon icon-xs" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                          </a>
-                      </div>
-                    </div>
-                    <ul class="nav flex-column pt-3 pt-md-0">
-                      <li class="nav-item">
-                        <a href="/" class="nav-link d-flex align-items-center">
-                          <span class="sidebar-icon">
-                            <img src="{{ ASSETS_ROOT }}/img/brand/light.svg" height="20" width="20" alt="Volt Logo">
-                          </span>
-                          <span class="mt-1 ms-1 sidebar-text"> Menu </span>
-                        </a>
-                      </li>
-                      <li class="nav-item {% if 'dashboard' in segment %} active {% endif %}">
-                        <a href="/" class="nav-link">
-                          <span class="sidebar-icon">
-                            <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
-                          </span> 
-                          <span class="sidebar-text"> Dashboard</span>
-                        </a>
-                      </li>
-                      <li class="nav-item {% if 'transactions' in segment %} active {% endif %}">
-                        <a href="{% url 'permissions:manage_permissions' %}"> {# Changed to POST #}
-                          <span class="sidebar-icon">
-                            <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>
-                          </span>
-                          <span class="sidebar-text">Permissions </span>
-                        </a>
-                      </li>
-        
+                </ul>
+              </div>
+            </li>
             
+        
+            <li role="separator" class="dropdown-divider mt-4 mb-3 border-gray-700"></li>
+            <li class="nav-item">
+              <a href="{% url 'logout' %}" class="nav-link">
+                  <span class="sidebar-icon">
+                      <svg class="icon icon-xs text-danger me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                      </svg> 
+                  </span>
+                  <span class="sidebar-text">Logout</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        </nav>
+        
           
-                      
-                      <li class="nav-item {% if 'settings' in segment %} active {% endif %}">
-                        <a href="/generate_docs.html" class="nav-link">
-                          <span class="sidebar-icon">
-                            <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path></svg>
-                          </span>
-                          <span class="sidebar-text">Generate Docs</span>
-                        </a>
-                      </li>
-        
-                      <li class="nav-item {% if 'page-' in segment %} active {% endif %}">
-                        <span
-                          class="nav-link  collapsed  d-flex justify-content-between align-items-center"
-                          data-bs-toggle="collapse" data-bs-target="#submenu-pages">
-                          <span>
-                            <span class="sidebar-icon">
-                              <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd"></path><path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z"></path></svg>
-                            </span> 
-                            <span class="sidebar-text">Docs Analyser</span>
-                          </span>
-                          <span class="link-arrow">
-                            <svg class="icon icon-sm" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                          </span>
-                        </span>
-                        <div class="multi-level collapse {% if 'page-' in segment %} show {% endif %} " role="list"
-                          id="submenu-pages" aria-expanded="false">
-                          <ul class="flex-column nav">
-                            <li class="nav-item">
-                              <a class="nav-link" href="/judgement _analyser.html">
-                                <span class="sidebar-text">Judgement Analyser</span>
-                              </a>
-                            </li>
-                            <li class="nav-item">
-                              <a class="nav-link" href="/brief_analyser.html">
-                                <span class="sidebar-text">Brief Analyser</span>
-                              </a>
-                            </li>
-                          </ul>
-                        </div>
-                      </li>
-                      <li role="separator" class="dropdown-divider mt-4 mb-3 border-gray-700"></li>
-                      <li class="nav-item">
-                        <a href="{% url 'logout' %}" class="nav-link">
-                            <span class="sidebar-icon">
-                                <svg class="icon icon-xs text-danger me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                                </svg> 
-                            </span>
-                            <span class="sidebar-text">Logout</span>
-                        </a>
-                      </li>  
-        
-                   
-                    </ul>
-                  </div>
-                </nav>
 
     . layouts/
       . base-fullscreen.html
@@ -11241,6 +12003,47 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         {% endblock %}
 
     . permissions/
+      . assign_departments.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Assign Departments to Modules{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <h1>Assign Departments to Modules</h1>
+        
+            <form method="post">
+                {% csrf_token %}
+                {{ formset.management_form }}  {# Required for formsets #}
+        
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Departments</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                            <tr>
+                                <td>{{ form.instance.name }}</td>
+                                <td>
+                                    {{ form.departments }}  {# This renders the ManyToMany field #}
+                                    {% if form.departments.errors %}
+                                        <div class="text-danger">{{ form.departments.errors }}</div>
+                                    {% endif %}
+                                </td>
+                                
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'permissions:manage_permissions' %}" class="btn btn-secondary">Back to Permissions</a>
+            </form>
+        </div>
+        {% endblock %}
+
       . manage_permissions.html
         Content:
         {% extends "layouts/base.html" %}
@@ -11324,43 +12127,184 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       . case_summary.html
         Content:
         {% extends "layouts/base.html" %}
-        
         {% load unicorn %}
         
-        {% block extra_head %}
-        
-        {% unicorn_scripts %}
-        
-        {% endblock extra_head %}
-        
-        {% block title %} DCRT SUMMARY {% endblock title %}
-        
+        {% block title %} Court Case Analytics {% endblock %}
         
         {% block content %}
-        
         <div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
-        
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Column Summary</h2>
-                <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id unit.id division.id  %}" class="btn btn-primary btn-sm">
-                  <i class="fas fa-arrow-left"></i> Go Back
-                </a> 
-               
-             </div>
+                <div>
+                    <h2>Court Case Analytics</h2>
+                    <h4 class="text-muted">{{ unit.name }} - {{ month.name }}</h4>
+                    <p class="text-muted">{{ unit_rank.name }} - FY {{ financial_year.name }} - {{ financial_quarter.name }}</p>
+                </div>
+                <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id unit.id division.id %}" 
+                   class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Months
+                </a>
+            </div>
         
-            <h3> {{ unit.name }} in the Month  {{ month.name }}</h3>
+            <div class="row mb-4">
+                <!-- Summary Statistics Cards -->
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Cases</h5>
+                            <h2 class="card-text">{{ total_cases }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Resolved Cases</h5>
+                            <h2 class="card-text">{{ resolved_cases }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body">
+                            <h5 class="card-title">Pending Cases</h5>
+                            <h2 class="card-text">{{ pending_cases }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Cases With Legal Rep</h5>
+                            <h2 class="card-text">{{ legal_rep_cases }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
         
-            <h4> {{ unit_rank.name }} -  FY {{  financial_year.name }} - {{ financial_quarter.name }} </h4>
+            <div class="row">
+                <!-- Case Analysis Section -->
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Case Data Analysis</h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- Column Selection and Analysis -->
+                            {% unicorn 'case_summary' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         
+            <div class="row mt-4">
+                <!-- Case Type Distribution -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Case Types Distribution</h4>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Case Type</th>
+                                        <th>Count</th>
+                                        <th>Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for case_type in case_types %}
+                                    <tr>
+                                        <td>{{ case_type.type }}</td>
+                                        <td>{{ case_type.count }}</td>
+                                        <td>{{ case_type.percentage }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
         
-            {% unicorn 'case_summary' unit_rank financial_year financial_quarter unit division month %}
+                <!-- Case Outcomes -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Case Outcomes</h4>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Outcome</th>
+                                        <th>Count</th>
+                                        <th>Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for outcome in case_outcomes %}
+                                    <tr>
+                                        <td>{{ outcome.type }}</td>
+                                        <td>{{ outcome.count }}</td>
+                                        <td>{{ outcome.percentage }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         
-        
-        
-         
-        
+            <div class="row mt-4">
+                <!-- Gender Distribution -->
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Gender Distribution in Cases</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Plaintiffs/Appellants</h5>
+                                    <table class="table table-striped">
+                                        <tr>
+                                            <th>Male</th>
+                                            <td>{{ plaintiff_male }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Female</th>
+                                            <td>{{ plaintiff_female }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Organizations</th>
+                                            <td>{{ plaintiff_org }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Defendants/Accused</h5>
+                                    <table class="table table-striped">
+                                        <tr>
+                                            <th>Male</th>
+                                            <td>{{ defendant_male }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Female</th>
+                                            <td>{{ defendant_female }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Organizations</th>
+                                            <td>{{ defendant_org }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
         {% endblock content %}
 
       . home.html
@@ -11870,176 +12814,164 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         Content:
         {% extends "layouts/base.html" %}
         
-        {% block stylesheets %}
-        <!-- Bootstrap CSS -->
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
-        
-        <!-- Font Awesome -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
-        
-        {% endblock %}
+        {% block title %} Upload DCRT Data {% endblock %}
         
         {% block content %}
+        <div class="container mt-4">
+            <!-- Header and Navigation -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Upload DCRT Data</h2>
+                    <h5 class="text-muted">
+                        {{ unit.name }} - {{ month.name }} - FY {{ financial_year.name }} - {{ financial_quarter.name }}
+                    </h5>
+                </div>
+                <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id unit.id division.id %}" 
+                   class="btn btn-outline-primary">
+                    Back to Months
+                </a>
+            </div>
         
-        <div class="container my-5">
+            <!-- Upload Card -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Upload Excel File</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                
+                                <div class="mb-4 text-center p-4 bg-light border rounded">
+                                    <div class="mb-3">
+                                        <input type="file" class="form-control" id="excelFile" name="excelFile" accept=".xlsx,.xls">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        Upload DCRT Data
+                                    </button>
+                                </div>
         
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Dashboard</h2>
-            <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id unit.id division.id  %}" class="btn btn-primary btn-sm">
-              <i class="fas fa-arrow-left"></i> Go Back
-            </a> 
-           
-          </div>
-        
-          <h3>{{ unit.name }} - {{ month.name }}</h3>
-        
-          <h4>{{ unit_rank.name }} - FY {{ financial_year.name }} - {{ financial_quarter.name }}</h4>
-        
-          <div class="row">
-        
-            <div class="col-md-6">
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-upload"></i>
-                    Upload DCRT Returns
-                  </h3>
-        
-                  <!-- Form for uploading DCRT Returns -->
-                  <form method="post" enctype="multipart/form-data" action="{% url 'statistics:upload_unit_monthly_dcrt_excel' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                      <label for="excelFile">Select Excel File:</label>
-                      <input type="file" name="excelFile" class="form-control-file" id="excelFile" required>
+                                <!-- Guidelines -->
+                                <div class="alert alert-info">
+                                    <h6>Upload Guidelines:</h6>
+                                    <ul class="mb-0">
+                                        <li>Only Excel files (.xlsx, .xls) are accepted</li>
+                                        <li>Maximum file size: 10MB</li>
+                                        <li>Ensure your Excel follows the DCRT template format</li>
+                                        <li>All required fields must be filled</li>
+                                        <li>Data should correspond to {{ month.name }} {{ financial_year.name }}</li>
+                                    </ul>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">
-                      <i class="fas fa-upload"></i>
-                      Upload
-                    </button>
-                  </form>
                 </div>
-              </div>
         
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i>
-                    Data Summary  
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_case_summary' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View Summary
-                  </a>
+                <!-- Quick Links -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Quick Links</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <!-- Case Analysis -->
+                                <a href="{% url 'statistics:monthly_unit_case_summary' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                                  class="list-group-item list-group-item-action">
+                                    View Case Summary
+                                </a>
+                                
+                                <!-- Data Quality Links -->
+                                <a href="{% url 'statistics:monthly_unit_missing_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                                  class="list-group-item list-group-item-action">
+                                    Check Missing Data
+                                </a>
+                                <a href="{% url 'statistics:monthly_unit_duplicate_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                                  class="list-group-item list-group-item-action">
+                                    View Duplicate Data
+                                </a>
+                                <a href="{% url 'statistics:monthly_unit_outliers' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                                  class="list-group-item list-group-item-action">
+                                    Analyze Outliers
+                                </a>
+                                <a href="{% url 'statistics:monthly_unit_incomplete_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                                  class="list-group-item list-group-item-action">
+                                    Check Incomplete Records
+                                </a>
+        
+                                <!-- Case Statistics -->
+                                <a href="{% url 'statistics:monthly_unit_registered_cases' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                                  class="list-group-item list-group-item-action">
+                                    View Registered Cases
+                                </a>
+                                <a href="{% url 'statistics:monthly_unit_resolved_cases' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                                  class="list-group-item list-group-item-action">
+                                    View Resolved Cases
+                                </a>
+                                <a href="{% url 'statistics:monthly_unit_matters_handled' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}"
+                                  class="list-group-item list-group-item-action">
+                                    View Matters Handled
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
         
-        
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-list"></i>
-                    DCRT Data
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_case_summary' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View DCRT Data
-                  </a>
+                    <!-- Status Card -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Current Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Unit:</th>
+                                    <td>{{ unit.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Month:</th>
+                                    <td>{{ month.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Financial Year:</th>
+                                    <td>{{ financial_year.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Quarter:</th>
+                                    <td>{{ financial_quarter.name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-              </div>
-        
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-copy"></i>
-                    Duplicate Data
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_duplicate_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View Duplicate Data
-                  </a>
-                </div>
-              </div>
-        
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-chart-line"></i>
-                    Data Outliers
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_outliers' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View Outliers  
-                  </a>
-                </div>
-              </div>
-        
             </div>
-        
-            <div class="col-md-6">
-        
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-exclamation-circle"></i>
-                    Missing Data
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_missing_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View Missing Data
-                  </a>
-                </div>
-              </div>
-        
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-clipboard-list"></i> 
-                    Registered Cases
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_registered_cases' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View Registered Cases
-                  </a>
-                </div>
-              </div>
-        
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-check-square"></i>
-                    Resolved Cases
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_resolved_cases' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View Resolved Cases
-                  </a>
-                </div>
-              </div>
-        
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-balance-scale"></i>
-                    Matters Handled
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_matters_handled' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View Matters Handled
-                  </a>
-                </div>
-              </div>
-        
-              <div class="card mb-4">
-                <div class="card-body">
-                  <h3 class="card-title">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Incomplete Data
-                  </h3>
-                  <a href="{% url 'statistics:monthly_unit_incomplete_data' unit_rank.id financial_year.id financial_quarter.id unit.id division.id month.id %}" class="btn btn-primary btn-sm">
-                    View Incomplete Data
-                  </a>
-                </div>
-              </div>
-        
-            </div>
-        
-          </div>
-        
         </div>
+        {% endblock content %}
         
-        {% endblock %}
+        {% block javascripts %}
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('excelFile');
+            const submitButton = document.querySelector('button[type="submit"]');
+        
+            fileInput.addEventListener('change', function() {
+                // Enable submit button only if a file is selected
+                submitButton.disabled = !this.files.length;
+        
+                if (this.files.length > 0) {
+                    const file = this.files[0];
+                    // Check file size (10MB limit)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('File size exceeds 10MB limit');
+                        this.value = '';
+                        submitButton.disabled = true;
+                    }
+                }
+            });
+        });
+        </script>
+        {% endblock javascripts %}
 
 . authentication/
   . __init__.py

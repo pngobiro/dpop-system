@@ -1,0 +1,25 @@
+{# apps/innovations/templates/innovations/approve_innovation.html #}
+
+{% extends "layouts/base.html" %}
+
+{% block title %}Approve Innovation{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h2 class="h4 mb-0">Approve Innovation</h2>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to approve the innovation "{{ innovation.title }}"?</p>
+            <p>Approving this innovation will change its status to "Best Practice".</p>
+
+            <form method="post" action="{% url 'innovations:approve_innovation' innovation.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">Approve</button>
+                <a href="{% url 'innovations:innovation_detail' innovation.pk %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

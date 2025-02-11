@@ -1,0 +1,324 @@
+{% extends "layouts/base.html" %}
+{% block title %}Submit Innovation{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'innovations:dashboard' %}">Innovations</a></li>
+            <li class="breadcrumb-item active">Submit Innovation</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Submit Innovation</h2>
+                <a href="{% url 'innovations:innovation_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.media }}
+                {{ formset.management_form }}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">Basic Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <label for="{{ form.court.id_for_label }}" class="col-sm-3 col-form-label">Court <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.court }}
+                                {% if form.court.errors %}
+                                <div class="text-danger">{{ form.court.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="{{ form.station.id_for_label }}" class="col-sm-3 col-form-label">Station <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.station }}
+                                {% if form.station.errors %}
+                                <div class="text-danger">{{ form.station.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="col-sm-3 col-form-label">Title <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                <div class="text-danger">{{ form.title.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="{{ form.financial_year.id_for_label }}" class="col-sm-3 col-form-label">Financial Year <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.financial_year }}
+                                {% if form.financial_year.errors %}
+                                <div class="text-danger">{{ form.financial_year.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="col-sm-3 col-form-label">Category <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                <div class="text-danger">{{ form.category.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Replication Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">Replication Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-sm-9 offset-sm-3">
+                                <div class="form-check">
+                                    {{ form.is_replication }}
+                                    <label class="form-check-label" for="{{ form.is_replication.id_for_label }}">
+                                        This is a replication of an existing innovation
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3" id="source_court_div" style="display: none;">
+                            <label for="{{ form.source_court.id_for_label }}" class="col-sm-3 col-form-label">Source Court</label>
+                            <div class="col-sm-9">
+                                {{ form.source_court }}
+                                {% if form.source_court.errors %}
+                                <div class="text-danger">{{ form.source_court.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Innovation Details -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">Innovation Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <label for="{{ form.situation_before.id_for_label }}" class="col-sm-3 col-form-label">Situation Before <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.situation_before }}
+                                <div class="text-muted text-end small"><span id="situation_before_count">0</span>/500 characters</div>
+                                {% if form.situation_before.errors %}
+                                <div class="text-danger">{{ form.situation_before.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="col-sm-3 col-form-label">Description <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.description }}
+                                <div class="text-muted text-end small"><span id="description_count">0</span>/1000 characters</div>
+                                {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="{{ form.solution.id_for_label }}" class="col-sm-3 col-form-label">Solution <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.solution }}
+                                <div class="text-muted text-end small"><span id="solution_count">0</span>/1000 characters</div>
+                                {% if form.solution.errors %}
+                                <div class="text-danger">{{ form.solution.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="{{ form.replication_potential.id_for_label }}" class="col-sm-3 col-form-label">Replication Potential <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.replication_potential }}
+                                {% if form.replication_potential.errors %}
+                                <div class="text-danger">{{ form.replication_potential.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stakeholders -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">Stakeholders</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <label for="{{ form.individuals_involved.id_for_label }}" class="col-sm-3 col-form-label">Individuals Involved <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.individuals_involved }}
+                                {% if form.individuals_involved.errors %}
+                                <div class="text-danger">{{ form.individuals_involved.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="{{ form.stakeholders_affected.id_for_label }}" class="col-sm-3 col-form-label">Stakeholders Affected <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                {{ form.stakeholders_affected }}
+                                {% if form.stakeholders_affected.errors %}
+                                <div class="text-danger">{{ form.stakeholders_affected.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attachments -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">Attachments</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="attachment-formset-container">
+                            {% for form in formset %}
+                            <div class="attachment-form mb-3 p-3 bg-light rounded">
+                                <div class="row">
+                                    <div class="col">
+                                        {{ form.file }}
+                                        {% if form.file.errors %}
+                                        <div class="text-danger">{{ form.file.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="button" class="btn btn-sm btn-danger remove-attachment" style="display: none;">
+                                            <i class="fas fa-times"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary" id="add-attachment">
+                            <i class="fas fa-plus"></i> Add Attachment
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex justify-content-between border-top pt-4">
+                    <a href="{% url 'innovations:innovation_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Submit Innovation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle source court field
+    const isReplicationCheckbox = document.getElementById('id_is_replication');
+    const sourceCourtDiv = document.getElementById('source_court_div');
+
+    function toggleSourceCourt() {
+        sourceCourtDiv.style.display = isReplicationCheckbox.checked ? 'block' : 'none';
+    }
+
+    isReplicationCheckbox.addEventListener('change', toggleSourceCourt);
+    toggleSourceCourt();
+
+    // Character count
+    function updateCharCount(textarea, countElement, maxLength) {
+        const count = textarea.value.length;
+        countElement.textContent = count;
+    }
+
+    const textareas = {
+        'id_situation_before': ['situation_before_count', 500],
+        'id_description': ['description_count', 1000],
+        'id_solution': ['solution_count', 1000]
+    };
+
+    Object.entries(textareas).forEach(([id, [countId, maxLength]]) => {
+        const textarea = document.getElementById(id);
+        const countElement = document.getElementById(countId);
+        if (textarea && countElement) {
+            updateCharCount(textarea, countElement, maxLength);
+            textarea.addEventListener('input', () => updateCharCount(textarea, countElement, maxLength));
+        }
+    });
+
+    // Attachment handling
+    const container = document.getElementById('attachment-formset-container');
+    const addButton = document.getElementById('add-attachment');
+    let formCount = container.children.length;
+
+    addButton.addEventListener('click', function() {
+        const newForm = container.children[0].cloneNode(true);
+        formCount++;
+
+        const formRegex = RegExp(`form-(\\d+)-`, 'g');
+        newForm.innerHTML = newForm.innerHTML.replace(formRegex, `form-${formCount}-`);
+
+        newForm.querySelectorAll('input').forEach(input => {
+            input.value = '';
+        });
+
+        const removeButton = newForm.querySelector('.remove-attachment');
+        removeButton.style.display = 'block';
+        removeButton.addEventListener('click', function() {
+            newForm.remove();
+            updateFormsetManagement();
+        });
+
+        container.appendChild(newForm);
+        updateFormsetManagement();
+    });
+
+    container.querySelectorAll('.remove-attachment').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.attachment-form').remove();
+            updateFormsetManagement();
+        });
+        button.style.display = 'block';
+    });
+
+    function updateFormsetManagement() {
+        const totalForms = container.children.length;
+        document.getElementById('id_innovationattachment_set-TOTAL_FORMS').value = totalForms;
+    }
+});
+</script>
+{% endblock %}

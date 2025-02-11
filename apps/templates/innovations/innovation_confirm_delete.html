@@ -1,0 +1,25 @@
+{# apps/innovations/templates/innovations/innovation_confirm_delete.html #}
+
+{% extends "layouts/base.html" %}
+
+{% block title %}Confirm Deletion{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h2 class="h4 mb-0">Confirm Deletion</h2>
+        </div>
+        <div class="card-body">
+            <p>Are you sure you want to delete the innovation "{{ innovation.title }}"?</p>
+            <p class="text-danger">This action cannot be undone.</p>
+
+            <form method="post" action="{% url 'innovations:delete_innovation' innovation.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Delete</button>
+                <a href="{% url 'innovations:innovation_detail' innovation.pk %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
