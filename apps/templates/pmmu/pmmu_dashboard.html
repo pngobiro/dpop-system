@@ -1,0 +1,22 @@
+{% extends "layouts/base.html" %}
+{% block title %}PMMU Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>PMMU Dashboard</h1>
+
+    <div class="row">
+        {% for pmmu in pmmus %}  {# Looping through PMMUs now #}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ pmmu.name }}</h5>
+                    <p class="card-text">{{ pmmu.description|truncatewords:20 }}</p>
+                    <a href="{% url 'pmmu:pmmu_item_list' pmmu.pk %}" class="btn btn-primary">View Indicators</a> {# Link to indicator list for this PMMU #}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

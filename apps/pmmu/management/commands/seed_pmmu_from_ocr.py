@@ -1,7 +1,7 @@
 # apps/pmmu/management/commands/seed_pmmu_from_ocr.py
 from django.core.management.base import BaseCommand
 from apps.pmmu.models import Indicator, IndicatorNote, PMMU
-from apps.organization.models import FinancialYear
+from apps.statistics.models import FinancialYear
 from apps.organization.models import Department
 from django.contrib.auth import get_user_model
 from apps.document_management.utils.document_manager import DocumentManager
@@ -80,6 +80,7 @@ class Command(BaseCommand):
              'notes': ["a. Hold quarterly staff meetings, emerging issues affecting staff welfare and report progress in the subsequent meetings.", "b. Conduct Employee Satisfaction and Work Environment Survey³ and disseminate the findings"]}, # Note: Superscript numbers in OCR
         ]
 
+
         # --- Create Indicator Items ---
         for indicator_data in indicators_data:
             indicator = Indicator.objects.create( # Updated model name
@@ -118,6 +119,6 @@ class Command(BaseCommand):
                         description=f"Dummy document attached to indicator note for {indicator.name}",
                         source_module='pmmu'
                     )
-                    self.stdout.write(self.style.SUCCESS(f'      Attached document to Note: {doc_title}'))
+                    self.stdout.write(self.style.SUCCESS(f'      Attached document to Note: {doc_title}')) # Moved inside the if block
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded PMMU Indicator data from OCR text with PMU, Indicators and Notes'))

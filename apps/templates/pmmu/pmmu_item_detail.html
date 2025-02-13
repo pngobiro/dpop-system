@@ -1,0 +1,71 @@
+{# apps/pmmu/templates/pmmu/pmmu_item_detail.html #}
+{% extends "layouts/base.html" %}
+{% block title %}{{ indicator.name }} - Performance Indicator Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Performance Indicator Detail</h1>
+
+    <div class="card">
+        <div class="card-body">
+            <h2>{{ indicator.name }}</h2>
+            <p><strong>Description:</strong> {{ indicator.description }}</p>
+            <p><strong>PMMU Understanding:</strong> {{ indicator.pmmu.name }}</p>
+            <p><strong>Financial Year:</strong> {{ indicator.pmmu.financial_year }}</p>
+            <p><strong>Department:</strong> {{ indicator.department }}</p>
+            <p><strong>Unit of Measure:</strong> {{ indicator.unit_of_measure }}</p>
+            <p><strong>Weight:</strong> {{ indicator.weight }}</p>
+            <p><strong>Baseline (2023/2024):</strong> {{ indicator.baseline_2023_2024 }}</p>
+            <p><strong>Target (2024/2025):</strong> {{ indicator.target_2024_2025 }}</p>
+
+            <h3>Notes</h3>
+            {% if indicator.notes.all %}
+            <ul class="list-group">
+                {% for note in indicator.notes.all %}
+                <li class="list-group-item">
+                    <p class="mb-1">{{ note.note_text|linebreaks }}</p>
+                    <small class="text-muted">
+                        Created by: {{ note.created_by.get_full_name|default:note.created_by.username }} on {{ note.created_at }}
+                    </small>
+
+                    {% if note.documents.all %}
+                    <div class="mt-2">
+                        <strong>Attachments:</strong>
+                        <ul>
+                            {% for document in note.documents.all %}
+                            <li><a href="{{ document.get_file_url }}" target="_blank">{{ document.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No notes added yet.</p>
+            {% endif %}
+
+            <h4 class="mt-4">Add a Note</h4>
+            <form method="post" action="{% url 'pmmu:indicator_detail' indicator.pk %}">
+                {% csrf_token %}
+                {{ note_form.as_p }}
+                <button type="submit" class="btn btn-primary">Add Note</button>
+            </form>
+
+
+            <h3>Indicator Documents</h3>
+            {% if indicator.documents.all %}
+            <ul>
+                {% for document in indicator.documents.all %}
+                <li><a href="{{ document.get_file_url }}" target="_blank">{{ document.title }}</a></li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No documents attached directly to this Performance Indicator.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{% url 'pmmu:indicator_list' indicator.pmmu.pk %}" class="btn btn-secondary mt-3">Back to List</a> {# Updated back link #}
+</div>
+{% endblock %}
