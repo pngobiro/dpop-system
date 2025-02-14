@@ -113,6 +113,148 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/s
     class HelloWorldView(UnicornView):
         name = "World"
 
+. filepolice copy.py
+  Content:
+  import os
+  
+  def should_exclude(item, path):
+      # List of files and directories to exclude
+      exclude_list = [
+          # Previous exclusions
+          "filepolice.py",
+          "folder_structure_and_content.txt",
+          ".pyc",
+          ".DS_Store",
+          ".git",
+          ".gitignore",
+          ".idea",
+          ".vscode",
+          "__pycache__",
+          "node_modules",
+          "venv",
+          "env",
+          ".env",
+          "build",
+          "dist",
+          "*.log",
+          "*.tmp",
+          "*.swp",
+          ".pytest_cache",
+          ".mypy_cache",
+          ".tox",
+          ".coverage",
+          "*.egg-info",
+          ".ipynb_checkpoints",
+          # Front-end related exclusions
+          "*.scss",
+          "*.css",
+          ".js",
+          "db.sqlite3",
+          "*.sass",
+          "*.less",
+          "*.vue",
+          "*.json",
+          "*.map",
+          "*.woff",
+          "*.woff2",
+          "*.eot",
+          "*.ttf",
+          "*.otf",
+          "*.svg",
+          "*.png",
+          "*.jpg",
+          "*.jpeg",
+          "*.gif",
+          "*.ico",
+          "*.webp",
+          "*.min.js",
+          "*.min.css",
+          "package.json",
+          "package-lock.json",
+          "yarn.lock",
+          "bower.json",
+          "Gruntfile.js",
+          "gulpfile.js",
+          "webpack.config.js",
+          "tsconfig.json",
+          "babel.config.js",
+          ".babelrc",
+          ".eslintrc",
+          ".stylelintrc",
+          "bower_components",
+          "gen-lang-client-0877968897-dbded6b0bfa2.json",
+          "encoded-key.txt",
+          "neo4j_kenya_ewakili.pem",
+          "odk_central.pem",
+          "readme.md",
+          "UI.md",
+          "vendor",
+          "assets",
+          "public",
+          "dist",
+          "libs",
+          "external",
+          "third-party",
+          "3rdparty",
+          "project docs"
+          "cdn",
+          "migrations",
+      ]
+      
+      # Check if the item matches any in the exclude list
+      for exclude_item in exclude_list:
+          if exclude_item.startswith("*"):
+              if item.lower().endswith(exclude_item[1:]):
+                  return True
+          elif item.lower() == exclude_item.lower():
+              return True
+      
+      # Check if the path contains any of the static/vendor related directories
+      static_vendor_dirs = ["docs" ,"static", "staticfiles","vendor", "assets", "public", "dist", "libs", "external", "third-party", "3rdparty", "cdn","data"]
+      for dir_name in static_vendor_dirs:
+          if dir_name.lower() in path.lower().split(os.sep):
+              return True
+      
+      return False
+  
+  def write_folder_structure(base_path, output_file, indent=""):
+      for item in sorted(os.listdir(base_path)):
+          full_path = os.path.join(base_path, item)
+          relative_path = os.path.relpath(full_path, start=base_path)
+          
+          if should_exclude(item, full_path):
+              continue
+          
+          if os.path.isdir(full_path):
+              output_file.write(f"{indent}. {relative_path}/\n")
+              write_folder_structure(full_path, output_file, indent + "  ")
+          else:
+              output_file.write(f"{indent}. {relative_path}\n")
+              # Write file content
+              output_file.write(f"{indent}  Content:\n")
+              try:
+                  with open(full_path, 'r', encoding='utf-8') as file:
+                      content = file.read()
+                  # Add indentation to each line of the content
+                  indented_content = "\n".join(f"{indent}  {line}" for line in content.splitlines())
+                  output_file.write(indented_content + "\n")
+              except Exception as e:
+                  output_file.write(f"{indent}  Unable to read file: {str(e)}\n")
+              output_file.write("\n")  # Add a blank line after each file's content
+  
+  def main():
+      base_folder = os.getcwd()  # Use the current working directory
+      output_file_name = "folder_structure_and_content.txt"
+      
+      with open(output_file_name, 'w', encoding='utf-8') as output_file:
+          output_file.write(f"Folder structure and content for: {base_folder}\n\n")
+          write_folder_structure(base_folder, output_file)
+      
+      print(f"Folder structure and content have been written to {output_file_name}")
+  
+  if __name__ == "__main__":
+      main()
+
 . management/
   . commands/
     . check_data.py
@@ -356,11 +498,17 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/s
   class UnitRank(models.Model):
       name = models.CharField(max_length=255)
       is_court = models.BooleanField(default=False)
+      
+      def __str__(self):
+          return self.name
   
   class FinancialYear(models.Model):
       name = models.CharField(max_length=255)
       start_date = models.DateTimeField()
       end_date = models.DateTimeField()
+      
+      def __str__(self):
+          return self.name
   
   class FinancialQuarter(models.Model):
       name = models.CharField(max_length=255)
@@ -396,6 +544,10 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/s
       is_court = models.BooleanField(default=False)
       latitude = models.FloatField(default=0)
       longitude = models.FloatField(default=0)
+      
+      
+      def __str__(self):
+          return self.name
   
   class Months(models.Model):
       name = models.CharField(max_length=255)
@@ -839,47 +991,94 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/s
 . views/
   . __init__.py
     Content:
-    # apps/statistics/views/__init__.py
+    from django.shortcuts import render
+    from django.db.models import Count
+    from apps.statistics.models import (
+        UnitRank, FinancialYear, FinancialQuarter,
+        Unit, Division, DcrtData, Months
+    )
     
+    def home(request):
+        """Dashboard view showing overall statistics and navigation options."""
+        context = {
+            'unit_ranks': UnitRank.objects.all(),
+            'total_units': Unit.objects.count(),
+            'active_divisions': Division.objects.filter(is_active=True).count(),
+            'court_units': Unit.objects.filter(is_court=True).count(),
+            'financial_year': FinancialYear.objects.first(),
+            'financial_quarter': FinancialQuarter.objects.first(),
+            
+            # Additional statistics
+            'total_cases': DcrtData.objects.count(),
+            'resolved_cases': DcrtData.objects.filter(
+                case_outcome__icontains='Resolved'
+            ).count(),
+            'pending_cases': DcrtData.objects.exclude(
+                case_outcome__icontains='Resolved'
+            ).count(),
+            
+            # Top case types
+            'top_case_types': DcrtData.objects.values(
+                'specific_case_type'
+            ).annotate(
+                count=Count('id')
+            ).order_by('-count')[:5],
+        }
+        return render(request, 'statistics/home.html', context)
+    
+    # Import views from modules
     from .dashboard import (
-        home,
         rank_units,
     )
     
     from .case_analysis import (
         case_summary,
         monthly_unit_registered_cases,
+        monthly_unit_resolved_cases,
+        rank_unit_division_month_cases_summary,
     )
     
     from .unit_views import (
         rank_unit_division_months,
         unit_division_quarters,
         unit_division_fy,
+        monthly_unit_matters_handled,
+        upload_unit_monthly_dcrt_excel,
     )
     
     from .data_quality import (
         monthly_unit_missing_data,
         monthly_unit_duplicate_data,
+        monthly_unit_outliers,
+        monthly_unit_incomplete_data,
     )
     
     # Export all views
     __all__ = [
-        # Dashboard views
+        # Main view
         'home',
+        
+        # Dashboard views
         'rank_units',
         
         # Case analysis views
         'case_summary',
         'monthly_unit_registered_cases',
+        'monthly_unit_resolved_cases',
+        'rank_unit_division_month_cases_summary',
         
-        # Unit and division views
+        # Unit views
         'rank_unit_division_months',
         'unit_division_quarters',
         'unit_division_fy',
+        'monthly_unit_matters_handled',
+        'upload_unit_monthly_dcrt_excel',
         
         # Data quality views
         'monthly_unit_missing_data',
         'monthly_unit_duplicate_data',
+        'monthly_unit_outliers',
+        'monthly_unit_incomplete_data',
     ]
 
   . case_analysis.py
@@ -987,6 +1186,257 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/s
         }
         
         return render(request, 'statistics/monthly_unit_registered_cases.html', context)
+    
+    
+    def monthly_unit_resolved_cases(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+        """
+        View for analyzing resolved cases in a given month.
+        """
+        queryset = DcrtData.objects.filter(
+            financial_year=financial_year_id,
+            financial_quarter=financial_quarter_id,
+            unit=unit_id,
+            division=division_id,
+            month=month_id,
+            case_outcome__icontains='Resolved'
+        )
+        
+        df = read_frame(queryset)
+        
+        context = {
+            'resolved_cases': len(df),
+            'resolved_cases_by_type': df.groupby('case_number_code').size().to_dict(),
+            'basic_info': {
+                'unit_rank': UnitRank.objects.get(id=id),
+                'financial_year': FinancialYear.objects.get(id=financial_year_id),
+                'financial_quarter': FinancialQuarter.objects.get(id=financial_quarter_id),
+                'unit': Unit.objects.get(id=unit_id),
+                'division': Division.objects.get(id=division_id),
+                'month': Months.objects.get(id=month_id),
+            }
+        }
+        
+        return render(request, 'statistics/monthly_unit_resolved_cases.html', context)
+    
+    
+    def rank_unit_division_month_cases_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+        """
+        View for ranking unit-division-month cases summary.
+        """
+        # Get base objects
+        unit_rank = UnitRank.objects.get(id=id)
+        fy = FinancialYear.objects.get(id=financial_year_id)
+        fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+        unit = Unit.objects.get(id=unit_id)
+        division = Division.objects.get(id=division_id)
+        month = Months.objects.get(id=month_id)
+    
+        # Get filtered queryset
+        queryset = DcrtData.objects.filter(
+            financial_year=financial_year_id,
+            financial_quarter=financial_quarter_id,
+            unit=unit_id,
+            division=division_id,
+            month=month_id
+        )
+    
+        # Convert to dataframe for analysis
+        df = read_frame(queryset)
+    
+        context = {
+            'unit_rank': unit_rank,
+            'financial_year': fy,
+            'financial_quarter': fq,
+            'unit': unit,
+            'division': division,
+            'month': month,
+    
+            # Basic statistics
+            'total_cases': len(df),
+            'resolved_cases': len(df[df['case_outcome'].str.contains(
+                'Resolved|Concluded|Completed', na=False, case=False, regex=True
+            )]),
+            'pending_cases': len(df[~df['case_outcome'].str.contains(
+                'Resolved|Concluded|Completed', na=False, case=False, regex=True
+            )]),
+    
+            # Case types analysis
+            'case_types': [
+                {
+                    'type': case_type,
+                    'count': count,
+                    'percentage': round(count/len(df)*100, 1)
+                }
+                for case_type, count in df['specific_case_type'].value_counts().items()
+            ],
+    
+            # Demographics
+            'plaintiff_stats': {
+                'male': df['no_of_plaintiffs_or_appellants_male'].sum(),
+                'female': df['no_of_plaintiffs_or_appellants_female'].sum(),
+                'org': df['no_of_plaintiffs_or_appellants_organization'].sum(),
+                'total': df['no_of_plaintiffs_or_appellants_male'].sum() + 
+                        df['no_of_plaintiffs_or_appellants_female'].sum() +
+                        df['no_of_plaintiffs_or_appellants_organization'].sum()
+            },
+            'defendant_stats': {
+                'male': df['no_of_defendants_accused_male'].sum(),
+                'female': df['no_of_defendants_accused_female'].sum(),
+                'org': df['no_of_defendants_accused_organization'].sum(),
+                'total': df['no_of_defendants_accused_male'].sum() +
+                        df['no_of_defendants_accused_female'].sum() +
+                        df['no_of_defendants_accused_organization'].sum()
+            },
+    
+            # Legal representation
+            'legal_representation': {
+                'with_representation': len(df[df['parties_have_legal_representation'].str.contains('Yes', na=False, case=False)]),
+                'without_representation': len(df[df['parties_have_legal_representation'].str.contains('No', na=False, case=False)]),
+                'not_specified': len(df[~df['parties_have_legal_representation'].str.contains('Yes|No', na=False, case=False, regex=True)])
+            },
+    
+            # Witness statistics
+            'witness_stats': {
+                'defense': df['no_of_witnesses_in_court_d'].sum(),
+                'prosecution': df['no_of_witnesses_in_court_w'].sum(),
+                'total': df['no_of_witnesses_in_court_d'].sum() + df['no_of_witnesses_in_court_w'].sum()
+            },
+    
+            # Additional case statistics
+            'remand_stats': {
+                'total_remanded': df['no_of_accused_remanded'].sum(),
+                'cases_with_remand': len(df[df['no_of_accused_remanded'] > 0])
+            }
+        }
+    
+        return render(request, 'statistics/rank_unit_division_month_cases_summary.html', context)
+    
+    
+    def monthly_unit_matters_handled(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+        """
+        View for analyzing matters handled in a specific month by a unit.
+        Shows various case statistics and breakdowns.
+        """
+        # Get base objects
+        unit_rank = UnitRank.objects.get(id=id)
+        fy = FinancialYear.objects.get(id=financial_year_id)
+        fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+        unit = Unit.objects.get(id=unit_id)
+        division = Division.objects.get(id=division_id)
+        month = Months.objects.get(id=month_id)
+    
+        # Get filtered queryset
+        queryset = DcrtData.objects.filter(
+            financial_year=financial_year_id,
+            financial_quarter=financial_quarter_id,
+            unit=unit_id,
+            division=division_id,
+            month=month_id
+        )
+    
+        # Convert to dataframe for analysis
+        df = read_frame(queryset)
+    
+        # Calculate matters handled statistics
+        context = {
+            # Basic info
+            'unit_rank': unit_rank,
+            'financial_year': fy,
+            'financial_quarter': fq,
+            'unit': unit,
+            'division': division,
+            'month': month,
+    
+            # Case statistics
+            'case_stats': {
+                'total_matters': len(df),
+                'new_cases': len(df[df['case_outcome'].str.contains('Registered|Filed', na=False, case=False, regex=True)]),
+                'resolved_cases': len(df[df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]),
+                'adjourned_cases': len(df[df['case_outcome'].str.contains('Adjourned', na=False, case=False)])
+            },
+    
+            # Case types breakdown
+            'case_types': [
+                {
+                    'type': case_type,
+                    'count': count,
+                    'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+                }
+                for case_type, count in df['specific_case_type'].value_counts().items()
+            ],
+    
+            # Coming for analysis
+            'coming_for_analysis': [
+                {
+                    'reason': reason,
+                    'count': count,
+                    'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+                }
+                for reason, count in df['case_coming_for'].value_counts().items()
+            ],
+    
+            # Adjournment reasons
+            'adjournment_reasons': [
+                {
+                    'reason': reason,
+                    'count': count,
+                    'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+                }
+                for reason, count in df['adjournment_reason'].value_counts().items()
+                if not pd.isna(reason)
+            ],
+    
+            # Judicial officer workload
+            'judicial_workload': {
+                'officers_involved': len(df[[f'judicial_officer_{i}' for i in range(1, 9)]].notna().any(axis=1)),
+                'cases_per_officer': round(len(df) / len(df[[f'judicial_officer_{i}' for i in range(1, 9)]].notna().any(axis=1)), 2)
+                if len(df[[f'judicial_officer_{i}' for i in range(1, 9)]].notna().any(axis=1)) > 0 else 0
+            },
+    
+            # Representation statistics
+            'representation_stats': {
+                'with_lawyers': len(df[df['parties_have_legal_representation'].str.contains('Yes', na=False, case=False)]),
+                'without_lawyers': len(df[df['parties_have_legal_representation'].str.contains('No', na=False, case=False)]),
+                'not_specified': len(df[~df['parties_have_legal_representation'].str.contains('Yes|No', na=False, case=False, regex=True)])
+            },
+    
+            # Party statistics
+            'party_stats': {
+                'plaintiffs': {
+                    'male': df['no_of_plaintiffs_or_appellants_male'].sum(),
+                    'female': df['no_of_plaintiffs_or_appellants_female'].sum(),
+                    'organizations': df['no_of_plaintiffs_or_appellants_organization'].sum()
+                },
+                'defendants': {
+                    'male': df['no_of_defendants_accused_male'].sum(),
+                    'female': df['no_of_defendants_accused_female'].sum(),
+                    'organizations': df['no_of_defendants_accused_organization'].sum()
+                }
+            },
+    
+            # Witness participation
+            'witness_stats': {
+                'total_witnesses': df['no_of_witnesses_in_court_d'].sum() + df['no_of_witnesses_in_court_w'].sum(),
+                'defense_witnesses': df['no_of_witnesses_in_court_d'].sum(),
+                'prosecution_witnesses': df['no_of_witnesses_in_court_w'].sum(),
+                'cases_with_witnesses': len(df[(df['no_of_witnesses_in_court_d'] > 0) | (df['no_of_witnesses_in_court_w'] > 0)])
+            },
+    
+            # Next activity analysis
+            'next_activity': {
+                'scheduled': len(df[df['date_of_next_activity_day'].notna()]),
+                'not_scheduled': len(df[df['date_of_next_activity_day'].isna()]),
+            },
+    
+            # Remand cases
+            'remand_stats': {
+                'total_remanded': df['no_of_accused_remanded'].sum(),
+                'cases_with_remand': len(df[df['no_of_accused_remanded'] > 0])
+            }
+        }
+    
+        return render(request, 'statistics/monthly_unit_matters_handled.html', context)
+    
 
   . dashboard.py
     Content:
@@ -1058,66 +1508,232 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/s
 
   . data_quality.py
     Content:
-    from django.shortcuts import render
+    # apps/statistics/views/data_quality.py
+    
+    from django.shortcuts import render, HttpResponse
     from django_pandas.io import read_frame
     import pandas as pd
+    from django.db.models import Count, Q
     from apps.statistics.models import (
         UnitRank, FinancialYear, FinancialQuarter,
         Unit, Division, DcrtData, Months
     )
     
+    def monthly_unit_outliers(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+        """Analyze and display statistical outliers in the data."""
+        try:
+            # Get base objects
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+    
+            # Get filtered queryset
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id
+            )
+    
+            df = read_frame(queryset)
+            
+            # Define numerical columns to check for outliers
+            numeric_columns = [
+                'no_of_plaintiffs_or_appellants_male',
+                'no_of_plaintiffs_or_appellants_female',
+                'no_of_plaintiffs_or_appellants_organization',
+                'no_of_defendants_accused_male',
+                'no_of_defendants_accused_female',
+                'no_of_defendants_accused_organization',
+                'no_of_witnesses_in_court_d',
+                'no_of_witnesses_in_court_w',
+                'no_of_accused_remanded'
+            ]
+    
+            outliers = {}
+            for column in numeric_columns:
+                if column in df.columns:
+                    # Calculate Q1, Q3, and IQR
+                    Q1 = df[column].quantile(0.25)
+                    Q3 = df[column].quantile(0.75)
+                    IQR = Q3 - Q1
+                    
+                    # Define outlier bounds
+                    lower_bound = Q1 - 1.5 * IQR
+                    upper_bound = Q3 + 1.5 * IQR
+                    
+                    # Find outliers
+                    outliers[column] = {
+                        'lower_bound': lower_bound,
+                        'upper_bound': upper_bound,
+                        'outliers': df[
+                            (df[column] < lower_bound) | 
+                            (df[column] > upper_bound)
+                        ][['case_number_code', column]].to_dict('records'),
+                        'count': len(df[
+                            (df[column] < lower_bound) | 
+                            (df[column] > upper_bound)
+                        ])
+                    }
+    
+            context = {
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+                'outliers': outliers,
+                'total_records': len(df)
+            }
+            
+            return render(request, 'statistics/monthly_unit_outliers.html', context)
+            
+        except Exception as e:
+            return HttpResponse(f"An error occurred: {str(e)}", status=500)
+    
     def monthly_unit_missing_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-        """
-        View for analyzing missing data in monthly reports.
-        """
-        queryset = DcrtData.objects.filter(
-            financial_year=financial_year_id,
-            financial_quarter=financial_quarter_id,
-            unit=unit_id,
-            division=division_id,
-            month=month_id
-        )
-        
-        df = read_frame(queryset)
-        
-        # Calculate missing values for each column
-        missing_data = {
-            column: {
-                'missing_count': df[column].isna().sum(),
-                'missing_percentage': round(df[column].isna().sum() / len(df) * 100, 2)
+        """Analyze and display missing data patterns."""
+        try:
+            # Get base objects and data
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+    
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id
+            )
+    
+            df = read_frame(queryset)
+            
+            # Calculate missing values for each column
+            missing_data = {
+                column: {
+                    'missing_count': df[column].isna().sum(),
+                    'missing_percentage': round(df[column].isna().sum() / len(df) * 100, 2),
+                    'examples': df[df[column].isna()]['case_number_code'].tolist()[:5]
+                }
+                for column in df.columns
+                if df[column].isna().sum() > 0
             }
-            for column in df.columns
-            if df[column].isna().sum() > 0
-        }
-        
-        context = {
-            'missing_data': missing_data,
-            'total_records': len(df),
-            'basic_info': {
-                'unit_rank': UnitRank.objects.get(id=id),
-                'financial_year': FinancialYear.objects.get(id=financial_year_id),
-                'financial_quarter': FinancialQuarter.objects.get(id=financial_quarter_id),
-                'unit': Unit.objects.get(id=unit_id),
-                'division': Division.objects.get(id=division_id),
-                'month': Months.objects.get(id=month_id),
+    
+            context = {
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+                'missing_data': missing_data,
+                'total_records': len(df)
             }
-        }
-        
-        return render(request, 'statistics/monthly_unit_missing_data.html', context)
+            
+            return render(request, 'statistics/monthly_unit_missing_data.html', context)
+            
+        except Exception as e:
+            return HttpResponse(f"An error occurred: {str(e)}", status=500)
     
     def monthly_unit_duplicate_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
-        """
-        View for identifying duplicate entries in monthly data.
-        """
-        queryset = DcrtData.objects.filter(
-            financial_year=financial_year_id,
-            financial_quarter=financial_quarter_id,
-            unit=unit_id,
-            division=division_id,
-            month=month_id
-        )
-        
-        df = read_frame(queryset)
+        """Identify and display duplicate records."""
+        try:
+            # Get base objects and data
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+    
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id
+            )
+    
+            df = read_frame(queryset)
+            
+            # Find duplicates based on case number
+            duplicates = df[df.duplicated(subset=['case_number_code', 'case_number_number'], keep=False)]
+            
+            context = {
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+                'duplicate_count': len(duplicates),
+                'duplicate_cases': duplicates.to_dict('records'),
+                'total_records': len(df)
+            }
+            
+            return render(request, 'statistics/monthly_unit_duplicate_data.html', context)
+            
+        except Exception as e:
+            return HttpResponse(f"An error occurred: {str(e)}", status=500)
+    
+    def monthly_unit_incomplete_data(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+        """Analyze and display incomplete records."""
+        try:
+            # Get base objects and data
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+    
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id
+            )
+    
+            df = read_frame(queryset)
+            
+            # Define required fields
+            required_fields = [
+                'case_number_code',
+                'case_number_number',
+                'specific_case_type',
+                'case_outcome'
+            ]
+            
+            # Find incomplete records
+            incomplete_records = df[df[required_fields].isna().any(axis=1)]
+            
+            context = {
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+                'incomplete_count': len(incomplete_records),
+                'incomplete_cases': incomplete_records.to_dict('records'),
+                'total_records': len(df),
+                'required_fields': required_fields
+            }
+            
+            return render(request, 'statistics/monthly_unit_incomplete_data.html', context)
+            
+        except Exception as e:
+            return HttpResponse(f"An error occurred: {str(e)}", status=500)
         
         
 
@@ -1127,102 +1743,187 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone/apps/s
 
   . unit_views.py
     Content:
-    from django.shortcuts import render
-    from django.db.models import Count
+    # apps/statistics/views/unit_views.py
+    
+    from django.shortcuts import render, HttpResponse
+    from django_pandas.io import read_frame
+    import pandas as pd
+    from django.db.models import Count, Q, Sum
     from apps.statistics.models import (
         UnitRank, FinancialYear, FinancialQuarter,
         Unit, Division, DcrtData, Months
     )
     
     def rank_unit_division_months(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
-        """
-        View for displaying months for a specific unit and division.
-        """
+        """View for displaying months for a specific unit and division."""
         unit_rank = UnitRank.objects.get(id=id)
         fy = FinancialYear.objects.get(id=financial_year_id)
         fq = FinancialQuarter.objects.get(id=financial_quarter_id)
         unit = Unit.objects.get(id=unit_id)
         division = Division.objects.get(id=division_id)
     
-        # Get months with case counts
-        months = Months.objects.filter(
-            financial_quarter=fq.quarter_number
-        ).annotate(
-            case_count=Count('dcrtdata', filter=Q(
-                dcrtdata__financial_year=financial_year_id,
-                dcrtdata__financial_quarter=financial_quarter_id,
-                dcrtdata__unit=unit_id,
-                dcrtdata__division=division_id
-            ))
-        )
-    
         context = {
-            'months': months,
+            'months': Months.objects.filter(financial_quarter=fq.quarter_number),
             'unit_rank': unit_rank,
             'financial_year': fy,
             'financial_quarter': fq,
             'unit': unit,
             'division': division,
         }
-        
         return render(request, 'statistics/rank_unit_months.html', context)
     
     def unit_division_quarters(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
-        """
-        View for quarterly statistics of a unit.
-        """
-        quarters = FinancialQuarter.objects.filter(
-            financial_year=financial_year_id
-        ).annotate(
-            total_cases=Count('dcrtdata', filter=Q(
-                dcrtdata__unit=unit_id,
-                dcrtdata__division=division_id
-            )),
-            resolved_cases=Count('dcrtdata', filter=Q(
-                dcrtdata__unit=unit_id,
-                dcrtdata__division=division_id,
-                dcrtdata__case_outcome__icontains='Resolved'
-            ))
-        )
-    
+        """View for quarterly statistics of a unit."""
         context = {
-            'quarters': quarters,
-            'basic_info': {
-                'unit_rank': UnitRank.objects.get(id=id),
-                'financial_year': FinancialYear.objects.get(id=financial_year_id),
-                'unit': Unit.objects.get(id=unit_id),
-                'division': Division.objects.get(id=division_id),
-            }
+            'financial_years': FinancialYear.objects.all(),
+            'financial_quarters': FinancialQuarter.objects.all(),
+            'id': id,
+            'unit_id': unit_id,
+            'division_id': division_id,
         }
-        
         return render(request, 'statistics/unit_division_quarters.html', context)
     
     def unit_division_fy(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
+        """View for financial year statistics of a unit."""
+        context = {
+            'financial_years': FinancialYear.objects.all(),
+            'financial_quarters': FinancialQuarter.objects.all(),
+            'id': id,
+            'unit_id': unit_id,
+        }
+        return render(request, 'statistics/unit_division_fy.html', context)
+    
+    def monthly_unit_matters_handled(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
         """
-        View for financial year statistics of a unit.
+        View for analyzing matters handled in a specific month by a unit.
+        Provides comprehensive analysis of case data.
         """
-        # Get yearly statistics
-        yearly_stats = DcrtData.objects.filter(
-            unit=unit_id,
-            division=division_id,
-            financial_year=financial_year_id
-        ).aggregate(
-            total_cases=Count('id'),
-            resolved_cases=Count('id', filter=Q(case_outcome__icontains='Resolved')),
-            male_plaintiffs=Sum('no_of_plaintiffs_or_appellants_male'),
-            female_plaintiffs=Sum('no_of_plaintiffs_or_appellants_female'),
-            org_plaintiffs=Sum('no_of_plaintiffs_or_appellants_organization'),
-        )
+        try:
+            # Get base objects
+            unit_rank = UnitRank.objects.get(id=id)
+            fy = FinancialYear.objects.get(id=financial_year_id)
+            fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+            unit = Unit.objects.get(id=unit_id)
+            division = Division.objects.get(id=division_id)
+            month = Months.objects.get(id=month_id)
+    
+            # Get filtered queryset
+            queryset = DcrtData.objects.filter(
+                financial_year=financial_year_id,
+                financial_quarter=financial_quarter_id,
+                unit=unit_id,
+                division=division_id,
+                month=month_id
+            )
+    
+            # Convert to dataframe for analysis
+            df = read_frame(queryset)
+    
+            # Calculate case statistics
+            context = {
+                # Basic info
+                'unit_rank': unit_rank,
+                'financial_year': fy,
+                'financial_quarter': fq,
+                'unit': unit,
+                'division': division,
+                'month': month,
+    
+                # Main case statistics
+                'case_stats': {
+                    'total_matters': len(df),
+                    'new_cases': len(df[df['case_outcome'].str.contains('Registered|Filed', na=False, case=False, regex=True)]) if not df.empty else 0,
+                    'resolved_cases': len(df[df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]) if not df.empty else 0,
+                    'adjourned_cases': len(df[df['case_outcome'].str.contains('Adjourned', na=False, case=False)]) if not df.empty else 0
+                },
+    
+                # Case type analysis
+                'case_types': [
+                    {
+                        'type': case_type,
+                        'count': count,
+                        'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+                    }
+                    for case_type, count in df['specific_case_type'].value_counts().items()
+                ] if not df.empty else [],
+    
+                # Party statistics
+                'party_stats': {
+                    'plaintiffs': {
+                        'male': int(df['no_of_plaintiffs_or_appellants_male'].sum()),
+                        'female': int(df['no_of_plaintiffs_or_appellants_female'].sum()),
+                        'organizations': int(df['no_of_plaintiffs_or_appellants_organization'].sum())
+                    },
+                    'defendants': {
+                        'male': int(df['no_of_defendants_accused_male'].sum()),
+                        'female': int(df['no_of_defendants_accused_female'].sum()),
+                        'organizations': int(df['no_of_defendants_accused_organization'].sum())
+                    }
+                },
+    
+                # Witness statistics
+                'witness_stats': {
+                    'total_witnesses': int(df['no_of_witnesses_in_court_d'].sum() + df['no_of_witnesses_in_court_w'].sum()),
+                    'defense_witnesses': int(df['no_of_witnesses_in_court_d'].sum()),
+                    'prosecution_witnesses': int(df['no_of_witnesses_in_court_w'].sum()),
+                    'cases_with_witnesses': len(df[(df['no_of_witnesses_in_court_d'] > 0) | (df['no_of_witnesses_in_court_w'] > 0)])
+                },
+    
+                # Legal representation
+                'representation_stats': {
+                    'with_lawyers': len(df[df['parties_have_legal_representation'].str.contains('Yes', na=False, case=False)]) if not df.empty else 0,
+                    'without_lawyers': len(df[df['parties_have_legal_representation'].str.contains('No', na=False, case=False)]) if not df.empty else 0,
+                    'not_specified': len(df[~df['parties_have_legal_representation'].str.contains('Yes|No', na=False, case=False, regex=True)]) if not df.empty else 0
+                },
+    
+                # Remand statistics
+                'remand_stats': {
+                    'total_remanded': int(df['no_of_accused_remanded'].sum()),
+                    'cases_with_remand': len(df[df['no_of_accused_remanded'] > 0])
+                },
+    
+                # Next activity scheduling
+                'next_activity': {
+                    'scheduled': len(df[df['date_of_next_activity_day'].notna()]),
+                    'not_scheduled': len(df[df['date_of_next_activity_day'].isna()])
+                }
+            }
+    
+            return render(request, 'statistics/monthly_unit_matters_handled.html', context)
+            
+        except (UnitRank.DoesNotExist, FinancialYear.DoesNotExist, 
+                FinancialQuarter.DoesNotExist, Unit.DoesNotExist, 
+                Division.DoesNotExist, Months.DoesNotExist) as e:
+            return HttpResponse(f"Error: {str(e)}", status=404)
+        except Exception as e:
+            return HttpResponse(f"An error occurred: {str(e)}", status=500)
+    
+    def upload_unit_monthly_dcrt_excel(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
+        """Handle Excel file upload for monthly DCRT data."""
+        from apps.statistics.utils import handle_uploaded_file
+        
+        unit_rank = UnitRank.objects.get(id=id)
+        fy = FinancialYear.objects.get(id=financial_year_id)
+        fq = FinancialQuarter.objects.get(id=financial_quarter_id)
+        unit = Unit.objects.get(id=unit_id)
+        division = Division.objects.get(id=division_id)
+        month = Months.objects.get(id=month_id)
+    
+        if request.method == 'POST':
+            excel_file = request.FILES.get("excelFile")
+            if excel_file:
+                handle_uploaded_file(excel_file, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id)
+                return redirect('statistics:monthly_unit_case_summary', id=id, financial_year_id=financial_year_id, 
+                              financial_quarter_id=financial_quarter_id, unit_id=unit_id, division_id=division_id, month_id=month_id)
+            return HttpResponse("No file uploaded.")
     
         context = {
-            'yearly_stats': yearly_stats,
-            'basic_info': {
-                'unit_rank': UnitRank.objects.get(id=id),
-                'financial_year': FinancialYear.objects.get(id=financial_year_id),
-                'unit': Unit.objects.get(id=unit_id),
-                'division': Division.objects.get(id=division_id),
-            }
+            'unit_rank': unit_rank,
+            'financial_year': fy,
+            'financial_quarter': fq,
+            'unit': unit,
+            'division': division,
+            'month': month,
         }
-        
-        return render(request, 'statistics/unit_division_fy.html', context)
+        return render(request, 'statistics/upload_unit_monthly_dcrt_excel.html', context)
 
