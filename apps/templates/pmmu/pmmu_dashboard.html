@@ -1,22 +1,151 @@
+<!-- pmmu/templates/pmmu/pmmu_dashboard.html -->
 {% extends "layouts/base.html" %}
-{% block title %}PMMU Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>PMMU Dashboard</h1>
+<div class="container-fluid px-4">
+    <!-- Header Section -->
+    <div class="row my-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">Performance Management & Measurement</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'apps.home:dashboard' %}">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">PMMU Dashboard</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
 
+    <!-- Main Content -->
     <div class="row">
-        {% for pmmu in pmmus %}  {# Looping through PMMUs now #}
-        <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ pmmu.name }}</h5>
-                    <p class="card-text">{{ pmmu.description|truncatewords:20 }}</p>
-                    <a href="{% url 'pmmu:pmmu_item_list' pmmu.pk %}" class="btn btn-primary">View Indicators</a> {# Link to indicator list for this PMMU #}
+        <!-- PMMU List Sidebar -->
+        <div class="col-12 col-lg-3 mb-4">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">PMMU Documents</h5>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-folder fa-fw"></i>
+                        </div>
+                    </div>
                 </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for pmmu in pmmus %}
+                            <a href="{% url 'pmmu:pmmu_detail' pmmu.pk %}"
+                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center 
+                                      {% if pmmu == latest_pmmu %}active bg-primary text-white{% endif %}">
+                                <div>
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    {{ pmmu.name }}
+                                    <div class="small {% if pmmu == latest_pmmu %}text-white-50{% else %}text-muted{% endif %}">
+                                        {{ pmmu.financial_year }}
+                                    </div>
+                                </div>
+                                {% if pmmu == latest_pmmu %}
+                                    <span class="badge bg-white text-primary">Current</span>
+                                {% endif %}
+                            </a>
+                        {% empty %}
+                            <div class="list-group-item text-center py-4">
+                                <i class="fas fa-folder-open fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-0">No PMMU documents available.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if request.user.is_staff %}
+                    <div class="card-footer bg-light border-0">
+                        <a href="{% url 'pmmu:pmmu_create' %}" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-plus me-2"></i>New PMMU
+                        </a>
+                    </div>
+                {% endif %}
             </div>
         </div>
-        {% endfor %}
+
+        <!-- Main Content Area -->
+        <div class="col-12 col-lg-9">
+            {% if latest_pmmu %}
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-header bg-white">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">{{ latest_pmmu.name }}</h5>
+                                <small class="text-muted">Financial Year: {{ latest_pmmu.financial_year }}</small>
+                            </div>
+                            <div class="col-auto">
+                                <div class="btn-group">
+                                    <a href="{% url 'pmmu:pmmu_detail' latest_pmmu.pk %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-2"></i>View Details
+                                    </a>
+                                    {% if request.user.is_staff %}
+                                        <a href="{% url 'pmmu:pmmu_update' latest_pmmu.pk %}" 
+                                           class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit me-2"></i>Edit
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Summary Stats -->
+                        <div class="row g-0 border-bottom">
+                            <div class="col-6 col-md-3 p-3 border-end">
+                                <div class="text-center">
+                                    <h6 class="text-muted mb-1">Total Indicators</h6>
+                                    <h3 class="mb-0">{{ latest_pmmu.indicators.count }}</h3>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 p-3 border-end">
+                                <div class="text-center">
+                                    <h6 class="text-muted mb-1">Categories</h6>
+                                    <h3 class="mb-0">5</h3>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 p-3 border-end">
+                                <div class="text-center">
+                                    <h6 class="text-muted mb-1">Total Weight</h6>
+                                    <h3 class="mb-0">100%</h3>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 p-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted mb-1">Status</h6>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description if available -->
+                        {% if latest_pmmu.description %}
+                            <div class="p-3 border-bottom">
+                                <h6 class="text-muted mb-2">Description</h6>
+                                <p class="mb-0">{{ latest_pmmu.description }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="card border-0 shadow">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <h5>No PMMU Documents Available</h5>
+                        <p class="text-muted mb-3">Start by creating your first PMMU document.</p>
+                        {% if request.user.is_staff %}
+                            <a href="{% url 'pmmu:pmmu_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create PMMU
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -24,7 +24,7 @@ LOGIN_URL = 'authentication:login'  # Correct
 LOGIN_URL = '/accounts/login/' # Correct - explicitly specifies
 
 # allow all hosts in development
-ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost','4757-196-202-207-77.ngrok-free.app']
+ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost','69f8-196-202-207-77.ngrok-free.app']
 
 
 # Application definition
