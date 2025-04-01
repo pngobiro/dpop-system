@@ -1,0 +1,253 @@
+<!-- pmmu/templates/pmmu/pmmu_detail.html -->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="row my-4">
+        <div class="col-12">
+            <div class="bg-light rounded-3 p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-2">{{ pmmu.name }}</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="{% url 'apps.home:dashboard' %}" class="text-decoration-none">Home</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'pmmu:pmmu_dashboard' %}" class="text-decoration-none">PMMU</a></li>
+                                <li class="breadcrumb-item active">{{ pmmu.financial_year }}</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    {% if request.user.is_staff %}
+                    <div>
+                        <a href="{% url 'pmmu:pmmu_update' pmmu.pk %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit me-2"></i>Edit PMMU
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Financial Year</h6>
+                    <p class="h4 mb-0">{{ pmmu.financial_year }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Last Updated</h6>
+                    <p class="h4 mb-0">{{ pmmu.updated_at|date:"M d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Total Weight</h6>
+                    <p class="h4 mb-0">100%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted mb-1">Status</h6>
+                    <span class="badge bg-success px-3 py-2">Active</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories and Indicators -->
+    {% for category, indicators in categories_data.items %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ category.display_name }}</h5>
+                <button class="btn btn-sm btn-outline-primary rounded-pill" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#category{{ category.id }}">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="collapse show" id="category{{ category.id }}">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4 text-nowrap" style="width: 45%">Indicator</th>
+                            <th class="text-nowrap" style="width: 10%">Weight</th>
+                            <th class="text-nowrap" style="width: 10%">Unit</th>
+                            <th class="text-nowrap" style="width: 15%">Target</th>
+                            <th class="text-nowrap" style="width: 12%">Baseline</th>
+                            <th class="text-end pe-4" style="width: 8%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        {% for indicator in indicators %}
+                        {% with performance=indicator.financial_year_data.first %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="text-wrap pe-3">
+                                    <a href="#" class="text-decoration-none text-dark" 
+                                       data-bs-toggle="collapse" 
+                                       data-bs-target="#notes{{ indicator.id }}">
+                                        {{ indicator.name }}
+                                        <i class="fas fa-chevron-down ms-2 small"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ indicator.weight }}%</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ indicator.unit_of_measure }}</span>
+                            </td>
+                            <td>
+                                <span class="badge text-dark bg-light">{{ performance.target|default:"N/A" }}</span>
+                            </td>
+                            <td>
+                                <span class="badge text-dark bg-light">{{ performance.baseline|default:"N/A" }}</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a href="{% url 'pmmu:indicator_detail' indicator.pk %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if request.user.is_staff %}
+                                    <a href="{% url 'pmmu:indicator_update' indicator.pk %}" 
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Notes Section -->
+                        <tr>
+                            <td colspan="6" class="p-0 border-0">
+                                <div class="collapse" id="notes{{ indicator.id }}">
+                                    <div class="p-4 bg-light">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0">Implementation Notes</h6>
+                                            {% if request.user.is_staff %}
+                                            <button class="btn btn-sm btn-primary" type="button"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#addNoteModal{{ indicator.id }}">
+                                                <i class="fas fa-plus me-2"></i>Add Note
+                                            </button>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="list-group">
+                                            {% for note in indicator.notes.all %}
+                                            <div class="list-group-item border-start border-primary border-3">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1 me-3">
+                                                        <p class="mb-1">{{ note.note_text }}</p>
+                                                        <small class="text-muted">
+                                                            Added by {{ note.created_by.get_full_name|default:note.created_by.username }}
+                                                            on {{ note.created_at|date:"M d, Y" }}
+                                                        </small>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#uploadModal{{ note.id }}">
+                                                        <i class="fas fa-paperclip"></i>
+                                                    </button>
+                                                </div>
+
+                                                {% if note.documents.exists %}
+                                                <div class="mt-3">
+                                                    <h6 class="text-muted small mb-2">Attachments</h6>
+                                                    <div class="list-group list-group-flush">
+                                                        {% for doc in note.documents.all %}
+                                                        <div class="list-group-item bg-light rounded">
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <div>
+                                                                    <i class="fas fa-file me-2"></i>
+                                                                    {{ doc.title }}
+                                                                </div>
+                                                                <div class="btn-group">
+                                                                    <a href="{{ doc.file.url }}" 
+                                                                       class="btn btn-sm btn-outline-primary"
+                                                                       target="_blank">
+                                                                        <i class="fas fa-download"></i>
+                                                                    </a>
+                                                                    {% if request.user.is_staff %}
+                                                                    <button type="button" 
+                                                                            class="btn btn-sm btn-outline-danger">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                            {% if doc.description %}
+                                                            <small class="text-muted d-block mt-1">
+                                                                {{ doc.description }}
+                                                            </small>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% empty %}
+                                            <div class="text-center py-3">
+                                                <p class="text-muted mb-0">No implementation notes available.</p>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Add Note Modal -->
+    {% for indicator in indicators %}
+    <div class="modal fade" id="addNoteModal{{ indicator.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'pmmu:add_indicator_note' indicator.pk %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Implementation Note</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Note</label>
+                            <textarea class="form-control" name="note_text" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Note</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

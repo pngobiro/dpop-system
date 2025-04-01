@@ -1,0 +1,296 @@
+<!-- pmmu/templates/pmmu/indicator_detail.html -->
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header Section -->
+    <div class="row my-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'apps.home:dashboard' %}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'pmmu:pmmu_dashboard' %}">PMMU</a></li>
+                            <li class="breadcrumb-item active">Indicator Details</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h3 mb-2 text-gray-800">{{ indicator.name }}</h1>
+                    <p class="text-muted">{{ indicator.subcategory.display_name }}</p>
+                </div>
+                {% if request.user.is_staff %}
+                <div>
+                    <a href="{% url 'pmmu:indicator_update' indicator.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Edit Indicator
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Indicator Overview -->
+        <div class="col-12 col-xl-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0">Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Details</h6>
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Category</span>
+                                <span class="fw-bold">{{ indicator.subcategory.display_name }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Weight</span>
+                                <span class="badge bg-primary">{{ indicator.weight }}%</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Unit of Measure</span>
+                                <span class="badge bg-secondary">{{ indicator.unit_of_measure }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if indicator.description %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Description</h6>
+                        <p class="mb-0">{{ indicator.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance History -->
+        <div class="col-12 col-xl-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0">Performance History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Financial Year</th>
+                                    <th>Target</th>
+                                    <th>Baseline</th>
+                                    <th>Actual</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for performance in yearly_performance %}
+                                <tr>
+                                    <td>{{ performance.financial_year.name }}</td>
+                                    <td>{{ performance.target }}</td>
+                                    <td>{{ performance.baseline|default:"-" }}</td>
+                                    <td>
+                                        {% if performance.actual %}
+                                            {{ performance.actual }}
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if performance.actual %}
+                                            {% if performance.actual >= performance.target %}
+                                                <span class="badge bg-success">Achieved</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Not Achieved</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">In Progress</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <p class="text-muted mb-0">No performance data available</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Implementation Notes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Implementation Notes</h5>
+                        {% if request.user.is_staff %}
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                            <i class="fas fa-plus me-2"></i>Add Note
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for note in indicator.notes.all %}
+                        <div class="timeline-item">
+                            <div class="timeline-icon bg-primary">
+                                <i class="fas fa-comment text-white"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <h6 class="card-subtitle mb-2 text-muted">
+                                                {{ note.created_by.get_full_name|default:note.created_by.username }}
+                                            </h6>
+                                            <small class="text-muted">{{ note.created_at|date:"M d, Y" }}</small>
+                                        </div>
+                                        <p class="card-text">{{ note.note_text }}</p>
+                                        
+                                        {% if note.documents.exists %}
+                                        <div class="mt-3">
+                                            <h6 class="text-muted mb-2">Attachments</h6>
+                                            <div class="list-group list-group-flush">
+                                                {% for doc in note.documents.all %}
+                                                <div class="list-group-item">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="fas fa-file me-2"></i>
+                                                            {{ doc.title }}
+                                                        </div>
+                                                        <div class="btn-group">
+                                                            <a href="{{ doc.file.url }}" 
+                                                               class="btn btn-sm btn-outline-primary"
+                                                               target="_blank">
+                                                                <i class="fas fa-download"></i>
+                                                            </a>
+                                                            {% if request.user.is_staff %}
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-outline-danger">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    {% if doc.description %}
+                                                    <small class="text-muted d-block mt-1">
+                                                        {{ doc.description }}
+                                                    </small>
+                                                    {% endif %}
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if request.user.is_staff %}
+                                        <div class="mt-3">
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#uploadModal{{ note.id }}">
+                                                <i class="fas fa-paperclip me-2"></i>Add Attachment
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No implementation notes available</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Note Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'pmmu:add_indicator_note' indicator.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Implementation Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="noteText" class="form-label">Note</label>
+                        <textarea class="form-control" id="noteText" name="note_text" 
+                                  rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-item {
+    padding-left: 40px;
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-content {
+    position: relative;
+}
+
+.timeline-content:before {
+    content: '';
+    position: absolute;
+    left: -35px;
+    top: 15px;
+    width: 25px;
+    height: 2px;
+    background: #e9ecef;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+</style>
+{% endblock %}

@@ -1,237 +1,123 @@
-# apps/organization/management/commands/seed_organization.py
+# apps/pmmu/management/commands/seed_pmmu_from_ocr.py
 from django.core.management.base import BaseCommand
+from apps.pmmu.models import Indicator, IndicatorNote, PMMU
+from apps.organization.models import FinancialYear
+from apps.organization.models import Department
 from django.contrib.auth import get_user_model
-from apps.organization.models import Department, Role, UserRole
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
-from apps.home.models import Module
-from apps.statistics.models import FinancialYear, FinancialQuarter # Import
-from datetime import datetime
-from django.utils import timezone
+from apps.document_management.utils.document_manager import DocumentManager
+from django.core.files.base import ContentFile
+from faker import Faker
+import random
 
 User = get_user_model()
+fake = Faker()
 
 class Command(BaseCommand):
-    help = 'Seeds organization structure, users, roles, and permissions'
+    help = 'Seeds PMMU data with Indicators and IndicatorNotes from OCR text, splitting notes'
 
     def handle(self, *args, **kwargs):
+        self.stdout.write('Seeding PMMU Indicator data with notes and document attachments from OCR text...')
 
-        # --- Clear Existing Data ---
-        self.stdout.write('Clearing existing organization data...')
-        UserRole.objects.all().delete()
-        Role.objects.all().delete()
-        Department.objects.all().delete()
-        User.objects.all().delete()  # Be *very* careful with this in production!
+        # --- Prerequisites ---
+        financial_year = FinancialYear.objects.filter(name="2024/2025").first()
+        if not financial_year:
+            self.stdout.write(self.style.ERROR('Financial Year 2024/2025 not found. Run seed_organization first including FY 2024/2025.'))
+            return
 
-        # --- Departments ---
-        self.stdout.write('Creating departments...')
-        departments = {
-            'directors_office': Department.objects.create(
-                name="Director's Office",
-                description="Office of the Director of Strategy, Planning and Organizational Performance",
-                is_active=True
-            ),
-            'performance': Department.objects.create(
-                name="Performance Coordination",
-                description="Performance monitoring and coordination",
-                is_active=True
-            ),
-            'planning': Department.objects.create(
-                name="Planning, Monitoring & Evaluation",
-                description="Planning, monitoring and evaluation activities",
-                is_active=True
-            ),
-            'research': Department.objects.create(
-                name="Research & Statistics",
-                description="Research and statistical analysis",
-                is_active=True
-            ),
-            'quality': Department.objects.create(
-                name="Quality Assurance & Innovation",
-                description="Quality assurance and innovation initiatives",
-                is_active=True
-            )
-        }
+        directorate_dept = Department.objects.filter(name="Director's Office").first()
+        if not directorate_dept:
+            self.stdout.write(self.style.ERROR("Department 'Director's Office' not found. Run seed_organization first."))
+            return
 
-        # --- Roles ---
-        self.stdout.write('Creating base roles...')
-        base_roles = [
-            ("Assistant Director", 'JSG3'),
-            ("Court Assistant II", 'JSG4'),
-            ("Economist I", 'JSG4'),
-            ("Court Administrator I", 'JSG4'),
-            ("Statistician II", 'JSG4'),
-            ("Accountant I", 'JSG4'),
-            ("Office Assistant I", 'JSG5'),
-            ("Office Assistant II", 'JSG5'),
-        ]
+        uploaded_by_user = User.objects.filter(username='joseph.osewe').first() # Assuming a user exists to be creator of notes
+        if not uploaded_by_user:
+            self.stdout.write(self.style.ERROR("User 'joseph.osewe' not found. Create this user or adjust seeder."))
+            return
 
-        roles = {}
-        for dept in departments.values():
-            for title, job_group in base_roles:
-                role_key = f"{title}_{dept.name}".lower().replace(' ', '_').replace(',', '').replace('&', 'and')
-                roles[role_key] = Role.objects.create(
-                    title=title,
-                    department=dept,
-                    job_group=job_group
-                )
-
-        # --- Staff Data ---
-        staff_data = [
-            # ... (Your existing staff data - as before) ...
-             {'name': 'George Obai', 'pj': '64282', 'title': 'Assistant Director', 'dept': departments['performance']},
-            {'name': 'Dominic Nyambane', 'pj': '64739', 'title': 'Assistant Director', 'dept': departments['planning']},
-            {'name': 'Gilbert Kipkirui', 'pj': '69727', 'title': 'Assistant Director', 'dept': departments['research']},
-            {'name': 'Victor Lumwamu', 'pj': '62751', 'title': 'Economist I', 'dept': departments['quality']},
-            {'name': 'Alex Njeru', 'pj': '75665', 'title': 'Court Assistant II', 'dept': departments['planning']},
-            {'name': 'Evelyne Simiyu', 'pj': '42505', 'title': 'Economist I', 'dept': departments['performance']},
-            {'name': 'Linda Lukhale', 'pj': '44029', 'title': 'Court Administrator I', 'dept': departments['quality']},
-            {'name': 'Martin Asitiba', 'pj': '33627', 'title': 'Court Assistant II', 'dept': departments['research']},
-            {'name': 'Eric Kocheli', 'pj': '75681', 'title': 'Court Assistant II', 'dept': departments['research']},
-            {'name': 'Solomon Onyara', 'pj': '76433', 'title': 'Court Assistant II', 'dept': departments['planning']},
-            {'name': 'Caroline Mungai', 'pj': '75657', 'title': 'Court Assistant II', 'dept': departments['quality']},
-            {'name': 'Margret Ochieng', 'pj': '80113', 'title': 'Court Assistant II', 'dept': departments['research']},
-            {'name': 'Stanford Mwangi', 'pj': '47117', 'title': 'Court Assistant II', 'dept': departments['research']},
-            {'name': 'Patrick Ngobiro', 'pj': '59433', 'title': 'Court Assistant II', 'dept': departments['directors_office']},
-            {'name': 'John Mbiti', 'pj': '71530', 'title': 'Court Assistant II', 'dept': departments['performance']},
-            {'name': 'Mercy Chemitai', 'pj': '71483', 'title': 'Court Assistant II', 'dept': departments['research']},
-            {'name': 'Hannah Gichuki', 'pj': '54936', 'title': 'Office Assistant II', 'dept': departments['directors_office']},
-            {'name': 'Lucy Gachoka', 'pj': '30982', 'title': 'Office Assistant I', 'dept': departments['directors_office']},
-            {'name': 'Steve Njehia', 'pj': '57049', 'title': 'Accountant I', 'dept': departments['planning']},
-            {'name': 'Leonard Melly', 'pj': '81485', 'title': 'Statistician II', 'dept': departments['research']},
-            {'name': 'Lorna Barasa', 'pj': '82594', 'title': 'Office Assistant II', 'dept': departments['directors_office']}
-        ]
-
-        self.stdout.write('Creating staff users...')
-        for staff in staff_data:
-            username = staff['name'].lower().replace(' ', '.')
-            email = f"{username}@judiciary.go.ke"
-            first_name = staff['name'].split()[0]
-            last_name = ' '.join(staff['name'].split()[1:])  # Handle multi-part last names
-            user, created = User.objects.get_or_create(
-                username=username,
-                defaults={
-                    'email': email,
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'pj_number': staff['pj'],
-                    'is_staff': True,  # Important: Mark users as staff
-                }
-            )
-            if created:
-                user.set_password('Password123!')  # ALWAYS set a password
-                user.save()
-
-
-            role_key = f"{staff['title']}_{staff['dept'].name}".lower().replace(' ', '_').replace(',', '').replace('&', 'and')
-
-            #CRITICAL FIX: Check if the role exists!
-            if role_key in roles:
-                role = roles[role_key]
-                # Associate user with department directly.
-                user.departments.add(staff['dept']) #add the department to the user
-                user.save()
-
-                user_role = UserRole.objects.create(
-                    user=user,
-                    role=role,
-                    is_active=True
-                 )
-                # --- Grant Permissions ---
-                # Get all content types for the apps you want to manage
-                content_types = ContentType.objects.filter(
-                    app_label__in=['budget', 'document_management', 'meetings', 'memos', 'mail', 'statistics']  # Add your app labels here
-                )
-
-                # Get all permissions for those content types
-                permissions = Permission.objects.filter(content_type__in=content_types)
-
-                # Assign permissions based on role (Example)
-                if role.title == "Assistant Director":
-                    # Grant all permissions to Assistant Directors
-                    role.permissions.set(permissions) # important, use .set()
-                elif role.title.startswith("Court Assistant"):
-                    # Grant view permissions to Court Assistants.  This is a very basic example.
-                    for perm in permissions:
-                        if 'view' in perm.codename:
-                            role.permissions.add(perm)
-            else:
-                self.stdout.write(self.style.ERROR(f"Role key '{role_key}' not found!"))
-
-
-        self.stdout.write('Creating director user...')
-        director, created = User.objects.get_or_create(
-            username='joseph.osewe',
-            defaults={
-                'email': 'joseph.osewe@judiciary.go.ke',
-                'first_name': 'Joseph',
-                'last_name': 'Osewe',
-                'is_staff': True,
-                'is_superuser': True  # Correctly sets superuser status
-            }
+        # --- Create PMMU Instance ---
+        pmmu_instance = PMMU.objects.create(
+            name="Performance Management & Measurement Understanding 2024-2025",
+            financial_year=financial_year,
+            description="This PMMU Understanding outlines the agreement between The Chief Registrar of the Judiciary and The Director, Strategy Planning and Organizational Productivity.",
         )
-        if created:
-            director.set_password('Admin123!')
-            director.save()
-        director.departments.add(departments['directors_office']) # Assign director to a dept.
-        director_role_key = f"assistant_director_{departments['directors_office'].name}".lower()
+        self.stdout.write(self.style.SUCCESS(f'Created PMMU: {pmmu_instance.name}'))
 
-        if director_role_key in roles:
-             director_role = roles[director_role_key]
-             UserRole.objects.create(user = director, role = director_role, is_active = True)
-             # --- Grant Permissions to Director---
-             module_content_type = ContentType.objects.get_for_model(Module)
-             module_permissions = Permission.objects.filter(content_type=module_content_type)
-             for perm in module_permissions:
-                director_role.permissions.add(perm)
-        # --- Seed Financial Data ---
-        self.seed_financial_periods()
-        self.stdout.write(self.style.SUCCESS('Successfully seeded organization data'))
-
-    def seed_financial_periods(self):
-        financial_years = [
-            {'name': '2018/2019', 'start_date': '2018-07-01', 'end_date': '2019-06-30'},
-            {'name': '2019/2020', 'start_date': '2019-07-01', 'end_date': '2020-06-30'},
-            {'name': '2020/2021', 'start_date': '2020-07-01', 'end_date': '2021-06-30'},
-            {'name': '2021/2022', 'start_date': '2021-07-01', 'end_date': '2022-06-30'},
-             {'name': '2022/2023', 'start_date': '2022-07-01', 'end_date': '2023-06-30'},
-            {'name': '2023/2024', 'start_date': '2023-07-01', 'end_date': '2024-06-30'},
+        # --- Indicator Data (Extracted from OCR - Page 5 Schedule + Pages 6-8 Notes) ---
+        indicators_data = [
+            {'name': 'Institutionalize Performance Management', 'unit_of_measure': '%', 'weight': 10, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Review 2023-2024 performance management guidelines", "b. Coordinate PMMU evaluations and target setting to all courts and units within the first half of the financial year", "c. Coordinate PMMUs evaluation for all Implementing Units", "d. Evaluate compliance of Service Delivery Standards and prepare annual report", "e. Conduct annual Performance Management and Measurement sensitisation for Heads of Stations and Deputy Registrars", "f. Facilitate annual AJPMC engagement on status and feedback of PMMU implementation to improve the process.", "g. Undertake PMMU briefs for the following;", "a. Chief Justice", "b. Deputy Chief Justice", "c. Chief Registrar of the Judiciary", "d. Judiciary Management Team", "h. Identify and recommend new/reviewed performance measurement indicators and submit to AJPMC for adoption"]},
+            {'name': 'Enhance Data Governance', 'unit_of_measure': '%', 'weight': 10, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Sensitize staff in at least 200 courts on data management.", "b. Facilitate case audits in 10 courts", "c. Improve caseload data accuracy across the Judiciary by 3 percent.", "d. Update the data dictionary in liaison with the registrars as need arises."]},
+            {'name': 'Timely preparation and dissemination of caseload statistics', 'unit_of_measure': '%', 'weight': 10, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Annual Caseload Statistics Report for FY 2023/24 by 5th August 2024.", "b. 1st Quarter Caseload Report 2024/25 by 5th November 2024.", "c. 2nd Quarter Caseload Report 2024/25 by 5th February 2025.", "d. 3rd Quarter Caseload Report 2024/25 by 5th May 2025."]},
+            {'name': 'Facilitate use of Statistics to inform policy', 'unit_of_measure': '%', 'weight': 5, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Prepare input on caseload statistics for the SOJAR Report 2023/24.", "b. Prepare and submit draft performance reports of individual Judges and Judicial officers for JSC within the timelines specified as per request."]},
+            {'name': 'Institutionalize Quality Management Systems', 'unit_of_measure': '%', 'weight': 8, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Facilitate establishment of the Judiciary ISO-QMS Steering Committee", "b. Develop a Judiciary ISO-QMS Road Map", "c. Coordinate Development of ISO-QMS Procedures for NCAJ"]},
+            {'name': 'Promote Service Delivery Innovations', 'unit_of_measure': '%', 'weight': 7, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Collate and review and publish Service Delivery Innovations", "b. Review and Disseminate Service Delivery Innovations for Replications", "c. Develop and Maintain a Service Delivery Innovations Online-Repository", "d. Undertake and disseminate 1 research on topical issue to inform policy"]},
+            {'name': 'Enhance Reporting on Programs and Projects', 'unit_of_measure': '%', 'weight': 10, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Prepare and disseminate quarterly statistical reports within 30 days from the close of submission by courts", "b. Prepare and disseminate quarterly M&E reports within 5 days from receipt of statistical report", "c. Prepare ad-hoc reports within 7 days after receipt of the request", "d. Prepare 2023-2024 PMMUs evaluation report by 30th June 2025", "e. Evaluate the Judiciary Strategic Plan 2019-2023", "f. Track implementation of multi-door approach to justice programs such as AJS, CAM, and address emerging issues and report to management"]},
+            {'name': 'Enhance Feedback Mechanism', 'unit_of_measure': '%', 'weight': 10, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Analyse Judiciary dialogue feedback and disseminate the findings", "b. Analyse field report from PMMU evaluation exercise and disseminate the findings to AJPMC and management"]},
+            {'name': 'Compliance with the budget', 'unit_of_measure': '%', 'weight': 3, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Ensure 100% absorption of the budget as per the approved work plan"]},
+            {'name': 'Greening Initiatives', 'unit_of_measure': '%', 'weight': 2, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["b. Implement energy saving initiatives"]}, # Note: 'b.' is used as it's continuation of 'Greening Initiatives' Section B.2
+            {'name': 'Compliance with Service Delivery Charter Standards', 'unit_of_measure': '%', 'weight': 5, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["The Directorate will track compliance of all the Service Delivery Charter standards"]},
+            {'name': 'Implement or follow-up on the implementation of the recommendations from the customer satisfaction survey', 'unit_of_measure': '%', 'weight': 5, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["The Directorate will conduct one survey that involves court users and disseminate the findings"]},
+            {'name': 'Service improvement Innovations', 'unit_of_measure': 'No.', 'weight': 4, 'baseline_2023_2024': '1', 'target_2024_2025': '1',
+             'notes': ["a. Replicate/adopt any relevant innovations OR", "b. May come up with one service delivery innovation"]},
+            {'name': 'Competency development', 'unit_of_measure': '%', 'weight': 6, 'baseline_2023_2024': '3', 'target_2024_2025': 100,
+             'notes': ["a. Identify training gaps and facilitate relevant training"]},
+            {'name': 'Corruption Prevention & Eradication', 'unit_of_measure': '%', 'weight': 2, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Continue sensitizing members of staff on dangers of corruption in staff meetings", "b. Document and maintain records of all reported corruption related issues from various sources including the following;", "Complaints/corruption feedback", "Oversight bodies", "C. Implement the recommendations of corruption prevalence surveys and system audits by DSPOP, EACC, and other public oversight bodies.", "d. Implement corruption prevention action plans by integrity officers and submit quarterly reports to OJO and OCRJ.", "e. Implement strategies to address reported and other corruption eradication activities."]},
+            {'name': 'Improve Employee wellness', 'unit_of_measure': '%', 'weight': 1, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Implement staff welfare programme¹", "b. Organize one team building event for staff²"]}, # Note: Superscript numbers in OCR
+            {'name': 'Enhance Employee Satisfaction and Work Environment', 'unit_of_measure': '%', 'weight': 2, 'baseline_2023_2024': '', 'target_2024_2025': 100,
+             'notes': ["a. Hold quarterly staff meetings, emerging issues affecting staff welfare and report progress in the subsequent meetings.", "b. Conduct Employee Satisfaction and Work Environment Survey³ and disseminate the findings"]}, # Note: Superscript numbers in OCR
         ]
 
-        for fy_data in financial_years:
-            financial_year, created = FinancialYear.objects.get_or_create(
-                name=fy_data['name'],
-                defaults={
-                    'start_date': timezone.make_aware(datetime.strptime(fy_data['start_date'], '%Y-%m-%d')),
-                    'end_date': timezone.make_aware(datetime.strptime(fy_data['end_date'], '%Y-%m-%d')),
-                }
+        # --- Create Indicator Items ---
+        for indicator_data in indicators_data:
+            indicator = Indicator.objects.create( # Updated model name
+                pmmu=pmmu_instance, # Link to the PMMU instance
+                name=indicator_data['name'],
+                description=indicator_data.get('description', ''), # Description not in page 5, using empty string as default
+                department=directorate_dept,
+                unit_of_measure=indicator_data['unit_of_measure'],
+                weight=indicator_data['weight'],
+                baseline_2023_2024=indicator_data['baseline_2023_2024'],
+                target_2024_2025=indicator_data['target_2024_2025'],
             )
-            if created:
-              self.stdout.write(f'Created financial year: {financial_year.name}')
+            self.stdout.write(self.style.SUCCESS(f'  Created PMMU Indicator: {indicator.name}'))
 
-
-            quarters = [
-                {'name': 'Quarter 1', 'start_date': '07-01', 'end_date': '09-30', 'quarter_number': 1},
-                {'name': 'Quarter 2', 'start_date': '10-01', 'end_date': '12-31', 'quarter_number': 2},
-                {'name': 'Quarter 3', 'start_date': '01-01', 'end_date': '03-31', 'quarter_number': 3},
-                {'name': 'Quarter 4', 'start_date': '04-01', 'end_date': '06-30', 'quarter_number': 4},
-            ]
-
-            for quarter_data in quarters:
-                start_date = timezone.make_aware(datetime.strptime(f"{financial_year.start_date.year}-{quarter_data['start_date']}", '%Y-%m-%d'))
-                # Handle year rollover for Q3 and Q4
-                end_year = financial_year.end_date.year
-                end_date = timezone.make_aware(datetime.strptime(f"{end_year}-{quarter_data['end_date']}", '%Y-%m-%d'))
-
-                quarter, created = FinancialQuarter.objects.get_or_create(
-                    financial_year=financial_year,
-                    quarter_number=quarter_data['quarter_number'],
-                    defaults={
-                        'name': quarter_data['name'],
-                        'start_date': start_date,
-                        'end_date': end_date,
-                    }
-
+            # --- Create Indicator Notes ---
+            indicator_notes = indicator_data['notes'] # Now notes is a list
+            for note_text in indicator_notes: # Iterate through the list of notes
+                indicator_note = IndicatorNote.objects.create(
+                    indicator=indicator,
+                    note_text=note_text.strip(), # Save each line as a separate note
+                    created_by=uploaded_by_user # Assign creator for notes
                 )
-                if created:
-                     self.stdout.write(f'Created quarter: {quarter.name}')
+                self.stdout.write(self.style.SUCCESS(f'    Created Indicator Note: {note_text[:50]}...')) # Show truncated note text
+
+                # --- Attach Documents to Notes (Randomly) ---
+                if random.random() < 0.3:
+                    doc_title = f"Document for Note: {indicator_note.note_text[:20]}..." # Title from note text
+                    doc_content = fake.text(max_nb_chars=100)
+                    doc_file = ContentFile(doc_content.encode('utf-8'), name=f"note_doc_{indicator.pk}_{indicator_note.pk}.txt") # Unique filename
+
+                    DocumentManager.attach_document(
+                        file=doc_file,
+                        source_object=indicator_note,
+                        uploaded_by=uploaded_by_user,
+                        title=doc_title,
+                        description=f"Dummy document attached to indicator note for {indicator.name}",
+                        source_module='pmmu'
+                    )
+                    self.stdout.write(self.style.SUCCESS(f'      Attached document to Note: {doc_title}'))
+
+        self.stdout.write(self.style.SUCCESS('Successfully seeded PMMU Indicator data from OCR text with PMU, Indicators and Notes'))

@@ -1,0 +1,9 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+    <h1>{% if action == 'Create' %}Create{% else %}Update{% endif %} Indicator</h1>
+    <p>Form to create/update Indicator will go here.</p>
+    <a href="{% url 'pmmu:indicator_list' %}" class="btn btn-secondary">Cancel</a>
+    {% if action == 'Update' %}
+    <a href="{% url 'pmmu:indicator_detail' pk=indicator.pk %}" class="btn btn-info">View Details</a>
+    {% endif %}
+{% endblock %}

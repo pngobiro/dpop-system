@@ -1,0 +1,10 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+    <h1>Confirm Delete PMMU</h1>
+    <p>Are you sure you want to delete the PMMU: "{{ pmmu.name }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a href="{% url 'pmmu:pmmu_detail' pk=pmmu.pk %}" class="btn btn-secondary">No, Cancel</a>
+    </form>
+{% endblock %}

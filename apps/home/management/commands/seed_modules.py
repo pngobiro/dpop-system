@@ -1,3 +1,4 @@
+      
 # apps/home/management/commands/seed_modules.py
 from django.core.management.base import BaseCommand
 from apps.home.models import Module
@@ -10,8 +11,8 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write('Seeding modules and permissions...')
 
-        # --- VERY IMPORTANT: Delete existing modules first! ---
-        Module.objects.all().delete()
+        # --- VERY IMPORTANT: REMOVED DELETE EXISTING MODULES ---
+        # Module.objects.all().delete() # <-- REMOVED THIS LINE
 
         modules_data = [
             # ... (Your module data as before) ...
@@ -100,6 +101,14 @@ class Command(BaseCommand):
                           'url_name': 'innovations:dashboard',
                           'permission_codename': 'access_innovations'
                             
+                      },
+                      {
+                        'name': 'DPOP PMMU',
+                        'description': 'DPOP PMMU',
+                        'icon_class': 'fas fa-chart-line',
+                        'url_name': 'pmmu:pmmu_dashboard',
+                        'permission_codename': 'access_pmmu'
+                        
                       }
         ]
 
@@ -142,3 +151,4 @@ class Command(BaseCommand):
                  self.stdout.write(self.style.WARNING(f"Permission '{module_data['permission_codename']}' already exists. Skipping."))
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded modules and permissions'))
+

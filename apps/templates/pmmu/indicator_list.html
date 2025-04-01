@@ -1,0 +1,31 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+    <h1>Performance Indicators</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Unit</th>
+                <th>Weight</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for indicator in indicators %}
+                <tr>
+                    <td><a href="{% url 'pmmu:indicator_detail' pk=indicator.pk %}">{{ indicator.name }}</a></td>
+                    <td>{{ indicator.subcategory }}</td>
+                    <td>{{ indicator.unit_of_measure }}</td>
+                    <td>{{ indicator.weight }}%</td>
+                    <td>
+                        <a href="{% url 'pmmu:indicator_update' pk=indicator.pk %}" class="btn btn-sm btn-secondary">Edit</a>
+                        <a href="{% url 'pmmu:indicator_delete' pk=indicator.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No indicators found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
