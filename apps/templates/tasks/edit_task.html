@@ -1,0 +1,37 @@
+{% extends "layouts/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %} Edit Task: {{ task.title }} {% endblock %}
+
+{% block content %}
+{# Removed invalid {% set %} tags #}
+
+<div class="container mt-4">
+    <h3 style="color: #006633; border-bottom: 1px solid #DAA520; padding-bottom: 5px;"> {# Primary Green, Gold Accent #}
+        <i class="fas fa-edit me-2"></i> Edit Task: {{ task.title }}
+    </h3>
+    <p class="text-muted">
+        <strong>Project:</strong> <a href="{% url 'tasks:project_detail' task.project.id %}" style="color: #006633;">{{ task.project.name }}</a> {# Primary Green #}
+    </p>
+    <hr class="mt-0">
+
+    <div class="card shadow-sm border-light">
+        <div class="card-body">
+            <form method="post" action="{% url 'tasks:edit_task' task.id %}">
+                {% csrf_token %}
+                {{ form|crispy }} {# Render the TaskForm #}
+
+                <div class="mt-4 text-end"> {# Align buttons right #}
+                    <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;">Cancel</a> {# Secondary Button #}
+                    <button type="submit" class="btn btn-sm" style="background-color: #ffc107; color: #000000; border-color: #ffc107;"> {# Warning Button #}
+                        <i class="fas fa-save me-1"></i> Save Changes
+                    </button>
+                    {# Add delete button later #}
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}

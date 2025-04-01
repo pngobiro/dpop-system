@@ -11,6 +11,8 @@ django-debug-toolbar
 django-webpack-loader
 django_pandas
 dj-database-url==0.5.0
+django-crispy-forms>=1.14,<2.0 # Added crispy-forms
+crispy-bootstrap5>=0.6,<0.8    # Added crispy-bootstrap5 template pack
 
 # Database
 psycopg2>=2.8
@@ -39,11 +41,10 @@ pinecone-client
 langchain
 
 
-# react 
+# react
 
 django-webpack-loader==1.8.1
 
 # Faker
 
 Faker==19.13.0
-

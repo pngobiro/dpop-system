@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> 
+<head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Directorate of Strategy, Planning and Organizational Productivity</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    
+
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="120x120" href="{{ ASSETS_ROOT }}/img/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ ASSETS_ROOT }}/img/favicon/favicon-32x32.png">
@@ -16,22 +16,23 @@
 
     <!-- Sweet Alert -->
     <link type="text/css" href="{{ ASSETS_ROOT }}/vendor/sweetalert2/dist/sweetalert2.min.css" rel="stylesheet">
-    
+
     <!-- Notyf -->
     <link type="text/css" href="{{ ASSETS_ROOT }}/vendor/notyf/notyf.min.css" rel="stylesheet">
-    
+
     <!-- Volt CSS -->
     <link type="text/css" href="{{ ASSETS_ROOT }}/css/volt.css" rel="stylesheet">
 
     <style>
         :root {
-            --primary-green: #0A5F38;  /* Kenya Judiciary Green */
-            --secondary-green: #0D7344;
-            --accent-gold: #D4AF37;    /* Official Gold */
+            /* Updated Kenya Judiciary Theme Colors */
+            --primary-green: #006633;
+            --secondary-green: #004d26; /* Darker shade for hover/secondary */
+            --accent-gold: #DAA520;    /* Goldenrod */
             --text-dark: #333333;
             --text-light: #FFFFFF;
             --light-bg: #F8F9FA;
-            --gold-hover: #BFA030;
+            --gold-hover: #c4951c; /* Darker gold for hover */
         }
 
         body {
@@ -51,7 +52,7 @@
             background-color: var(--primary-green);
         }
 
-        .btn-outline-white {
+        .btn-outline-white { /* Renamed for clarity, uses gold now */
             border: 2px solid var(--accent-gold);
             color: var(--accent-gold);
             transition: all 0.3s ease;
@@ -59,12 +60,12 @@
 
         .btn-outline-white:hover {
             background: var(--accent-gold);
-            color: var(--primary-green);
+            color: var(--primary-green); /* Contrast on gold background */
         }
 
         .section-header {
             padding: 5rem 0;
-            min-height: calc(100vh - 80px);
+            min-height: calc(100vh - 80px); /* Adjust based on actual header height */
             display: flex;
             align-items: center;
         }
@@ -102,13 +103,13 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-left-color 0.3s ease;
             border-left: 4px solid var(--accent-gold);
         }
 
         .feature-list p:hover {
             transform: translateY(-3px);
-            box-shadow: 0 4px 15px rgba(10, 95, 56, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 102, 51, 0.1); /* Use primary green for shadow */
             border-left: 4px solid var(--primary-green);
         }
 
@@ -119,14 +120,14 @@
             font-size: 1.1rem;
             border-radius: 30px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(10, 95, 56, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 102, 51, 0.2); /* Use primary green for shadow */
             color: var(--text-light);
         }
 
         .btn-primary:hover {
             background-color: var(--secondary-green);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(10, 95, 56, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 102, 51, 0.3); /* Use primary green for shadow */
         }
 
         footer {
@@ -210,7 +211,9 @@
                         <div class="row">
                             <div class="col-6 collapse-brand">
                                 <a href="/">
-                                    <img src="{{ ASSETS_ROOT }}/img/brand/light.svg" alt="Volt logo">
+                                    {# Consider using a Judiciary logo/text here if available #}
+                                    <span style="color: var(--text-light); font-weight: bold;">Judiciary Portal</span>
+                                    {# <img src="{{ ASSETS_ROOT }}/img/brand/light.svg" alt="Logo"> #}
                                 </a>
                             </div>
                             <div class="col-6 collapse-close">
@@ -232,7 +235,7 @@
         <section class="section-header">
             <div class="container">
                 <h1 class="title text-center">Directorate of Strategy, Planning and Organizational Productivity</h1>
-        
+
                 <div class="text-center mt-5">
                     <p class="lead">A strategic department within the Kenyan Judiciary focused on driving organizational excellence through:</p>
                     <div class="mt-4 feature-list">
@@ -246,10 +249,10 @@
                 <div class="text-center mt-5">
                     <a href="{% url 'apps.home:dashboard' %}" class="btn btn-primary">Access Dashboard</a>
                 </div>
-        
+
                 <footer class="text-center mt-5">
                     <a href="https://judiciary.go.ke" class="text-decoration-none">Judiciary</a>
-                    <p>© 2025 Directorate of Strategy, Planning and Organizational Productivity</p>
+                    <p>© {% now "Y" %} Directorate of Strategy, Planning and Organizational Productivity</p> {# Use dynamic year #}
                 </footer>
             </div>
         </section>

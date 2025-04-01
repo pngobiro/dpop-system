@@ -1,0 +1,36 @@
+{% extends "layouts/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %} Add Task to {{ project.name }} {% endblock %}
+
+{% block content %}
+{# Removed invalid {% set %} tags #}
+
+<div class="container mt-4">
+    <h3 style="color: #006633; border-bottom: 1px solid #DAA520; padding-bottom: 5px;"> {# Primary Green, Gold Accent #}
+        <i class="fas fa-plus-square me-2"></i> Add New Task
+    </h3>
+    <p class="text-muted">
+        <strong>Project:</strong> <a href="{% url 'tasks:project_detail' project.id %}" style="color: #006633;">{{ project.name }}</a> {# Primary Green #}
+    </p>
+    <hr class="mt-0">
+
+    <div class="card shadow-sm border-light">
+        <div class="card-body">
+            <form method="post" action="{% url 'tasks:add_task' project.id %}">
+                {% csrf_token %}
+                {{ form|crispy }} {# Render the TaskForm #}
+
+                <div class="mt-4 text-end"> {# Align buttons right #}
+                    <a href="{% url 'tasks:project_detail' project.id %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;">Cancel</a> {# Secondary Button #}
+                    <button type="submit" class="btn btn-sm" style="background-color: #006633; color: #FFFFFF; border-color: #006633;"> {# Primary Green Button #}
+                        <i class="fas fa-save me-1"></i> Save Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}

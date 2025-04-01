@@ -1,0 +1,153 @@
+{% extends "layouts/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %} Project: {{ project.name }} {% endblock %}
+
+{% block content %}
+{# Removed invalid {% set %} tags #}
+
+<div class="container mt-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom: 2px solid #DAA520;"> {# Gold accent #}
+        <div>
+            <h2 style="color: #006633; margin-bottom: 0;"> {# Primary Green #}
+                <i class="fas fa-project-diagram me-2"></i> Project: {{ project.name }}
+            </h2>
+            {% if project.department %}
+                <h5 class="text-muted">Department: {{ project.department.name }}</h5>
+            {% endif %}
+            <p class="mb-1" style="color: #333333;"><strong>Owner:</strong> {# Dark Text #}
+                {% if project.owner %}
+                    {{ project.owner.get_full_name|default:project.owner.username }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-sm me-2" data-bs-toggle="modal" data-bs-target="#addProjectAttachmentModal" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"> {# Secondary Button #}
+                <i class="fas fa-paperclip me-1"></i> Add Attachment
+            </button>
+            <a href="{% url 'tasks:add_task' project.id %}" class="btn btn-sm" style="background-color: #006633; color: #FFFFFF; border-color: #006633;"> {# Primary Green Button #}
+                 <i class="fas fa-plus me-1"></i> Add New Task
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4 border-light shadow-sm">
+        <div class="card-header" style="background-color: #f8f9fa; border-bottom: 1px solid #ddd;"> {# Light BG #}
+             <h5 class="mb-0" style="color: #006633;"><i class="fas fa-info-circle me-2"></i> Description</h5> {# Primary Green #}
+        </div>
+        <div class="card-body" style="color: #333333;"> {# Dark Text #}
+            {{ project.description|linebreaksbr|default:"No description provided." }}
+        </div>
+    </div>
+
+
+    {# Project Attachments Section #}
+    <div class="card mb-4 border-light shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #f8f9fa; border-bottom: 1px solid #ddd;"> {# Light BG #}
+            <h5 class="mb-0" style="color: #006633;"><i class="fas fa-folder-open me-2"></i> Project Attachments</h5> {# Primary Green #}
+             <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" data-bs-toggle="modal" data-bs-target="#addProjectAttachmentModal" title="Add Attachment">
+                <i class="fas fa-plus"></i> Add
+            </button>
+        </div>
+        <div class="card-body">
+            {% if project_attachments %}
+                <ul class="list-group list-group-flush">
+                    {% for attachment in project_attachments %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-2 py-1">
+                            <a href="{{ attachment.get_file_url|default:'#' }}" target="_blank" style="color: #006633;">{{ attachment.title }}</a> {# Primary Green #}
+                            <small class="text-muted">({{ attachment.file_type }}) - {{ attachment.created_at|date:"Y-m-d" }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                 <p class="text-muted mb-0">No project attachments yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <h4 style="color: #006633;"><i class="fas fa-tasks me-2"></i> Tasks</h4> {# Primary Green #}
+
+    {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm align-middle">
+                <thead style="background-color: #f8f9fa;"> {# Light BG #}
+                    <tr>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Assignee</th>
+                        <th>Due Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                        <tr>
+                            <td><a href="{% url 'tasks:task_detail' task.id %}" style="color: #006633; text-decoration: none;">{{ task.title }}</a></td> {# Primary Green #}
+                            <td><span class="badge" style="background-color: #6c757d; color: #FFFFFF">{{ task.get_status_display }}</span></td> {# Secondary Badge #}
+                            <td>{{ task.get_priority_display }}</td>
+                            <td>
+                                {% if task.assignee %}
+                                    {{ task.assignee.get_full_name|default:task.assignee.username }}
+                                {% else %}
+                                    <span class="text-muted">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ task.due_date|date:"Y-m-d"|default:"-" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-sm py-0 px-1 me-1" style="background-color: #0dcaf0; color: #000000; border-color: #0dcaf0" title="View Task"><i class="fas fa-eye"></i></a> {# Info Button #}
+                                {% if request.user == task.creator or request.user == task.assignee %}
+                                    <a href="{% url 'tasks:edit_task' task.id %}" class="btn btn-sm py-0 px-1" style="background-color: #ffc107; color: #000000; border-color: #ffc107" title="Edit Task"><i class="fas fa-edit"></i></a> {# Warning Button #}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-secondary" role="alert">
+            No tasks found for this project yet.
+        </div>
+    {% endif %}
+
+    <div class="mt-4 mb-5">
+        {% if project.department %}
+            <a href="{% url 'tasks:department_task_project_list' project.department.id %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Department Projects</a> {# Secondary Button #}
+        {% else %}
+             <a href="{% url 'apps.home:dashboard' %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a> {# Secondary Button #}
+        {% endif %}
+    </div>
+
+</div>
+
+{# Add Project Attachment Modal #}
+<div class="modal fade" id="addProjectAttachmentModal" tabindex="-1" aria-labelledby="addProjectAttachmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color: #006633; color: #FFFFFF;"> {# Primary Green #}
+        <h5 class="modal-title" id="addProjectAttachmentModalLabel">Add Attachment to Project: {{ project.name }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'tasks:project_detail' project.id %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="modal-body">
+              {% if attachment_form %}
+                 {{ attachment_form|crispy }}
+              {% else %}
+                 <p class="text-danger">Attachment form could not be loaded. Document Management app might be misconfigured.</p>
+              {% endif %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn" style="background-color: #006633; color: #FFFFFF;" {% if not attachment_form %}disabled{% endif %}>Upload Attachment</button> {# Primary Green Button #}
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

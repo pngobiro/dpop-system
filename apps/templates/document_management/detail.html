@@ -1,0 +1,99 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Document: {{ document.title }} {% endblock %}
+
+{% block content %}
+{# Removed invalid {% set %} tags #}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 style="color: #006633; border-bottom: 1px solid #DAA520; padding-bottom: 5px; margin-bottom: 0;"> {# Primary Green, Gold Accent #}
+            <i class="fas fa-file-alt me-2"></i> Document: {{ document.title }}
+            {% if document.is_confidential %}
+                <span class="badge bg-danger ms-2">Confidential</span>
+            {% endif %}
+        </h3>
+        {# Back button logic updated #}
+        {% if from_dept_id %}
+             {# Preserve filters from library if needed? Maybe too complex for now. Just go back to library with dept context. #}
+             <a href="{% url 'document_management:digital_library' %}?from_dept={{ from_dept_id }}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Library</a>
+        {% else %}
+             <a href="{% url 'document_management:digital_library' %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Library</a>
+        {% endif %}
+    </div>
+    <hr class="mt-0">
+
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            {# Description/Summary Card #}
+            <div class="card shadow-sm border-light h-100">
+                 <div class="card-header" style="background-color: #f8f9fa; border-bottom: 1px solid #ddd;"> {# Light BG #}
+                    <h5 class="mb-0" style="color: #006633;"><i class="fas fa-align-left me-2"></i> Summary / Description</h5> {# Primary Green #}
+                 </div>
+                 <div class="card-body" style="white-space: pre-wrap; color: #333333;"> {# Dark Text #}
+                    {{ document.description|default:"No description available." }}
+                 </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+             {# Metadata Card #}
+            <div class="card shadow-sm border-light h-100">
+                <div class="card-header" style="background-color: #006633; color: #FFFFFF;"> {# Primary Green #}
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i> Details</h6>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Category:</strong> {{ document.category.name|default:'N/A' }}</li>
+                    <li class="list-group-item"><strong>File Type:</strong> {{ document.file_type|upper|default:'N/A' }}</li>
+                    <li class="list-group-item"><strong>Size:</strong> {{ document.file_size|filesizeformat|default:'N/A' }}</li>
+                    <li class="list-group-item"><strong>Tags:</strong> {{ document.tags|default:'None' }}</li>
+                    <li class="list-group-item"><strong>Uploaded By:</strong> {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username|default:'N/A' }}</li>
+                    <li class="list-group-item"><strong>Uploaded At:</strong> {{ document.created_at|date:"Y-m-d H:i" }}</li>
+                    <li class="list-group-item"><strong>Status:</strong> {{ document.get_status_display|default:document.status }}</li>
+                    {% if document.source_object %}
+                        {# Ensure get_absolute_url exists on related models or remove link #}
+                        <li class="list-group-item"><strong>Source:</strong>
+                            {% if document.source_object.get_absolute_url %}
+                                <a href="{{ document.source_object.get_absolute_url }}" style="color: #006633;">{{ document.source_object }}</a> {# Primary Green #}
+                            {% else %}
+                                {{ document.source_object }} (No link available)
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {# Action Buttons #}
+    <div class="mb-4 p-3 rounded" style="background-color: #f8f9fa; border: 1px solid #ddd;"> {# Light BG #}
+        <h5 style="color: #006633;">Actions</h5> {# Primary Green #}
+        <hr class="my-2">
+        <div class="d-flex flex-wrap gap-2">
+            {# Preserve from_dept_id in action links if present #}
+            {% url 'document_management:download_document' document.id as download_url %}
+            {% url 'document_management:share_document' document.id as share_url %}
+            {% url 'document_management:summarize_document' document.id as base_summarize_url %}
+
+            <a href="{{ download_url }}{% if from_dept_id %}?from_dept={{ from_dept_id }}{% endif %}" class="btn btn-sm" style="background-color: #006633; color: #FFFFFF; border-color: #006633;"> {# Primary Green Button #}
+                <i class="fas fa-download me-1"></i> Download
+            </a>
+             <a href="{{ share_url }}{% if from_dept_id %}?from_dept={{ from_dept_id }}{% endif %}" class="btn btn-sm" style="background-color: #0dcaf0; color: #000000; border-color: #0dcaf0;"> {# Info Button #}
+                <i class="fas fa-share-alt me-1"></i> Share
+            </a>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #DAA520; color: #333333; border-color: #DAA520;"> {# Gold Accent Button #}
+                <i class="fas fa-brain me-1"></i> Summarize (AI)
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ base_summarize_url }}?level=short{% if from_dept_id %}&from_dept={{ from_dept_id }}{% endif %}">Short Summary</a></li>
+                <li><a class="dropdown-item" href="{{ base_summarize_url }}?level=medium{% if from_dept_id %}&from_dept={{ from_dept_id }}{% endif %}">Medium Summary</a></li>
+                <li><a class="dropdown-item" href="{{ base_summarize_url }}?level=detailed{% if from_dept_id %}&from_dept={{ from_dept_id }}{% endif %}">Detailed Summary</a></li>
+              </ul>
+            </div>
+        </div>
+    </div>
+
+    {# Removed duplicate Back button from here #}
+
+</div>
+{% endblock content %}

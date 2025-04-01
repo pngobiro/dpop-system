@@ -4,9 +4,9 @@ from . import views
 app_name = 'document_management'
 
 urlpatterns = [
-    path('upload/', views.upload_document, name='upload_document'),
-    path('list/', views.document_list, name='document_list'),
-    path('google-auth/', views.google_auth, name='google_auth'),
-    path('google-auth-callback/', views.google_auth_callback, name='google_auth_callback'),
-    path('share/<int:document_id>/', views.share_document, name='share_document'),
+    path('library/', views.digital_library, name='digital_library'),
+    path('document/<int:doc_id>/', views.document_detail, name='document_detail'),
+    path('document/<int:doc_id>/summarize/', views.summarize_document, name='summarize_document'),
+    path('document/<int:doc_id>/download/', views.download_document, name='download_document'),
+    path('document/<int:doc_id>/share/', views.share_document, name='share_document'),
 ]

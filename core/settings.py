@@ -1,5 +1,3 @@
-
-
 import os
 
 
@@ -17,10 +15,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'django-insecure-x-7z@n$vgndj+lp*g98&*!#z2shsgah6jgt(%%k1f_%q4@nm9r'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True 
+DEBUG = True
 
 LOGIN_URL = 'authentication:login'  # Correct
-# or 
+# or
 LOGIN_URL = '/accounts/login/' # Correct - explicitly specifies
 
 # allow all hosts in development
@@ -38,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'authentication', # added the authentication apps
     'apps.permissions',
-    'apps.home', 
+    'apps.home',
     'django_unicorn',
     'apps.statistics',
     'apps.document_management',
@@ -49,10 +47,17 @@ INSTALLED_APPS = [
     'apps.memos',
     'apps.mail',
     'apps.pmmu',
+    'apps.tasks', # Added the tasks app
+
+    # Third-party apps
     'debug_toolbar',
+    'crispy_forms',
+    'crispy_bootstrap5',
 
 ]
 
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 
 AUTH_USER_MODEL = 'authentication.CustomUser'
@@ -82,11 +87,11 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            # templates dir then apps 
+            # templates dir then apps
             TEMPLATE_DIR,
             os.path.join(TEMPLATE_DIR, "apps"),
         ],
-    
+
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
