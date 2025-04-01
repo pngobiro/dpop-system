@@ -813,112 +813,129 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           from django.contrib.auth.models import Permission
           from django.contrib.contenttypes.models import ContentType
           
-          
           class Command(BaseCommand):
               help = 'Seeds modules and their permissions'
           
               def handle(self, *args, **kwargs):
                   self.stdout.write('Seeding modules and permissions...')
           
-                  # Delete existing modules
+                  # --- VERY IMPORTANT: Delete existing modules first! ---
                   Module.objects.all().delete()
           
                   modules_data = [
+                      # ... (Your module data as before) ...
                       {
-                          'name': 'Document Management',
-                          'description': 'Create, share and manage electronic documents', 
-                          'icon_class': 'fas fa-file-alt',
-                          'url_name': 'document_management:document_list',
-                          'permission_codename': 'access_documents'
-                      },
-                      {
-                          'name': 'Meetings',
-                          'description': 'Schedule and manage meetings',
-                          'icon_class': 'fas fa-calendar-alt',
-                          'url_name': 'meetings:dashboard',
-                          'permission_codename': 'access_meetings'
-                      },
-                      {
-                          'name': 'Budget',
-                          'description': 'Manage workplans and budgets',
-                          'icon_class': 'fas fa-money-bill-alt',
-                          'url_name': 'budget:workplan_summary',
-                          'permission_codename': 'access_budget'
-                      },
-                      {
-                          'name': 'Statistics',
-                          'description': 'Access and analyze DCRT data',
-                          'icon_class': 'fas fa-chart-bar',
-                          'url_name': 'statistics:home',
-                          'permission_codename': 'access_statistics'
-                      },
-                      {
-                          'name': 'Performance',
-                          'description': 'Performance tracking and reporting',
-                          'icon_class': 'fas fa-tachometer-alt',
-                          'url_name': 'performance:dashboard',
-                          'permission_codename': 'access_performance'
-                      },
-                      {
-                          'name': 'Memos',
-                          'description': 'Internal memos and communications',
-                          'icon_class': 'fas fa-envelope',
-                          'url_name': 'memos:department_dashboard',
-                          'permission_codename': 'access_memos'
-                      },
-                      {
-                          'name': 'Projects',
-                          'description': 'Track transformative initiatives',
-                          'icon_class': 'fas fa-project-diagram',
-                          'url_name': 'projects:dashboard',
-                          'permission_codename': 'access_projects'
-                      },
-                      {
-                          'name': 'Reports',
-                          'description': 'Generate and download reports',
-                          'icon_class': 'fas fa-file-pdf',
-                          'url_name': 'reports:dashboard', 
-                          'permission_codename': 'access_reports'
-                      },
-                      {
-                          'name': 'Mail',
-                          'description': 'Manage physical',
-                          'icon_class': 'fas fa-envelope',
-                          'url_name': 'mail:physical_list',
-                          'permission_codename': 'access_mail'
+                                    'name': 'Document Management',
+                                    'description': 'Create, share and manage electronic documents',
+                                    'icon_class': 'fas fa-file-alt',
+                                    'url_name': 'document_management:document_list',
+                                    'permission_codename': 'access_documents'
+                                },
+                                {
+                                    'name': 'Meetings',
+                                    'description': 'Schedule and manage meetings',
+                                    'icon_class': 'fas fa-calendar-alt',
+                                    'url_name': 'meetings:dashboard',
+                                    'permission_codename': 'access_meetings'
+                                },
+                                {
+                                    'name': 'Budget',
+                                    'description': 'Manage workplans and budgets',
+                                    'icon_class': 'fas fa-money-bill-alt',
+                                    'url_name': 'budget:workplan_summary',
+                                    'permission_codename': 'access_budget'
+                                },
+                                {
+                                    'name': 'Statistics',
+                                    'description': 'Access and analyze DCRT data',
+                                    'icon_class': 'fas fa-chart-bar',
+                                    'url_name': 'statistics:home',
+                                    'permission_codename': 'access_statistics'
+                                },
+                                {
+                                    'name': 'Performance',
+                                    'description': 'Performance tracking and reporting',
+                                    'icon_class': 'fas fa-tachometer-alt',
+                                    'url_name': 'performance:dashboard',
+                                    'permission_codename': 'access_performance'
+                                },
+                                {
+                                    'name': 'Memos',
+                                    'description': 'Internal memos and communications',
+                                    'icon_class': 'fas fa-envelope',
+                                    'url_name': 'memos:department_dashboard',
+                                    'permission_codename': 'access_memos'
+                                },
+                                {
+                                    'name': 'Projects',
+                                    'description': 'Track transformative initiatives',
+                                    'icon_class': 'fas fa-project-diagram',
+                                    'url_name': 'projects:dashboard',
+                                    'permission_codename': 'access_projects'
+                                },
+                                {
+                                    'name': 'Reports',
+                                    'description': 'Generate and download reports',
+                                    'icon_class': 'fas fa-file-pdf',
+                                    'url_name': 'reports:dashboard',
+                                    'permission_codename': 'access_reports'
+                                },
+                                {
+                                    'name': 'Mail',
+                                    'description': 'Manage physical',
+                                    'icon_class': 'fas fa-envelope',
+                                    'url_name': 'mail:physical_list',
+                                    'permission_codename': 'access_mail'
           
-                      },
-                      {
-                          'name': 'Surveys',
-                          'description': 'Create and manage surveys',
-                          'icon_class': 'fas fa-poll',
-                          'url_name': 'surveys:dashboard',
-                          'permission_codename': 'access_surveys'
-                      },
-                      {
-                          'name': 'PMMU Evaluation and Target Setting',
-                          'description': 'PMMU Evaluation and Target Setting',
-                          'icon_class': 'fas fa-chart-line',
-                          'url_name': 'pmmu_evaluation:dashboard',
-                          'permission_codename': 'access_pmmu_evaluation'
-                      }
+                                },
+                                {
+                                    'name': 'Surveys',
+                                    'description': 'Create and manage surveys',
+                                    'icon_class': 'fas fa-poll',
+                                    'url_name': 'surveys:dashboard',
+                                    'permission_codename': 'access_surveys'
+                                },
+                                {
+                                    'name': 'PMMU Evaluation and Target Setting',
+                                    'description': 'PMMU Evaluation and Target Setting',
+                                    'icon_class': 'fas fa-chart-line',
+                                    'url_name': 'pmmu_evaluation:dashboard',
+                                    'permission_codename': 'access_pmmu_evaluation'
+                                },
+                                {
+                                    'name': 'Innovations and Best Practices',
+                                    'description': 'Innovations and Best Practices',
+                                    'icon_class': 'fas fa-lightbulb',
+                                    'url_name': 'innovations:dashboard',
+                                    'permission_codename': 'access_innovations'
+                                      
+                                }
                   ]
+          
           
                   # Get content type for Module model
                   content_type = ContentType.objects.get_for_model(Module)
           
                   # Create modules and permissions
                   for module_data in modules_data:
-                      # Create module
-                      module = Module.objects.create(
-                          name=module_data['name'],
-                          description=module_data['description'],
-                          icon_class=module_data['icon_class'],
-                          url_name=module_data['url_name'],
-                          permission_codename=module_data['permission_codename']
+                       # Create module using get_or_create
+                      module, created = Module.objects.get_or_create(
+                          name=module_data['name'],  # Use 'name' for uniqueness
+                          defaults={
+                              'description': module_data['description'],
+                              'icon_class': module_data['icon_class'],
+                              'url_name': module_data['url_name'],
+                              'permission_codename': module_data['permission_codename']
+                          }
                       )
           
-                           # Create permission using get_or_create
+                      if created:
+                          self.stdout.write(f"Created module: {module.name}")
+                      else:
+                          self.stdout.write(self.style.WARNING(f"Module '{module.name}' already exists. Skipping."))
+          
+          
+                      # Create permission using get_or_create
                       permission, created = Permission.objects.get_or_create(
                           codename=module_data['permission_codename'],
                           content_type=content_type,
@@ -927,15 +944,13 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                           }
                       )
           
-                      if created:
-                          self.stdout.write(f"Created module: {module.name} with permission: {module_data['permission_codename']}")
-                      else:
-                          self.stdout.write(self.style.WARNING(f"Module '{module.name}' and/or permission '{module_data['permission_codename']}' already exists. Skipping."))
           
+                      if created:
+                          self.stdout.write(f"Created permission: {permission.codename}")
+                      else:
+                           self.stdout.write(self.style.WARNING(f"Permission '{module_data['permission_codename']}' already exists. Skipping."))
           
                   self.stdout.write(self.style.SUCCESS('Successfully seeded modules and permissions'))
-          
-                    
 
     . models.py
       Content:
@@ -1057,6 +1072,570 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
               'modules': permitted_modules,
           }
           return render(request, "home/department_modules.html", context)
+
+  . innovations/
+    . __init__.py
+      Content:
+
+
+    . admin.py
+      Content:
+      # apps/innovations/admin.py
+      from django.contrib import admin
+      from .models import Innovation, InnovationAttachment
+      
+      class InnovationAttachmentInline(admin.TabularInline):  # Or StackedInline, if you prefer
+          model = InnovationAttachment
+          extra = 1  # Number of empty forms to show
+      
+      @admin.register(Innovation)
+      class InnovationAdmin(admin.ModelAdmin):
+          list_display = ('title', 'court', 'station', 'financial_year', 'status', 'submitted_by', 'submitted_at')
+          list_filter = ('status', 'financial_year', 'court__unit_rank', 'is_replication') # Added filters
+          search_fields = ('title', 'description', 'court__name', 'station')
+          inlines = [InnovationAttachmentInline]
+          readonly_fields = ('submitted_at', 'approved_at')  # Make timestamps read-only
+          fieldsets = (
+              (None, {
+                  'fields': (
+                      'court',
+                      'station',
+                      'financial_year',
+                      'title',
+                      'status', # status is also here
+                      'submitted_by',  # Added submitted_by
+                      'submitted_at',
+                  )
+              }),
+              ('Replication Information', {
+                  'fields': ('is_replication', 'source_court'),
+                  'classes': ('collapse',),  # Optional: Collapsible section
+              }),
+              ('Categorization', {
+                  'fields': ('category',),  # Added category
+              }),
+              ('Details', {
+                  'fields': (
+                      'situation_before',
+                      'description',
+                      'solution',
+                      'replication_potential',
+                      'individuals_involved',
+                      'stakeholders_affected',
+                  ),
+              }),
+      
+              ('Approval', {  # Approval section
+                  'fields': ('approved_by', 'approved_at'),
+                   'classes': ('collapse',),
+              }),
+      
+          )
+          
+          def save_model(self, request, obj, form, change):
+            if not change:  # New object
+                obj.submitted_by = request.user # auto-populate on initial save
+            super().save_model(request, obj, form, change)
+
+    . apps.py
+      Content:
+      from django.apps import AppConfig
+      
+      
+      class InnovationsConfig(AppConfig):
+          default_auto_field = 'django.db.models.BigAutoField'
+          name = 'apps.innovations'
+          label = "innovations"
+
+    . forms.py
+      Content:
+      # apps/innovations/forms.py
+      from django import forms
+      from .models import Innovation, InnovationAttachment
+      from django.forms import inlineformset_factory
+      
+      
+      class InnovationForm(forms.ModelForm):
+          class Meta:
+              model = Innovation
+              fields = [
+                  'court',
+                  'station',
+                  'financial_year',
+                  'title',
+                  'is_replication',
+                  'source_court',
+                  'category',
+                  'situation_before',
+                  'description',
+                  'solution',
+                  'replication_potential',
+                  'individuals_involved',
+                  'stakeholders_affected',
+                  'status', # status in the form
+              ]
+      
+              widgets = {
+                  'situation_before': forms.Textarea(attrs={'rows': 3}),
+                  'description': forms.Textarea(attrs={'rows': 5}),
+                  'solution': forms.Textarea(attrs={'rows': 5}),
+                  'replication_potential': forms.Textarea(attrs={'rows': 3}),
+                  'individuals_involved': forms.Textarea(attrs={'rows': 3}),
+                  'stakeholders_affected': forms.Textarea(attrs={'rows': 3}),
+      
+                  'court': forms.Select(attrs={'class': 'form-control'}),
+                  'station': forms.TextInput(attrs={'class': 'form-control'}),
+                  'financial_year': forms.Select(attrs={'class': 'form-control'}),
+                  'title': forms.TextInput(attrs={'class': 'form-control'}),
+                  'source_court': forms.TextInput(attrs={'class': 'form-control'}),
+                  'category': forms.Select(attrs={'class': 'form-control'}), # Added category
+                   'status': forms.Select(attrs={'class': 'form-control'}),# added ststus in the form
+              }
+      
+              # help text
+              help_texts = {
+                'is_replication': 'Check this box if this innovation is a replication of an existing innovation.',
+                'source_court': 'If this is a replication, specify the original court/tribunal/directorate/registry.',
+              }
+            
+          def __init__(self, *args, **kwargs):
+             super().__init__(*args, **kwargs)
+             # Set up choices for the 'category' field, based on SECTION II of your form.
+             self.fields['category'].choices = [
+                ('', 'Select Category'),  # Add a blank option at the top
+                ('efficiency', 'Initiatives that improve efficiency and effectiveness in service delivery (Court user satisfaction)'),
+                ('vulnerable', 'Initiatives that are responsive to vulnerable and marginalised groups'),
+                ('security', 'Initiatives that enhance security, safety and convenience'),
+                ('access', 'Initiatives that enhance expansion of doorways to Justice'),
+                ('partnerships', 'Initiatives in partnerships with other stakeholders in justice chain'),
+                ('mentorship', 'Initiatives that enhance mentorship, leadership and governance'),
+                ('financial', 'Initiatives that improve financial management and save cost'),
+                ('employee', 'Initiatives that improve employee satisfaction and mental wellness'),
+                ('environment', 'Initiatives that improve work environment and/or mitigate effects of climate change'),
+                ('other', 'Others (specify)'),
+              ]
+              
+          # def clean, to check the required based on a selection
+      
+          def clean(self):
+            cleaned_data = super().clean()
+            is_replication = cleaned_data.get('is_replication')
+            source_court = cleaned_data.get('source_court')
+      
+            if is_replication and not source_court:
+                self.add_error('source_court', 'Source court is required if this is a replication.')
+      
+            return cleaned_data
+      
+      class InnovationAttachmentForm(forms.ModelForm):
+          class Meta:
+              model = InnovationAttachment
+              fields = ['file']
+      
+      # Create an inline formset for attachments
+      InnovationAttachmentFormSet = inlineformset_factory(
+          Innovation,
+          InnovationAttachment,
+          form=InnovationAttachmentForm,
+          extra=1,  # Number of empty forms to display
+          can_delete=True,  # Allow deleting existing attachments
+      )
+
+    . management/
+      . commands/
+        . seed_innovations.py
+          Content:
+          # apps/innovations/management/commands/seed_innovations.py
+          from django.core.management.base import BaseCommand
+          from django.contrib.auth import get_user_model
+          from apps.innovations.models import Innovation, InnovationAttachment
+          from apps.statistics.models import Unit, FinancialYear
+          from faker import Faker
+          import random
+          
+          User = get_user_model()
+          
+          class Command(BaseCommand):
+              help = 'Seeds the Innovation model with sample data'
+          
+              def handle(self, *args, **kwargs):
+                  self.stdout.write('Seeding Innovation data...')
+          
+                  # --- Prerequisites ---
+                  users = User.objects.all()
+                  if not users.exists():
+                      self.stdout.write(self.style.ERROR('No users found. Run seed_organization first.'))
+                      return
+          
+                  units = Unit.objects.all()
+                  if not units.exists():
+                      self.stdout.write(self.style.ERROR('No units found. Run seed_statistics first.'))
+                      return
+          
+                  financial_years = FinancialYear.objects.all()
+                  if not financial_years.exists():
+                      self.stdout.write(self.style.ERROR('No financial years found. Run seed_organization first.'))
+                      return
+          
+                  # --- Sample Data ---
+                  fake = Faker()
+                  categories = [
+                      'efficiency', 'vulnerable', 'security', 'access', 'partnerships',
+                      'mentorship', 'financial', 'employee', 'environment', 'other'
+                  ]
+                  statuses = ['innovation', 'best_practice', 'rejected']
+          
+                  # --- Create Innovations ---
+                  for _ in range(30):  # Create 30 innovations
+                      submitted_by = random.choice(users)
+                      court = random.choice(units)
+                      financial_year = random.choice(financial_years)
+                      is_replication = random.choice([True, False])
+                      source_court = fake.company() if is_replication else None
+                      category = random.choice(categories)
+                      status = random.choice(statuses) #random choice of the status
+                      approved_by = random.choice(users) if status == 'best_practice' else None #approved by a random user
+          
+                      innovation = Innovation.objects.create(
+                          court=court,
+                          station=fake.city(),
+                          financial_year=financial_year,
+                          title=fake.catch_phrase(),
+                          is_replication=is_replication,
+                          source_court=source_court,
+                          category=category,
+                          situation_before=fake.paragraph(nb_sentences=3),
+                          description=fake.paragraph(nb_sentences=5),
+                          solution=fake.paragraph(nb_sentences=5),
+                          replication_potential=fake.paragraph(nb_sentences=2),
+                          individuals_involved=', '.join([fake.name() for _ in range(random.randint(1, 5))]),
+                          stakeholders_affected=', '.join([fake.word() for _ in range(random.randint(1, 3))]),
+                          status=status,
+                          submitted_by=submitted_by,
+                          approved_by = approved_by # assigned approved by
+                      )
+                      # create attachments
+                      for _ in range(random.randint(0, 3)):  # 0-3 attachments
+                          try:
+                              InnovationAttachment.objects.create(
+                                  innovation=innovation,
+                                  file=f"dummy_file_{random.randint(1,100)}.txt",  # Dummy filename, as we're not really uploading.
+                                  uploaded_by=submitted_by,
+                          )
+                          except Exception as e:
+                              print(e)
+                              continue
+          
+                      self.stdout.write(self.style.SUCCESS(f'Created innovation: {innovation.title}'))
+          
+                  self.stdout.write(self.style.SUCCESS('Successfully seeded Innovation data'))
+
+    . models.py
+      Content:
+            
+      # apps/innovations/models.py
+      from django.db import models
+      from django.conf import settings
+      from apps.statistics.models import Unit, FinancialYear, FinancialQuarter
+      from apps.organization.models import Department  # Assuming Department model is here
+      
+      class Innovation(models.Model):
+          STATUS_CHOICES = [
+              ('innovation', 'Innovation'),
+              ('best_practice', 'Best Practice'),
+              ('rejected', 'Rejected'),
+          ]
+      
+          court = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name="innovations") # FK
+          station = models.CharField(max_length=255)
+          financial_year = models.ForeignKey(FinancialYear, on_delete=models.CASCADE) # FK
+          title = models.CharField(max_length=255)
+          is_replication = models.BooleanField(default=False)
+          source_court = models.CharField(max_length=255, blank=True, null=True)  # If replication
+          category = models.CharField(max_length=100)  # Store the choice here as text
+          situation_before = models.TextField()
+          description = models.TextField()
+          solution = models.TextField()
+          replication_potential = models.TextField()
+          individuals_involved = models.TextField()  # Consider ManyToManyField to User model
+          stakeholders_affected = models.TextField()
+          status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='innovation')  # innovation, best_practice, rejected
+          submitted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='submitted_innovations')
+          submitted_at = models.DateTimeField(auto_now_add=True)
+          approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_innovations')
+          approved_at = models.DateTimeField(null=True, blank=True)
+      
+      
+          def __str__(self):
+              return self.title
+          
+          class Meta:
+                    permissions = [
+                  ("view_all_innovations", "Can view all innovations"),  # Keep this one
+                  ("approve_innovation", "Can approve innovation"),
+                  ("reject_innovation", "Can reject innovation"),
+                  # Renamed permissions:
+                  ("can_view_innovation", "Can view innovation"),
+                  ("can_change_innovation", "Can change innovation"),
+                  ("can_delete_innovation", "Can delete innovation"),
+              ]
+              
+      
+      class InnovationAttachment(models.Model):
+          innovation = models.ForeignKey(Innovation, on_delete=models.CASCADE, related_name='attachments')
+          file = models.FileField(upload_to='innovation_attachments/%Y/%m/%d/')
+          uploaded_at = models.DateTimeField(auto_now_add=True)
+          uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+      
+          def __str__(self):
+              return f"Attachment for {self.innovation.title}"
+      
+          
+
+    . tests.py
+      Content:
+      from django.test import TestCase
+      
+      # Create your tests here.
+
+    . urls.py
+      Content:
+      # apps/innovations/urls.py
+      from django.urls import path
+      from . import views
+      
+      app_name = 'apps.innovations'
+      
+      urlpatterns = [
+          path('submit/', views.submit_innovation, name='submit_innovation'),
+          path('list/', views.innovation_list, name='innovation_list'),
+          path('approve/<int:pk>/', views.approve_innovation, name='approve_innovation'),
+          path('reject/<int:pk>/', views.reject_innovation, name='reject_innovation'),
+          path('detail/<int:pk>/', views.innovation_detail, name='innovation_detail'),
+          path('edit/<int:pk>/', views.edit_innovation, name='edit_innovation'),
+          path('delete/<int:pk>/', views.delete_innovation, name='delete_innovation'),
+          path('download/<int:attachment_id>/', views.download_attachment, name='download_attachment'),
+          path('', views.dashboard, name='dashboard'),  # Add the dashboard URL
+      ]
+
+    . views.py
+      Content:
+      
+      from django.shortcuts import render, redirect, get_object_or_404
+      from django.contrib.auth.decorators import login_required, permission_required
+      from django.db.models import Q, Count  # Import Count
+      from apps.statistics.models import FinancialYear  # Import FinancialYear
+      from .forms import InnovationForm, InnovationAttachmentFormSet
+      from .models import Innovation, InnovationAttachment
+      from django.contrib.auth.decorators import login_required
+      from django.contrib import messages  # Import the messages framework
+      from django.utils import timezone #import timezone
+      from django.http import HttpResponseForbidden, HttpResponse
+      
+      
+      
+      @login_required
+      @permission_required('innovations.view_innovation', raise_exception=True) #add permissions
+      def dashboard(request):
+          # Get the selected financial year from the request, or default to the current year
+          current_fy = FinancialYear.objects.order_by('-start_date').first()  # Get *latest* FY
+          selected_fy_id = request.GET.get('financial_year', current_fy.pk if current_fy else None) # None if no FY at all
+      
+          try:
+              selected_fy = FinancialYear.objects.get(pk=selected_fy_id)
+          except FinancialYear.DoesNotExist:
+              selected_fy = current_fy  # Fallback to current, or could return a 404/error
+          
+          # Base query, filtered by user permissions
+          if request.user.is_superuser:
+              base_query = Q(financial_year=selected_fy)
+          else:
+             base_query = Q(financial_year=selected_fy) & (Q(submitted_by=request.user) | Q(court__in=request.user.departments.all())) # Use court, not department
+      
+          # Calculate statistics
+          stats = {
+              'total': Innovation.objects.filter(base_query).count(),
+              'innovations': Innovation.objects.filter(base_query, status='innovation').count(),
+              'best_practices': Innovation.objects.filter(base_query, status='best_practice').count(),
+              'rejected': Innovation.objects.filter(base_query, status='rejected').count(),
+          }
+      
+          # Get recent innovations (limit to, say, the last 5)
+          recent_innovations = Innovation.objects.filter(base_query).order_by('-submitted_at')[:5]
+      
+      
+          financial_years = FinancialYear.objects.all()  # Get all financial years for the dropdown
+      
+          context = {
+              'stats': stats,
+              'recent_innovations': recent_innovations,
+              'financial_years': financial_years,
+              'selected_fy': selected_fy,  # Pass the *selected* financial year object
+          }
+          return render(request, 'innovations/dashboard.html', context)
+      
+      
+      @login_required
+      def submit_innovation(request):
+          if request.method == 'POST':
+              form = InnovationForm(request.POST)
+              formset = InnovationAttachmentFormSet(request.POST, request.FILES)
+      
+              if form.is_valid() and formset.is_valid():
+                  innovation = form.save(commit=False)
+                  innovation.submitted_by = request.user
+                  innovation.save()
+      
+                  for form in formset:
+                      if form.cleaned_data:  # Avoid processing empty forms
+                        attachment = form.save(commit=False)
+                        attachment.innovation = innovation
+                        attachment.uploaded_by = request.user
+                        attachment.save()
+      
+                  messages.success(request, 'Innovation submitted successfully!')  # Success message
+                  return redirect('innovations:innovation_list')  # Redirect after successful submission
+      
+              else: # Display form errors with Bootstrap formatting
+                for field, errors in form.errors.items():
+                  for error in errors:
+                      messages.error(request, f"{form.fields[field].label}: {error}")
+      
+                for error in formset.non_form_errors():
+                  messages.error(request, error)
+      
+          else:
+              form = InnovationForm()
+              formset = InnovationAttachmentFormSet(queryset=InnovationAttachment.objects.none())  # Empty initial formset
+      
+          return render(request, 'innovations/submit_innovation.html', {'form': form, 'formset': formset})
+      
+      
+      
+      @login_required
+      @permission_required('innovations.can_view_innovation', raise_exception=True)
+      def innovation_list(request):
+          # Filter innovations based on user's permissions and department
+          if request.user.is_superuser:
+              innovations = Innovation.objects.all()  # Superuser can see all
+          else:
+             # User sees their submissions and department innovations
+              innovations = Innovation.objects.filter(
+              Q(submitted_by=request.user) | Q(court__in=request.user.departments.all())
+               ).distinct()
+      
+          return render(request, 'innovations/innovation_list.html', {'innovations': innovations})
+      
+      
+      @login_required
+      def innovation_detail(request, pk):
+          innovation = get_object_or_404(Innovation, pk=pk)
+          # Check permissions
+          if not request.user.is_superuser and request.user != innovation.submitted_by and request.user.department != innovation.court.department: #changed to court as it is now a foreign key
+      
+              return HttpResponseForbidden("You don't have permission to view this innovation.") # used HttpResponseForbidden
+      
+          return render(request, 'innovations/innovation_detail.html', {'innovation': innovation})
+      
+      
+      
+      @login_required
+      def approve_innovation(request, pk):
+          innovation = get_object_or_404(Innovation, pk=pk)
+          # Check permission to approve. Use the new helper function
+          if not request.user.is_superuser:
+              return HttpResponseForbidden("Only admins can approve.")
+      
+          if request.method == 'POST':
+              innovation.status = 'best_practice'  # Approve
+              innovation.approved_by = request.user
+              innovation.approved_at = timezone.now() # use timezone.now()
+              innovation.save()
+              messages.success(request, 'Innovation approved!')  # Provide feedback
+              return redirect('innovations:innovation_list')
+      
+          return render(request, 'innovations/approve_innovation.html', {'innovation': innovation})
+      
+      
+      @login_required
+      def reject_innovation(request, pk):
+          innovation = get_object_or_404(Innovation, pk=pk)
+      
+          # Check permission to reject. Only admins can reject:
+          if not request.user.is_superuser:
+            return HttpResponseForbidden("Only admins can reject.")
+      
+      
+          if request.method == 'POST':
+              innovation.status = 'rejected'
+              innovation.save()
+              messages.success(request, 'Innovation rejected.')
+              return redirect('innovations:innovation_list')  # Redirect after rejection
+          return render(request, 'innovations/reject_innovation.html', {'innovation': innovation})
+      
+      
+      
+      @login_required
+      @permission_required('innovations.can_change_innovation', raise_exception=True)
+      def edit_innovation(request, pk):
+          innovation = get_object_or_404(Innovation, pk=pk)
+      
+          # Check if the user has permission to edit
+          if request.user != innovation.submitted_by and not request.user.is_superuser:
+            return HttpResponseForbidden("You do not have permission to edit this innovation.")
+      
+      
+          if request.method == 'POST':
+              form = InnovationForm(request.POST, instance=innovation)
+              formset = InnovationAttachmentFormSet(request.POST, request.FILES, instance=innovation)
+      
+              if form.is_valid() and formset.is_valid():
+                  form.save()
+                  formset.save()
+                  messages.success(request, 'Innovation updated successfully!')
+                  return redirect('innovations:innovation_detail', pk=innovation.pk)
+              else: #added form errors to template
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{form.fields[field].label}: {error}")
+                for error in formset.non_form_errors():
+                  messages.error(request, error)
+          else:
+              form = InnovationForm(instance=innovation)
+              formset = InnovationAttachmentFormSet(instance=innovation)
+      
+          return render(request, 'innovations/edit_innovation.html', {'form': form, 'formset': formset, 'innovation': innovation})
+      
+      
+      @login_required
+      def delete_innovation(request, pk):
+          innovation = get_object_or_404(Innovation, pk=pk)
+      
+          #check permission
+          if request.user != innovation.submitted_by and not request.user.is_superuser: # added superuser
+              return HttpResponseForbidden("You do not have permission to delete this innovation.")
+      
+      
+          if request.method == 'POST':
+              innovation.delete()
+              messages.success(request, 'Innovation deleted successfully!') # added form errors
+              return redirect('innovations:innovation_list')
+      
+          return render(request, 'innovations/innovation_confirm_delete.html', {'innovation': innovation})
+      
+      
+      @login_required
+      def download_attachment(request, attachment_id):
+          attachment = get_object_or_404(InnovationAttachment, pk=attachment_id)
+      
+          # Check if user has permission to download:
+          if not request.user.is_superuser and request.user != attachment.innovation.submitted_by and request.user.department != attachment.innovation.court.department: # use court instead of department
+              return HttpResponseForbidden("You don't have permission to download this file.")
+      
+          # Serve the file using Django's built-in static files handling:
+          response = HttpResponse(attachment.file, content_type='application/octet-stream')
+          response['Content-Disposition'] = f'attachment; filename="{attachment.file.name}"'
+          return response
 
   . mail/
     . __init__.py
@@ -2281,6 +2860,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       app_name = 'meetings'
       
       urlpatterns = [
+          path('calendar/', views.calendar_view, name='calendar'),  # Add this line
           path('', views.dashboard, name='dashboard'),
           path('director/', views.director_dashboard, name='director_dashboard'),
           path('list/', views.meeting_list, name='meeting_list'),
@@ -2297,20 +2877,22 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         from .base import dashboard, director_dashboard
         from .crud import (
             meeting_create,
-            meeting_detail, 
+            meeting_detail,
             meeting_update,
             meeting_delete
         )
         from .lists import meeting_list
+        from .calendar import calendar_view
         
         __all__ = [
             'dashboard',
             'director_dashboard',
             'meeting_create',
             'meeting_detail',
-            'meeting_update', 
+            'meeting_update',
             'meeting_delete',
-            'meeting_list'
+            'meeting_list',
+            'calendar_view'
         ]
 
       . base.py
@@ -2329,9 +2911,25 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
             user = request.user
             today = timezone.now().date()
             thirty_days_ago = today - timezone.timedelta(days=30)
+            thirty_days_ahead = today + timezone.timedelta(days=30)
         
+            # Base query for user's meetings
             base_query = Q(department=user.department) | Q(participants=user)
         
+            # Get today's meetings
+            todays_meetings = Meeting.objects.filter(
+                date=today,
+                status='scheduled'
+            ).filter(base_query).distinct().order_by('start_time')
+        
+            # Get upcoming meetings (excluding today)
+            upcoming_meetings = Meeting.objects.filter(
+                date__gt=today,
+                date__lte=thirty_days_ahead,
+                status='scheduled'
+            ).filter(base_query).distinct().order_by('date', 'start_time')[:5]
+        
+            # Calculate statistics
             stats = {
                 'total_meetings': Meeting.objects.filter(base_query).distinct().count(),
                 'upcoming_count': Meeting.objects.filter(
@@ -2341,16 +2939,15 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                 'completed_count': Meeting.objects.filter(
                     status='completed',
                     date__gte=thirty_days_ago
-                ).filter(base_query).distinct().count()
+                ).filter(base_query).distinct().count(),
+                'my_meetings_count': Meeting.objects.filter(
+                    Q(organizer=user) | Q(participants=user)
+                ).distinct().count()
             }
-        
-            upcoming_meetings = Meeting.objects.filter(
-                date__gte=today,
-                status='scheduled'
-            ).filter(base_query).distinct().order_by('date', 'start_time')[:5]
         
             context = {
                 'stats': stats,
+                'todays_meetings': todays_meetings,
                 'upcoming_meetings': upcoming_meetings,
             }
             return render(request, 'meetings/dashboard.html', context)
@@ -2396,6 +2993,207 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
             }
             
             return render(request, 'meetings/director_dashboard.html', context)
+
+      . calendar.py
+        Content:
+        # apps/meetings/views/calendar.py
+        from django.shortcuts import render
+        from django.contrib.auth.decorators import login_required
+        from django.utils import timezone
+        from django.db.models import Q
+        from calendar import monthcalendar
+        import calendar
+        from datetime import datetime, date, timedelta
+        from ..models import Meeting
+        from apps.organization.models import Department
+        from apps.statistics.models import FinancialYear, FinancialQuarter
+        from django.utils.safestring import mark_safe
+        
+        class Calendar:
+            def __init__(self, year=None, month=None):
+                self.year = year or timezone.now().year
+                self.month = month or timezone.now().month
+                
+            def formatday(self, day, meetings):
+                """Format a day with its meetings."""
+                meetings_per_day = meetings.filter(date__day=day)
+                d = ''
+                for meeting in meetings_per_day:
+                    badge_class = ''
+                    if meeting.meeting_type == 'director':
+                        badge_class = 'text-danger'
+                    elif meeting.meeting_type == 'department':
+                        badge_class = 'text-primary'
+                    elif meeting.meeting_type == 'committee':
+                        badge_class = 'text-success'
+                        
+                    d += f'''<div class="mb-2">
+                        <a href="/meetings/{meeting.pk}/" 
+                           class="text-decoration-none {badge_class}">
+                            <small class="fw-bold">{meeting.start_time.strftime('%H:%M')}</small> - {meeting.title[:30]}...
+                        </a>
+                    </div>'''
+                    
+                if day != 0:
+                    today = timezone.localtime().date()
+                    today_class = 'table-primary' if today == date(self.year, self.month, day) else ''
+                    return f"""
+                        <td class="align-top p-3 {today_class}" style="height: 180px; min-width: 200px;">
+                            <div class="fs-4 fw-bold mb-3">{day}</div>
+                            <div class="overflow-hidden">{d}</div>
+                        </td>
+                    """
+                return '<td class="bg-light"></td>'
+        
+            def formatweek(self, week, meetings):
+                """Format a complete week."""
+                week_days = ''
+                for day in week:
+                    week_days += self.formatday(day, meetings)
+                return f'<tr>{week_days}</tr>'
+        
+            def formatmonth(self, meetings):
+                """Format the entire month."""
+                cal = monthcalendar(self.year, self.month)
+                
+                month_header = f'''
+                <thead>
+                    <tr>
+                        <th colspan="7" class="bg-primary text-white text-center p-4 fs-3">
+                            {calendar.month_name[self.month]} {self.year}
+                        </th>
+                    </tr>
+                    <tr>
+                        <th class="text-center p-3 fs-5">Mon</th>
+                        <th class="text-center p-3 fs-5">Tue</th>
+                        <th class="text-center p-3 fs-5">Wed</th>
+                        <th class="text-center p-3 fs-5">Thu</th>
+                        <th class="text-center p-3 fs-5">Fri</th>
+                        <th class="text-center p-3 fs-5">Sat</th>
+                        <th class="text-center p-3 fs-5">Sun</th>
+                    </tr>
+                </thead>
+                '''
+                
+                weeks = ''
+                for week in cal:
+                    weeks += self.formatweek(week, meetings)
+                    
+                return mark_safe(f'<table class="table table-bordered table-lg mb-0">{month_header}<tbody>{weeks}</tbody></table>')
+        
+        @login_required
+        def calendar_view(request):
+            """View for displaying the calendar with meetings."""
+            
+            # Get current date with timezone awareness
+            current_date = timezone.localtime().date()
+            
+            # Get current financial year
+            current_fy = FinancialYear.objects.filter(
+                start_date__date__lte=current_date,
+                end_date__date__gte=current_date
+            ).first()
+            
+            # Get default quarter
+            if current_fy:
+                current_quarter = FinancialQuarter.objects.filter(
+                    financial_year=current_fy,
+                    start_date__lte=current_date,
+                    end_date__gte=current_date
+                ).first()
+                default_quarter = str(current_quarter.quarter_number) if current_quarter else None
+            else:
+                default_quarter = None
+                
+            selected_quarter = request.GET.get('quarter', default_quarter)
+            
+            # Get selected month and year
+            if selected_quarter and not request.GET.get('month') and current_fy:
+                try:
+                    quarter = FinancialQuarter.objects.get(
+                        financial_year=current_fy,
+                        quarter_number=int(selected_quarter)
+                    )
+                    month = quarter.start_date.month
+                    year = quarter.start_date.year
+                except (FinancialQuarter.DoesNotExist, ValueError):
+                    month = current_date.month
+                    year = current_date.year
+            else:
+                month = int(request.GET.get('month', current_date.month))
+                year = int(request.GET.get('year', current_date.year))
+            
+            department_id = request.GET.get('department')
+            
+            # Filter meetings based on permissions
+            user = request.user
+            if user.has_perm('meetings.view_all_meetings'):
+                meetings = Meeting.objects.all()
+            else:
+                meetings = Meeting.objects.filter(
+                    Q(department=user.department) | Q(participants=user)
+                ).distinct()
+            
+            # Apply department filter if user has permission
+            if department_id and user.has_perm('meetings.view_all_meetings'):
+                meetings = meetings.filter(department_id=department_id)
+            
+            # Apply quarter filter
+            if selected_quarter and current_fy:
+                try:
+                    quarter = FinancialQuarter.objects.get(
+                        financial_year=current_fy,
+                        quarter_number=int(selected_quarter)
+                    )
+                    meetings = meetings.filter(
+                        date__range=[quarter.start_date, quarter.end_date]
+                    )
+                except (FinancialQuarter.DoesNotExist, ValueError):
+                    pass
+            
+            # Filter for selected month
+            meetings = meetings.filter(date__year=year, date__month=month)
+            
+            # Navigation links
+            prev_month = month - 1 if month > 1 else 12
+            prev_year = year if month > 1 else year - 1
+            next_month = month + 1 if month < 12 else 1
+            next_year = year if month < 12 else year + 1
+            
+            # Create calendar
+            cal = Calendar(year, month)
+            calendar_html = cal.formatmonth(meetings)
+            
+            # Get departments for filter (if user has permission)
+            departments = None
+            if user.has_perm('meetings.view_all_meetings'):
+                departments = Department.objects.all()
+            
+            # Get quarters for current financial year
+            quarters = []
+            if current_fy:
+                quarters = [
+                    (str(q.quarter_number), 
+                     f'Quarter {q.quarter_number} ({q.start_date.strftime("%b")} - {q.end_date.strftime("%b")})')
+                    for q in FinancialQuarter.objects.filter(financial_year=current_fy).order_by('quarter_number')
+                ]
+            
+            context = {
+                'calendar': calendar_html,
+                'prev_month': prev_month,
+                'prev_year': prev_year,
+                'next_month': next_month,
+                'next_year': next_year,
+                'current_month': calendar.month_name[month],
+                'current_year': year,
+                'departments': departments,
+                'selected_department': department_id,
+                'quarters': quarters,
+                'selected_quarter': selected_quarter,
+                'current_fy': current_fy,
+            }
+            
+            return render(request, 'meetings/calendar.html', context)
 
       . crud.py
         Content:
@@ -4358,11 +5156,17 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
       class UnitRank(models.Model):
           name = models.CharField(max_length=255)
           is_court = models.BooleanField(default=False)
+          
+          def __str__(self):
+              return self.name
       
       class FinancialYear(models.Model):
           name = models.CharField(max_length=255)
           start_date = models.DateTimeField()
           end_date = models.DateTimeField()
+          
+          def __str__(self):
+              return self.name
       
       class FinancialQuarter(models.Model):
           name = models.CharField(max_length=255)
@@ -4398,6 +5202,10 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
           is_court = models.BooleanField(default=False)
           latitude = models.FloatField(default=0)
           longitude = models.FloatField(default=0)
+          
+          
+          def __str__(self):
+              return self.name
       
       class Months(models.Model):
           name = models.CharField(max_length=255)
@@ -9952,6 +10760,1111 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         
           
 
+    . innovations/
+      . approve_innovation.html
+        Content:
+        {# apps/innovations/templates/innovations/approve_innovation.html #}
+        
+        {% extends "layouts/base.html" %}
+        
+        {% block title %}Approve Innovation{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h4 mb-0">Approve Innovation</h2>
+                </div>
+                <div class="card-body">
+                    <p>Are you sure you want to approve the innovation "{{ innovation.title }}"?</p>
+                    <p>Approving this innovation will change its status to "Best Practice".</p>
+        
+                    <form method="post" action="{% url 'innovations:approve_innovation' innovation.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">Approve</button>
+                        <a href="{% url 'innovations:innovation_detail' innovation.pk %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+
+      . dashboard.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Innovations Dashboard{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <!-- Breadcrumb Navigation -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Innovations Dashboard</li>
+                </ol>
+            </nav>
+        
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Innovations Dashboard</h2>
+                <div class="btn-group">
+                    <a href="{% url 'innovations:submit_innovation' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Submit New
+                    </a>
+                    <a href="{% url 'innovations:innovation_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-list"></i> View All
+                    </a>
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="fas fa-home"></i> Main Dashboard
+                    </a>
+                </div>
+            </div>
+        
+            <!-- Financial Year Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" action="{% url 'innovations:dashboard' %}" class="row align-items-center">
+                        <div class="col-md-4">
+                            <label for="financial_year" class="form-label">Filter by Financial Year:</label>
+                            <select name="financial_year" id="financial_year" class="form-select" onchange="this.form.submit()">
+                                {% for year in financial_years %}
+                                    <option value="{{ year.pk }}" {% if year.pk == selected_fy.pk %}selected{% endif %}>
+                                        {{ year.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Innovations</h5>
+                            <p class="card-text display-6">{{ stats.total }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Submitted</h5>
+                            <p class="card-text display-6">{{ stats.innovations }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Best Practices</h5>
+                            <p class="card-text display-6">{{ stats.best_practices }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Rejected</h5>
+                            <p class="card-text display-6">{{ stats.rejected }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Recent Innovations -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Innovations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Court</th>
+                                    <th>Submitted By</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for innovation in recent_innovations %}
+                                <tr>
+                                    <td>{{ innovation.title }}</td>
+                                    <td>{{ innovation.court.name }}</td>
+                                    <td>{{ innovation.submitted_by.get_full_name|default:innovation.submitted_by.username }}</td>
+                                    <td>
+                                        <span class="badge {% if innovation.status == 'innovation' %}bg-primary{% elif innovation.status == 'best_practice' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ innovation.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ innovation.submitted_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'innovations:innovation_detail' innovation.pk %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No recent innovations.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end mt-3">
+                        <a href="{% url 'innovations:innovation_list' %}" class="btn btn-primary">
+                            View All Innovations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+
+      . edit_innovation.html
+        Content:
+        {# apps/innovations/templates/innovations/edit_innovation.html #}
+        {% extends "layouts/base.html" %}
+        
+        {% block title %}Edit Innovation{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-warning text-white">
+                            <h5 class="mb-0">Edit Innovation: {{ innovation.title }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data"> {# enctype is needed for file uploads #}
+                                {% csrf_token %}
+        
+                                {{ form.media }}  {# Include form media (for Datepicker, etc.) #}
+                                {{ formset.management_form }} {# Required for formsets #}
+        
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger">
+                                        {{ form.non_field_errors }}
+                                    </div>
+                                {% endif %}
+        
+                                <!--  Display form fields-->
+        
+                              <!-- ... (rest of your form fields, like in submit_innovation.html) ... -->
+                               <div class="row">
+                                      <div class="col-md-6 mb-3">
+                                        {{ form.court.label_tag }}
+                                        {{ form.court }}
+                                        {{ form.court.errors }}
+                                      </div>
+                                      <div class="col-md-6 mb-3">
+                                        {{ form.station.label_tag }}
+                                        {{ form.station }}
+                                        {{ form.station.errors }}
+                                      </div>
+                                 </div>
+        
+                                <div class="mb-3">
+                                    {{ form.title.label_tag }}
+                                    {{ form.title }}
+                                    {{ form.title.errors }}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.financial_year.label_tag }}
+                                        {{ form.financial_year }}
+                                        {{ form.financial_year.errors }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form.category.label_tag }}
+                                        {{ form.category }}
+                                        {{ form.category.errors }}
+                                     </div>   
+                                </div>
+        
+                                <div class="mb-3 form-check">
+                                    {{ form.is_replication }}
+                                    <label class="form-check-label" for="{{ form.is_replication.id_for_label }}">
+                                        {{ form.is_replication.label }}
+                                    </label>
+                                    {{ form.is_replication.errors }}
+                                </div>
+        
+                                <div class="mb-3" id="source_court_div" style="display: none;">
+                                    {{ form.source_court.label_tag }}
+                                    {{ form.source_court }}
+                                    {{ form.source_court.errors }}
+                                </div>
+        
+                                <div class="mb-3">
+                                    {{ form.situation_before.label_tag }}
+                                    {{ form.situation_before }}
+                                    {{ form.situation_before.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    {{ form.description.label_tag }}
+                                    {{ form.description }}
+                                    {{ form.description.errors }}
+                                </div>
+                                <div class="mb-3">
+                                    {{ form.solution.label_tag }}
+                                    {{ form.solution }}
+                                    {{ form.solution.errors }}
+                                </div>
+        
+                                <div class="mb-3">
+                                    {{ form.replication_potential.label_tag }}
+                                    {{ form.replication_potential }}
+                                    {{ form.replication_potential.errors }}
+                                </div>
+        
+                                <div class="mb-3">
+                                    {{ form.individuals_involved.label_tag }}
+                                    {{ form.individuals_involved }}
+                                    {{ form.individuals_involved.errors }}
+                                </div>
+        
+                                <div class="mb-3">
+                                    {{ form.stakeholders_affected.label_tag }}
+                                    {{ form.stakeholders_affected }}
+                                    {{ form.stakeholders_affected.errors }}
+                                </div>
+        
+                                <div class="mb-3">
+                                 {{ form.status.label_tag }}
+                                 {{ form.status }}
+                                 {{ form.status.errors }}
+                              </div>
+        
+        
+        
+                                <h5>Attachments</h5>
+                                 <div id="attachment-formset-container">
+                                    
+                                    {% for form in formset %}
+                                    <div class="attachment-form mb-2 p-3 border rounded">
+                                        <div class="row">
+                                             <div class="col-md-4 mb-3">
+                                               <label class="form-label">Document Type</label>
+                                                  {{ form.document_type }}  
+                                             </div>
+        
+                                             <div class="col-md-4 mb-3">
+                                               <label class="form-label">File</label>
+                                                  {{ form.file }}  
+                                             </div>
+                                           <div class="col-md-4 mb-3">
+                                           <label class="form-label">Notes</label>
+                                           {{ form.notes }}  
+                                         </div>
+        
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-danger remove-attachment" style="display: {% if form.instance.pk %}inline-block{% else %}none{% endif %};">Remove</button>
+        
+                                        {% if form.instance.pk %}
+                                          {{ form.DELETE }}  {# Add the DELETE checkbox #}
+                                        {% endif %}
+        
+                                    </div>
+                                    {% endfor %}
+                                    </div>
+        
+                                <button type="button" class="btn btn-sm btn-secondary" id="add-attachment">
+                                    <i class="fas fa-plus"></i> Add Another Document
+                                </button>
+                                <div class="mt-3">
+                                <button type="submit" class="btn btn-primary">Update Innovation</button>
+                                <a href="{% url 'innovations:innovation_detail' innovation.pk %}" class="btn btn-secondary">Cancel</a>
+                               </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+        
+        {% block javascripts %}
+        <script>
+         document.addEventListener('DOMContentLoaded', function() {
+                // Handle meeting mode toggle
+                const meetingModeSelect = document.getElementById('{{ form.meeting_mode.id_for_label }}');
+                const virtualDetailsDiv = document.getElementById('virtualMeetingDetails');
+                
+                function toggleVirtualDetails() {
+                    if (meetingModeSelect.value === 'physical') {
+                        virtualDetailsDiv.style.display = 'none';
+                    } else {
+                        virtualDetailsDiv.style.display = 'flex';
+                    }
+                }
+                
+                meetingModeSelect.addEventListener('change', toggleVirtualDetails);
+                toggleVirtualDetails(); // Call once on page load
+        
+                // Handle document forms
+                const container = document.getElementById('documents-container');
+                const addButton = document.getElementById('add-document');
+                
+                addButton.addEventListener('click', function() {
+                    // Clone the first document form
+                    const newForm = container.querySelector('.document-form').cloneNode(true);
+                    
+                    // Clear input values
+                    newForm.querySelectorAll('input, textarea').forEach(input => input.value = '');
+                    
+                    // Show remove button
+                    newForm.querySelector('.remove-document').style.display = 'block';
+                    
+                    // Add event listener to remove button
+                    newForm.querySelector('.remove-document').addEventListener('click', function() {
+                        newForm.remove();
+                    });
+                    
+                    // Append new form
+                    container.appendChild(newForm);
+                });
+            
+                // Initialize date and time pickers if needed
+                if (typeof flatpickr !== 'undefined') {
+                    flatpickr('input[type="date"]', {
+                        dateFormat: 'Y-m-d',
+                        minDate: 'today'
+                    });
+                    
+                    flatpickr('input[type="time"]', {
+                        enableTime: true,
+                        noCalendar: true,
+                        dateFormat: "H:i",
+                        time_24hr: true
+                    });
+                }
+            });
+        </script>
+        {% endblock javascripts %}
+
+      . innovation_confirm_delete.html
+        Content:
+        {# apps/innovations/templates/innovations/innovation_confirm_delete.html #}
+        
+        {% extends "layouts/base.html" %}
+        
+        {% block title %}Confirm Deletion{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="h4 mb-0">Confirm Deletion</h2>
+                </div>
+                <div class="card-body">
+                    <p>Are you sure you want to delete the innovation "{{ innovation.title }}"?</p>
+                    <p class="text-danger">This action cannot be undone.</p>
+        
+                    <form method="post" action="{% url 'innovations:delete_innovation' innovation.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                        <a href="{% url 'innovations:innovation_detail' innovation.pk %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+
+      . innovation_detail.html
+        Content:
+        {% extends "layouts/base.html" %}
+        
+        {% block title %}Innovation Detail: {{ innovation.title }}{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                    <h2 class="h4 mb-0">{{ innovation.title }}</h2>
+                    <div>
+                        {% if perms.innovations.change_innovation and innovation.submitted_by == request.user or user.is_superuser  %}
+                            <a href="{% url 'innovations:edit_innovation' innovation.pk %}" class="btn btn-sm btn-warning" title="Edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        {% endif %}
+                        {% if perms.innovations.delete_innovation and innovation.submitted_by == request.user or user.is_superuser %}
+                            <a href="{% url 'innovations:delete_innovation' innovation.pk %}" class="btn btn-sm btn-danger" title="Delete">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </a>
+                        {% endif %}
+                    </div>
+        
+                </div>
+                <div class="card-body">
+        
+                     <div class="mb-3">
+                        <strong>Status:</strong>
+                        {% if innovation.status == 'innovation' %}
+                            <span class="badge bg-primary">Innovation</span>
+                        {% elif innovation.status == 'best_practice' %}
+                            <span class="badge bg-success">Best Practice</span>
+                        {% elif innovation.status == 'rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                        {% endif %}
+                    </div>
+        
+        
+                    <div class="mb-3">
+                        <strong>Court/Station:</strong> {{ innovation.court.name }}, {{ innovation.station }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Financial Year:</strong> {{ innovation.financial_year.name }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Submitted By:</strong> {{ innovation.submitted_by.get_full_name|default:innovation.submitted_by.username }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Submitted At:</strong> {{ innovation.submitted_at|date:"F j, Y, g:i a" }}
+                    </div>
+                    
+                    {% if innovation.approved_by %}
+                     <div class="mb-3">
+                       <strong>Approved By:</strong> {{ innovation.approved_by.get_full_name|default:innovation.approved_by.username }}
+                     </div>
+                    {% endif %}
+        
+                   {% if innovation.approved_at %}
+                      <div class="mb-3">
+                        <strong>Approved At:</strong> {{ innovation.approved_at|date:"F j, Y, g:i a" }}
+                      </div>
+                   {% endif %}
+                   
+        
+                    {% if innovation.is_replication %}
+                    <div class="mb-3">
+                        <strong>Replication:</strong> Yes
+                        <br>
+                        <strong>Source Court:</strong> {{ innovation.source_court }}
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <strong>Replication:</strong> No
+                    </div>
+                    {% endif %}
+        
+                    <div class="mb-3">
+                        <strong>Category:</strong> {{ innovation.category }}
+                    </div>
+        
+                    <div class="mb-3">
+                        <strong>Situation Before:</strong>
+                        <p>{{ innovation.situation_before|linebreaksbr }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Description:</strong>
+                        <p>{{ innovation.description|linebreaksbr }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Solution:</strong>
+                        <p>{{ innovation.solution|linebreaksbr }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Replication Potential:</strong>
+                        <p>{{ innovation.replication_potential|linebreaksbr }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Individuals Involved:</strong>
+                        <p>{{ innovation.individuals_involved|linebreaksbr }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Stakeholders Affected:</strong>
+                        <p>{{ innovation.stakeholders_affected|linebreaksbr }}</p>
+                    </div>
+                    
+                    {% if innovation.status == 'innovation' and user.is_superuser %}
+                         <div class="mb-3">
+        
+                             <form method="post" action="{% url 'innovations:approve_innovation' innovation.pk %}" class="d-inline">
+                                 {% csrf_token %}
+                                 <button type="submit" class="btn btn-success">Approve</button>
+                             </form>
+                            <form method="post" action="{% url 'innovations:reject_innovation' innovation.pk %}" class="d-inline">
+                                 {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Reject</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                    <hr>
+        
+                    <h5>Attachments</h5>
+                    {% if innovation.attachments.all %}
+                        <ul>
+                            {% for attachment in innovation.attachments.all %}
+                                <li>
+                                    <a href="{% url 'innovations:download_attachment' attachment.pk %}" target="_blank">
+                                        {{ attachment.file.name }}
+                                    </a> (Uploaded by: {{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.username }}
+                                     on {{attachment.uploaded_at|date:"M d, Y" }})
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No attachments.</p>
+                    {% endif %}
+        
+                     <a href="{% url 'innovations:innovation_list' %}" class="btn btn-primary">Back to List</a>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+
+      . innovation_list.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Innovation List{% endblock %}
+        
+        {% block extra_css %}
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
+        {% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'innovations:dashboard' %}">Innovations</a></li>
+                    <li class="breadcrumb-item active">List</li>
+                </ol>
+            </nav>
+        
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Innovation List</h2>
+                <div class="btn-group">
+                    <a href="{% url 'innovations:submit_innovation' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Submit New
+                    </a>
+                    <a href="{% url 'innovations:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-chart-bar"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        
+            <!-- Search and Filter Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" id="searchInput" class="form-control" placeholder="Search innovations...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="innovation">Innovation</option>
+                                <option value="best_practice">Best Practice</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="categoryFilter" class="form-select">
+                                <option value="">All Categories</option>
+                                <option value="efficiency">Efficiency</option>
+                                <option value="vulnerable">Vulnerable Groups</option>
+                                <option value="security">Security</option>
+                                <option value="access">Access to Justice</option>
+                                <option value="partnerships">Partnerships</option>
+                                <option value="mentorship">Mentorship</option>
+                                <option value="financial">Financial Management</option>
+                                <option value="employee">Employee Satisfaction</option>
+                                <option value="environment">Environment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Innovations Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="innovationsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Court</th>
+                                    <th>Station</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Submitted By</th>
+                                    <th>Submitted At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for innovation in innovations %}
+                                <tr>
+                                    <td>{{ innovation.title }}</td>
+                                    <td>{{ innovation.court.name }}</td>
+                                    <td>{{ innovation.station }}</td>
+                                    <td>{{ innovation.get_category_display }}</td>
+                                    <td>
+                                        <span class="badge {% if innovation.status == 'innovation' %}bg-primary{% elif innovation.status == 'best_practice' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ innovation.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ innovation.submitted_by.get_full_name|default:innovation.submitted_by.username }}</td>
+                                    <td>{{ innovation.submitted_at|date:"M d, Y, H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'innovations:innovation_detail' innovation.pk %}"
+                                               class="btn btn-sm btn-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if perms.innovations.change_innovation and innovation.submitted_by == request.user or user.is_superuser %}
+                                            <a href="{% url 'innovations:edit_innovation' innovation.pk %}" 
+                                               class="btn btn-sm btn-warning" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if perms.innovations.delete_innovation and innovation.submitted_by == request.user or user.is_superuser %}
+                                            <a href="{% url 'innovations:delete_innovation' innovation.pk %}" 
+                                               class="btn btn-sm btn-danger" title="Delete">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if user.is_superuser and innovation.status == 'innovation' %}
+                                            <a href="{% url 'innovations:approve_innovation' innovation.pk %}" 
+                                               class="btn btn-sm btn-success" title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            <a href="{% url 'innovations:reject_innovation' innovation.pk %}" 
+                                               class="btn btn-sm btn-danger" title="Reject">
+                                                <i class="fas fa-times"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No innovations found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+        
+        {% block extra_js %}
+        <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+        <script>
+        $(document).ready(function() {
+            // Initialize DataTables
+            var table = $('#innovationsTable').DataTable({
+                pageLength: 10,
+                order: [[6, 'desc']], // Sort by submitted date by default
+                responsive: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'collection',
+                        text: '<i class="fas fa-download"></i> Export',
+                        buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+                    }
+                ]
+            });
+        
+            // Custom search functionality
+            $('#searchInput').on('keyup', function() {
+                table.search(this.value).draw();
+            });
+        
+            // Status filter
+            $('#statusFilter').on('change', function() {
+                table.column(4).search(this.value).draw();
+            });
+        
+            // Category filter
+            $('#categoryFilter').on('change', function() {
+                table.column(3).search(this.value).draw();
+            });
+        });
+        </script>
+        {% endblock %}
+
+      . reject_innovation.html
+        Content:
+        {# apps/innovations/templates/innovations/reject_innovation.html #}
+        
+        {% extends "layouts/base.html" %}
+        
+        {% block title %}Reject Innovation{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h2 class="h4 mb-0">Reject Innovation</h2>
+                </div>
+                <div class="card-body">
+                    <p>Are you sure you want to reject the innovation "{{ innovation.title }}"?</p>
+                    <p>Rejecting this innovation will change its status to "Rejected".</p>
+        
+                    <form method="post" action="{% url 'innovations:reject_innovation' innovation.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Reject</button>
+                        <a href="{% url 'innovations:innovation_detail' innovation.pk %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+
+      . submit_innovation.html
+        Content:
+        {% extends "layouts/base.html" %}
+        {% block title %}Submit Innovation{% endblock %}
+        
+        {% block content %}
+        <div class="container mt-4">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'innovations:dashboard' %}">Innovations</a></li>
+                    <li class="breadcrumb-item active">Submit Innovation</li>
+                </ol>
+            </nav>
+        
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Submit Innovation</h2>
+                        <a href="{% url 'innovations:innovation_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+        
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form.media }}
+                        {{ formset.management_form }}
+        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+        
+                        <!-- Basic Information -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h3 class="h5 mb-0">Basic Information</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <label for="{{ form.court.id_for_label }}" class="col-sm-3 col-form-label">Court <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.court }}
+                                        {% if form.court.errors %}
+                                        <div class="text-danger">{{ form.court.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3">
+                                    <label for="{{ form.station.id_for_label }}" class="col-sm-3 col-form-label">Station <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.station }}
+                                        {% if form.station.errors %}
+                                        <div class="text-danger">{{ form.station.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3">
+                                    <label for="{{ form.title.id_for_label }}" class="col-sm-3 col-form-label">Title <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.title }}
+                                        {% if form.title.errors %}
+                                        <div class="text-danger">{{ form.title.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3">
+                                    <label for="{{ form.financial_year.id_for_label }}" class="col-sm-3 col-form-label">Financial Year <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.financial_year }}
+                                        {% if form.financial_year.errors %}
+                                        <div class="text-danger">{{ form.financial_year.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="col-sm-3 col-form-label">Category <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.category }}
+                                        {% if form.category.errors %}
+                                        <div class="text-danger">{{ form.category.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <!-- Replication Information -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h3 class="h5 mb-0">Replication Information</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-sm-9 offset-sm-3">
+                                        <div class="form-check">
+                                            {{ form.is_replication }}
+                                            <label class="form-check-label" for="{{ form.is_replication.id_for_label }}">
+                                                This is a replication of an existing innovation
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3" id="source_court_div" style="display: none;">
+                                    <label for="{{ form.source_court.id_for_label }}" class="col-sm-3 col-form-label">Source Court</label>
+                                    <div class="col-sm-9">
+                                        {{ form.source_court }}
+                                        {% if form.source_court.errors %}
+                                        <div class="text-danger">{{ form.source_court.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <!-- Innovation Details -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h3 class="h5 mb-0">Innovation Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <label for="{{ form.situation_before.id_for_label }}" class="col-sm-3 col-form-label">Situation Before <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.situation_before }}
+                                        <div class="text-muted text-end small"><span id="situation_before_count">0</span>/500 characters</div>
+                                        {% if form.situation_before.errors %}
+                                        <div class="text-danger">{{ form.situation_before.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="col-sm-3 col-form-label">Description <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.description }}
+                                        <div class="text-muted text-end small"><span id="description_count">0</span>/1000 characters</div>
+                                        {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3">
+                                    <label for="{{ form.solution.id_for_label }}" class="col-sm-3 col-form-label">Solution <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.solution }}
+                                        <div class="text-muted text-end small"><span id="solution_count">0</span>/1000 characters</div>
+                                        {% if form.solution.errors %}
+                                        <div class="text-danger">{{ form.solution.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3">
+                                    <label for="{{ form.replication_potential.id_for_label }}" class="col-sm-3 col-form-label">Replication Potential <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.replication_potential }}
+                                        {% if form.replication_potential.errors %}
+                                        <div class="text-danger">{{ form.replication_potential.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <!-- Stakeholders -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h3 class="h5 mb-0">Stakeholders</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <label for="{{ form.individuals_involved.id_for_label }}" class="col-sm-3 col-form-label">Individuals Involved <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.individuals_involved }}
+                                        {% if form.individuals_involved.errors %}
+                                        <div class="text-danger">{{ form.individuals_involved.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+        
+                                <div class="row mb-3">
+                                    <label for="{{ form.stakeholders_affected.id_for_label }}" class="col-sm-3 col-form-label">Stakeholders Affected <span class="text-danger">*</span></label>
+                                    <div class="col-sm-9">
+                                        {{ form.stakeholders_affected }}
+                                        {% if form.stakeholders_affected.errors %}
+                                        <div class="text-danger">{{ form.stakeholders_affected.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <!-- Attachments -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h3 class="h5 mb-0">Attachments</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="attachment-formset-container">
+                                    {% for form in formset %}
+                                    <div class="attachment-form mb-3 p-3 bg-light rounded">
+                                        <div class="row">
+                                            <div class="col">
+                                                {{ form.file }}
+                                                {% if form.file.errors %}
+                                                <div class="text-danger">{{ form.file.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="button" class="btn btn-sm btn-danger remove-attachment" style="display: none;">
+                                                    <i class="fas fa-times"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-outline-secondary" id="add-attachment">
+                                    <i class="fas fa-plus"></i> Add Attachment
+                                </button>
+                            </div>
+                        </div>
+        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between border-top pt-4">
+                            <a href="{% url 'innovations:innovation_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Submit Innovation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+        
+        {% block extra_js %}
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle source court field
+            const isReplicationCheckbox = document.getElementById('id_is_replication');
+            const sourceCourtDiv = document.getElementById('source_court_div');
+        
+            function toggleSourceCourt() {
+                sourceCourtDiv.style.display = isReplicationCheckbox.checked ? 'block' : 'none';
+            }
+        
+            isReplicationCheckbox.addEventListener('change', toggleSourceCourt);
+            toggleSourceCourt();
+        
+            // Character count
+            function updateCharCount(textarea, countElement, maxLength) {
+                const count = textarea.value.length;
+                countElement.textContent = count;
+            }
+        
+            const textareas = {
+                'id_situation_before': ['situation_before_count', 500],
+                'id_description': ['description_count', 1000],
+                'id_solution': ['solution_count', 1000]
+            };
+        
+            Object.entries(textareas).forEach(([id, [countId, maxLength]]) => {
+                const textarea = document.getElementById(id);
+                const countElement = document.getElementById(countId);
+                if (textarea && countElement) {
+                    updateCharCount(textarea, countElement, maxLength);
+                    textarea.addEventListener('input', () => updateCharCount(textarea, countElement, maxLength));
+                }
+            });
+        
+            // Attachment handling
+            const container = document.getElementById('attachment-formset-container');
+            const addButton = document.getElementById('add-attachment');
+            let formCount = container.children.length;
+        
+            addButton.addEventListener('click', function() {
+                const newForm = container.children[0].cloneNode(true);
+                formCount++;
+        
+                const formRegex = RegExp(`form-(\\d+)-`, 'g');
+                newForm.innerHTML = newForm.innerHTML.replace(formRegex, `form-${formCount}-`);
+        
+                newForm.querySelectorAll('input').forEach(input => {
+                    input.value = '';
+                });
+        
+                const removeButton = newForm.querySelector('.remove-attachment');
+                removeButton.style.display = 'block';
+                removeButton.addEventListener('click', function() {
+                    newForm.remove();
+                    updateFormsetManagement();
+                });
+        
+                container.appendChild(newForm);
+                updateFormsetManagement();
+            });
+        
+            container.querySelectorAll('.remove-attachment').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.attachment-form').remove();
+                    updateFormsetManagement();
+                });
+                button.style.display = 'block';
+            });
+        
+            function updateFormsetManagement() {
+                const totalForms = container.children.length;
+                document.getElementById('id_innovationattachment_set-TOTAL_FORMS').value = totalForms;
+            }
+        });
+        </script>
+        {% endblock %}
+
     . layouts/
       . base-fullscreen.html
         Content:
@@ -10640,43 +12553,193 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         {% endblock %}
 
     . meetings/
-      . dashboard.html
+      . calendar.html
         Content:
-        {% extends "layouts/base.html" %}
-        {% block title %}Meetings Dashboard{% endblock %}
+        {% extends 'layouts/base.html' %}
+        {% load static %}
         
         {% block content %}
-        <div class="container mt-4">
+        <div class="container-fluid py-4">
             <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">Meetings Dashboard</h2>
-                <a href="{% url 'meetings:meeting_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> New Meeting
-                </a>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h2 class="fs-1">Meeting Calendar</h2>
+                    {% if current_fy %}
+                    <p class="text-muted">Financial Year: {{ current_fy.name }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="{% url 'meetings:dashboard' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
             </div>
         
-            <!-- Stats Cards -->
+            <!-- Calendar Controls -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-4">
+                    <div class="btn-group">
+                        <a href="?month={{ prev_month }}&year={{ prev_year }}{% if selected_quarter %}&quarter={{ selected_quarter }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}" 
+                           class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                        <a href="?month={{ next_month }}&year={{ next_year }}{% if selected_quarter %}&quarter={{ selected_quarter }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}" 
+                           class="btn btn-outline-primary btn-lg">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <form method="get" id="quarterForm">
+                        {% if selected_department %}
+                        <input type="hidden" name="department" value="{{ selected_department }}">
+                        {% endif %}
+                        <div class="input-group input-group-lg">
+                            <select name="quarter" class="form-select form-select-lg" onchange="this.form.submit()">
+                                <option value="">All Quarters</option>
+                                {% for quarter_num, quarter_name in quarters %}
+                                <option value="{{ quarter_num }}" 
+                                        {% if quarter_num|stringformat:"s" == selected_quarter|stringformat:"s" %}selected{% endif %}>
+                                    {{ quarter_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+        
+                {% if departments %}
+                <div class="col-md-4">
+                    <form method="get" id="departmentForm">
+                        {% if selected_quarter %}
+                        <input type="hidden" name="quarter" value="{{ selected_quarter }}">
+                        {% endif %}
+                        <div class="input-group input-group-lg">
+                            <select name="department" class="form-select form-select-lg" onchange="this.form.submit()">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}" 
+                                        {% if dept.id|stringformat:"s" == selected_department %}selected{% endif %}>
+                                    {{ dept.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        
+            <!-- Calendar Legend -->
+            <div class="row mb-4">
+                <div class="col">
+                    <div class="d-flex gap-4">
+                        <div>
+                            <i class="fas fa-circle text-primary"></i>
+                            <span class="ms-2">Department Meetings</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-circle text-danger"></i>
+                            <span class="ms-2">Director Meetings</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-circle text-success"></i>
+                            <span class="ms-2">Committee Meetings</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Calendar -->
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                {{ calendar|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Meeting Quick View Modal -->
+        <div class="modal fade" id="meetingQuickView" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fs-4">Meeting Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Meeting details will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+        
+        {% block extra_js %}
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle meeting link clicks for quick view
+            document.querySelectorAll('td a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const meetingUrl = this.getAttribute('href');
+                    
+                    fetch(meetingUrl)
+                        .then(response => response.text())
+                        .then(html => {
+                            const modal = new bootstrap.Modal(document.getElementById('meetingQuickView'));
+                            document.querySelector('#meetingQuickView .modal-body').innerHTML = html;
+                            modal.show();
+                        });
+                });
+            });
+        });
+        </script>
+        {% endblock %}
+
+      . dashboard.html
+        Content:
+        {% extends 'layouts/base.html' %}
+        {% load static %}
+        
+        {% block content %}
+        <div class="container-fluid py-4">
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col">
+                    <h2>Meetings Dashboard</h2>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <a href="{% url 'meetings:meeting_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Meeting
+                        </a>
+                        <a href="{% url 'meetings:calendar' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-calendar-alt"></i> Calendar View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Quick Stats Cards -->
             <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="card bg-primary text-white">
                         <div class="card-body">
-                            <h5 class="card-title">Total Meetings</h5>
-                            <h2 class="mb-0">{{ stats.total_meetings }}</h2>
-                            <small>Last 30 days</small>
+                            <h5 class="card-title">Upcoming Meetings</h5>
+                            <h2 class="mb-0">{{ stats.upcoming_count }}</h2>
+                            <small>Next 30 days</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card bg-success text-white">
-                        <div class="card-body">
-                            <h5 class="card-title">Upcoming</h5>
-                            <h2 class="mb-0">{{ stats.upcoming_count }}</h2>
-                            <small>Scheduled meetings</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-info text-white">
                         <div class="card-body">
                             <h5 class="card-title">Completed</h5>
                             <h2 class="mb-0">{{ stats.completed_count }}</h2>
@@ -10685,201 +12748,164 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
                     </div>
                 </div>
                 <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Meetings</h5>
+                            <h2 class="mb-0">{{ stats.total_meetings }}</h2>
+                            <small>All time</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
                     <div class="card bg-warning text-white">
                         <div class="card-body">
-                            <h5 class="card-title">Cancelled</h5>
-                            <h2 class="mb-0">{{ stats.cancelled_count }}</h2>
-                            <small>Last 30 days</small>
+                            <h5 class="card-title">My Meetings</h5>
+                            <h2 class="mb-0">{{ stats.my_meetings_count }}</h2>
+                            <small>As organizer/participant</small>
                         </div>
                     </div>
                 </div>
             </div>
         
+            <!-- Main Content Area -->
             <div class="row">
-                <!-- Left Column -->
-                <div class="col-md-8">
-                    <!-- Upcoming Meetings -->
-                    <div class="card mb-4">
+                <!-- Today's Meetings -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Upcoming Meetings</h5>
-                            <a href="{% url 'meetings:meeting_list' %}?status=scheduled" class="btn btn-sm btn-outline-primary">View All</a>
+                            <h5 class="mb-0">Today's Meetings</h5>
+                            <span class="badge bg-primary">{{ todays_meetings|length }}</span>
                         </div>
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Title</th>
-                                            <th>Date & Time</th>
-                                            <th>Mode</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for meeting in upcoming_meetings %}
-                                        <tr>
-                                            <td>{{ meeting.title }}</td>
-                                            <td>
-                                                {{ meeting.date|date:"M d, Y" }}<br>
-                                                <small class="text-muted">
-                                                    {{ meeting.start_time|time:"g:i A" }} - {{ meeting.end_time|time:"g:i A" }}
-                                                </small>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-{{ meeting.meeting_mode|yesno:'primary,secondary' }}">
-                                                    {{ meeting.get_meeting_mode_display }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {% empty %}
-                                        <tr>
-                                            <td colspan="4" class="text-center">No upcoming meetings</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-        
-                    <!-- Recent Meetings -->
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Recent Meetings</h5>
-                            <a href="{% url 'meetings:meeting_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Title</th>
-                                            <th>Date</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for meeting in recent_meetings %}
-                                        <tr>
-                                            <td>{{ meeting.title }}</td>
-                                            <td>{{ meeting.date|date:"M d, Y" }}</td>
-                                            <td>
-                                                <span class="badge bg-{{ meeting.status|yesno:'success,secondary' }}">
-                                                    {{ meeting.get_status_display }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {% empty %}
-                                        <tr>
-                                            <td colspan="4" class="text-center">No recent meetings</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
+                            {% if todays_meetings %}
+                                <div class="list-group">
+                                    {% for meeting in todays_meetings %}
+                                        <a href="{% url 'meetings:meeting_detail' meeting.pk %}" 
+                                           class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ meeting.title }}</h6>
+                                                <small>{{ meeting.start_time|time:"H:i" }}</small>
+                                            </div>
+                                            <small class="text-muted">
+                                                {% if meeting.meeting_mode == 'virtual' %}
+                                                    <i class="fas fa-video"></i>
+                                                {% elif meeting.meeting_mode == 'physical' %}
+                                                    <i class="fas fa-building"></i>
+                                                {% else %}
+                                                    <i class="fas fa-users"></i>
+                                                {% endif %}
+                                                {{ meeting.get_meeting_mode_display }}
+                                                {% if meeting.virtual_meeting_url %}
+                                                    - <a href="{{ meeting.virtual_meeting_url }}" target="_blank" class="text-primary">Join Meeting</a>
+                                                {% endif %}
+                                            </small>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted text-center my-3">No meetings scheduled for today</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
         
-                <!-- Right Column -->
-                <div class="col-md-4">
-                    <!-- My Meetings -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">My Meetings</h5>
+                <!-- Upcoming Meetings -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Upcoming Meetings</h5>
+                            <a href="{% url 'meetings:calendar' %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-calendar-alt"></i> View Calendar
+                            </a>
                         </div>
                         <div class="card-body">
-                            {% for meeting in my_meetings %}
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="flex-shrink-0">
-                                    <div class="bg-light rounded p-2">
-                                        <i class="fas fa-calendar-alt text-primary"></i>
-                                    </div>
+                            {% if upcoming_meetings %}
+                                <div class="list-group">
+                                    {% for meeting in upcoming_meetings %}
+                                        <a href="{% url 'meetings:meeting_detail' meeting.pk %}" 
+                                           class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ meeting.title }}</h6>
+                                                <small>{{ meeting.date|date:"d M" }}</small>
+                                            </div>
+                                            <small class="text-muted">
+                                                {% if meeting.meeting_type == 'department' %}
+                                                    <i class="fas fa-users text-primary"></i>
+                                                {% elif meeting.meeting_type == 'director' %}
+                                                    <i class="fas fa-user-tie text-danger"></i>
+                                                {% elif meeting.meeting_type == 'committee' %}
+                                                    <i class="fas fa-users-cog text-success"></i>
+                                                {% else %}
+                                                    <i class="fas fa-users text-secondary"></i>
+                                                {% endif %}
+                                                {{ meeting.get_meeting_type_display }} - 
+                                                {{ meeting.department.name }}
+                                            </small>
+                                        </a>
+                                    {% endfor %}
                                 </div>
-                                <div class="flex-grow-1 ms-3">
-                                    <h6 class="mb-0">{{ meeting.title }}</h6>
-                                    <small class="text-muted">
-                                        {{ meeting.date|date:"M d, Y" }} at {{ meeting.start_time|time:"g:i A" }}
-                                    </small>
-                                </div>
-                                <a href="{% url 'meetings:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-arrow-right"></i>
-                                </a>
-                            </div>
-                            {% empty %}
-                            <p class="text-center text-muted">No upcoming meetings for you</p>
-                            {% endfor %}
+                            {% else %}
+                                <p class="text-muted text-center my-3">No upcoming meetings scheduled</p>
+                            {% endif %}
                         </div>
                     </div>
+                </div>
+            </div>
         
-                    <!-- Meeting Types Distribution -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Meeting Types</h5>
-                        </div>
-                        <div class="card-body">
-                            {% for type in meetings_by_type %}
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>{{ type.meeting_type|title }}</span>
-                                    <span class="fw-bold">{{ type.count }}</span>
-                                </div>
-                                <div class="progress" style="height: 6px;">
-                                    <div 
-                                        class="progress-bar" 
-                                        role="progressbar" 
-                                        style="width: {% widthratio type.count stats.total_meetings 100 %}%"
-                                        aria-valuenow="{% widthratio type.count stats.total_meetings 100 %}"
-                                        aria-valuemin="0" 
-                                        aria-valuemax="100">
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-        
-                    <!-- Meeting Modes Distribution -->
+            <!-- Quick Links and Actions -->
+            <div class="row">
+                <div class="col-md-12">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="mb-0">Meeting Modes</h5>
+                            <h5 class="mb-0">Quick Actions</h5>
                         </div>
                         <div class="card-body">
-                            {% for mode in meetings_by_mode %}
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span>{{ mode.meeting_mode|title }}</span>
-                                    <span class="fw-bold">{{ mode.count }}</span>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <a href="{% url 'meetings:meeting_create' %}" class="btn btn-outline-primary btn-block w-100 mb-2">
+                                        <i class="fas fa-plus"></i> Schedule Meeting
+                                    </a>
                                 </div>
-                                <div class="progress" style="height: 6px;">
-                                    <div 
-                                        class="progress-bar bg-success" 
-                                        role="progressbar" 
-                                        style="width: {% widthratio mode.count stats.total_meetings 100 %}%"
-                                        aria-valuenow="{% widthratio mode.count stats.total_meetings 100 %}"
-                                        aria-valuemin="0" 
-                                        aria-valuemax="100">
-                                    </div>
+                                <div class="col-md-3">
+                                    <a href="{% url 'meetings:meeting_list' %}" class="btn btn-outline-secondary btn-block w-100 mb-2">
+                                        <i class="fas fa-list"></i> View All Meetings
+                                    </a>
                                 </div>
+                                <div class="col-md-3">
+                                    <a href="{% url 'meetings:calendar' %}" class="btn btn-outline-info btn-block w-100 mb-2">
+                                        <i class="fas fa-calendar-alt"></i> Calendar View
+                                    </a>
+                                </div>
+                                {% if perms.meetings.view_all_meetings %}
+                                <div class="col-md-3">
+                                    <a href="{% url 'meetings:director_dashboard' %}" class="btn btn-outline-dark btn-block w-100 mb-2">
+                                        <i class="fas fa-chart-line"></i> Director's View
+                                    </a>
+                                </div>
+                                {% endif %}
                             </div>
-                            {% endfor %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        {% endblock content %}
+        {% endblock %}
+        
+        {% block extra_js %}
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Highlight current day's meetings
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            document.querySelectorAll('.meeting-date').forEach(elem => {
+                if (elem.dataset.date === todayStr) {
+                    elem.closest('.list-group-item').classList.add('list-group-item-primary');
+                }
+            });
+        });
+        </script>
+        {% endblock %}
 
       . director_dashboard.html
         Content:
@@ -13318,6 +15344,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         'apps.organization',
         'apps.budget',
         'apps.meetings',
+        'apps.innovations',
         'apps.memos',
         'apps.mail',
         'debug_toolbar',
@@ -13525,6 +15552,7 @@ Folder structure and content for: /home/ngobiro/projects/moringa_capstone
         path('meetings/', include('apps.meetings.urls', namespace='meetings')),
         path('memos/', include('apps.memos.urls', namespace='memos')),
         path('mail/', include('apps.mail.urls', namespace='mail')),
+        path('innovations/', include('apps.innovations.urls', namespace='innovations')),
         path("unicorn/", include("django_unicorn.urls")),
         path("", include("apps.home.urls")),
         path('react/', TemplateView.as_view(template_name='react.html'), name='react'),
