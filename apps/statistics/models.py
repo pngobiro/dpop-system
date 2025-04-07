@@ -54,17 +54,13 @@ class Unit(models.Model):
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     
-    
     def __str__(self):
         return self.name
 
 class Months(models.Model):
     name = models.CharField(max_length=255)
     month_number = models.IntegerField(help_text='The calendar month number (1-12)')
-    # the financial quarter in which the month falls . it is either 1,2,3,4. 
-    financial_quarter = models.IntegerField( help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4')
-
-
+    financial_quarter = models.IntegerField(help_text='The financial quarter in which the month falls. It is either 1, 2, 3, or 4')
 
     def __str__(self):
         return self.name
@@ -115,6 +111,20 @@ class CaseCategory(models.Model):
         """Returns the full case code pattern (e.g., 'ELRCA' for ELRC Appeals)"""
         return self.code
 
+class AdjournmentReason(models.Model):
+    """Adjournment reasons specific to each UnitRank."""
+    name = models.CharField(max_length=255)  # e.g., "Advocate not present", "Court on its own motion"
+    unit_rank = models.ForeignKey(UnitRank, on_delete=models.CASCADE, related_name='adjournment_reasons')
+    description = models.TextField(null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Adjournment Reasons"
+        unique_together = [('name', 'unit_rank')]  # Each reason should be unique within a rank
+        ordering = ['unit_rank', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.unit_rank.name})"
+
 class CaseActivityType(models.Model):
     """Types of activities/proceedings a case can be scheduled for, specific to a UnitRank."""
     name = models.CharField(max_length=255, unique=True) # Ensure names are unique
@@ -160,9 +170,7 @@ class DcrtData(models.Model):
     judicial_officer_6 = models.CharField(max_length=255, null=True, blank=True)
     judicial_officer_7 = models.CharField(max_length=255, null=True, blank=True)
     judicial_officer_8 = models.CharField(max_length=255, null=True, blank=True)
-    # Changed from CharField to ForeignKey
-    # case_coming_for = models.CharField(max_length=255 ,null=True, blank=True)
-    case_coming_for = models.ForeignKey(CaseActivityType, on_delete=models.SET_NULL, null=True, blank=True, related_name='dcrt_data_entries')
+    case_coming_for = models.CharField(max_length=255, null=True, blank=True)
     case_outcome = models.CharField(max_length=255, null=True, blank=True)
     adjournment_reason = models.CharField(max_length=255, null=True, blank=True)
     date_of_next_activity_day = models.IntegerField(null=True, blank=True)
@@ -186,6 +194,3 @@ class DcrtData(models.Model):
 class UnitDivision(models.Model):
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
     division = models.ForeignKey(Division, on_delete=models.CASCADE)
-
-
-
