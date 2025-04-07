@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'authentication', # added the authentication apps
     'apps.permissions',
     'apps.home',
-    'django_unicorn',
+    # 'django_unicorn', # Removed as Unicorn is no longer used
     'apps.statistics',
     'apps.document_management',
     'apps.organization',
@@ -154,7 +154,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static', 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') # Point to the correct volume mount
 MEDIA_URL = '/media/'
 
 

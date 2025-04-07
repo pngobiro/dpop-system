@@ -6,7 +6,7 @@ Copyright (c) 2019 - present AppSeed.us
 from django.urls import path
 from apps.statistics import views
 
-app_name = "apps.statistics"
+app_name = "statistics"
 
 urlpatterns = [
 

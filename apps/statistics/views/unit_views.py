@@ -1,6 +1,8 @@
 # apps/statistics/views/unit_views.py
-
-from django.shortcuts import render, HttpResponse
+import os # Import os
+import logging
+from django.conf import settings # Import settings
+from django.shortcuts import render, HttpResponse, redirect
 from django_pandas.io import read_frame
 import pandas as pd
 from django.db.models import Count, Q, Sum
@@ -8,6 +10,9 @@ from apps.statistics.models import (
     UnitRank, FinancialYear, FinancialQuarter,
     Unit, Division, DcrtData, Months
 )
+from ..utils import get_dcrt_filepath # Import helper
+
+logger = logging.getLogger(__name__)
 
 def rank_unit_division_months(request, id, financial_year_id, financial_quarter_id, unit_id, division_id):
     """View for displaying months for a specific unit and division."""
@@ -17,8 +22,22 @@ def rank_unit_division_months(request, id, financial_year_id, financial_quarter_
     unit = Unit.objects.get(id=unit_id)
     division = Division.objects.get(id=division_id)
 
+    # Get months for the quarter
+    months_in_quarter = Months.objects.filter(financial_quarter=fq.quarter_number).order_by('month_number')
+    
+    # Check file existence for each month
+    months_data = []
+    for month in months_in_quarter:
+        file_path = get_dcrt_filepath(unit_rank, fy, month, unit)
+        file_exists = os.path.exists(file_path) if file_path else False
+        logger.debug(f"Checking for file for {month.name}: Path={file_path}, Exists={file_exists}")
+        months_data.append({
+            'month': month,
+            'file_exists': file_exists
+        })
+
     context = {
-        'months': Months.objects.filter(financial_quarter=fq.quarter_number),
+        'months_data': months_data, # Pass list of dicts with month and status
         'unit_rank': unit_rank,
         'financial_year': fy,
         'financial_quarter': fq,
@@ -165,9 +184,10 @@ def upload_unit_monthly_dcrt_excel(request, id, financial_year_id, financial_qua
     month = Months.objects.get(id=month_id)
 
     if request.method == 'POST':
-        excel_file = request.FILES.get("excelFile")
+        excel_file = request.FILES.get("excelFile") # Reverted name
         if excel_file:
-            handle_uploaded_file(excel_file, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id)
+            # Pass the actual objects to the utility function
+            handle_uploaded_file(excel_file, unit_rank, fy, fq, unit, division, month)
             return redirect('statistics:monthly_unit_case_summary', id=id, financial_year_id=financial_year_id, 
                           financial_quarter_id=financial_quarter_id, unit_id=unit_id, division_id=division_id, month_id=month_id)
         return HttpResponse("No file uploaded.")

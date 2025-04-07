@@ -1,0 +1,255 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} DCRT Statistics Dashboard
+ {% endblock %}
+
+{% block stylesheets %}
+{{ block.super }} {# Include base stylesheets #}
+<style>
+    .text-judiciary { color: #006633 !important; }
+    .bg-judiciary-light { background-color: rgba(0, 102, 51, 0.05) !important; }
+    .btn-outline-judiciary { color: #006633; border-color: #006633; }
+    .btn-outline-judiciary:hover { color: #fff; background-color: #006633; border-color: #006633; }
+    .card { border-radius: 0.5rem; margin-bottom: 1.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; }
+    .card-header { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
+    .form-select:focus { border-color: #006633; box-shadow: 0 0 0 0.25rem rgba(0, 102, 51, 0.25); }
+    .icon-circle { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; border-radius: 50%; }
+    .card:hover .icon-circle { transform: scale(1.1); }
+    .list-group-item-action { border: none; border-radius: 0.25rem; margin-bottom: 0.25rem; transition: background-color 0.2s ease; }
+    .list-group-item-action:hover { background-color: rgba(0, 102, 51, 0.05); color: #006633; }
+    .btn-primary { background-color: #006633; border-color: #006633; }
+    .btn-primary:hover:not(.disabled) { background-color: #005528; border-color: #005528; }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="py-4">
+    <div class="container-fluid px-4">
+        {# Header #}
+        <nav class="d-flex justify-content-between w-100 mb-4">
+            <h1 class="h3 text-judiciary mb-0">DCRT Statistics Dashboard
+</h1>
+            {# Optional Filter Button - Add functionality if needed #}
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="btn-group ms-2 ms-lg-3">
+                    <button type="button" class="btn btn-sm btn-outline-judiciary">
+                        <i class="fas fa-filter me-2"></i> Filter
+                    </button>
+                </div>
+            </div> 
+        </nav>
+
+        {# Row 1: Summary Cards - Using context from the 'home' view #}
+    
+  
+        {# Row 2: Selection Form #}
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card shadow-sm border-light">
+                    <div class="card-header py-3 bg-judiciary-light">
+                        <h6 class="m-0 font-weight-bold text-judiciary">Select Criteria for Unit View</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-3">Select court rank, financial year, and quarter to view detailed unit statistics.</p>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="court_rank" class="form-label">Unit Rank</label>
+                                <select class="form-select" id="court_rank" name="court_rank">
+                                    <option value="" selected>Select Unit Rank</option>
+                                    {% for rank in unit_ranks %}
+                                        <option value="{{ rank.id }}">{{ rank.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="financial_year" class="form-label">Financial Year</label>
+                                <select class="form-select" id="financial_year" name="financial_year" disabled>
+                                    <option value="" selected>Select Financial Year</option>
+                                    {% for year in financial_years %}
+                                        <option value="{{ year.id }}">{{ year.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="quarter" class="form-label">FY Quarter</label>
+                                <select class="form-select" id="quarter" name="quarter" disabled>
+                                    <option value="" selected>Select Quarter</option>
+                                    {# Options will be loaded by JavaScript #}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" id="viewUnitsBtn" class="btn btn-primary btn-lg px-4" disabled>
+                                <i class="fas fa-arrow-right me-2"></i> View Units
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Row 3: Functionality Cards (Static Links) #}
+        <div class="row g-4 mt-4">
+             <div class="col-lg-4 mb-4">
+                <div class="card shadow-sm border-light h-100">
+                    <div class="card-header py-3 bg-judiciary-light">
+                        <h6 class="m-0 font-weight-bold text-judiciary"><i class="fas fa-chart-pie me-2"></i> Reports</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-4">Generate and view periodic and ad hoc reports.</p>
+                        <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-file-alt me-2"></i> Monthly Performance Summary</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-chart-line me-2"></i> Case Backlog Analysis</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-balance-scale me-2"></i> Case Clearance Rate Report</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-calendar-alt me-2"></i> Quarterly Unit Performance</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-calendar-check me-2"></i> Annual Performance Review</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-search me-2"></i> Custom Ad Hoc Report Builder</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="col-lg-4 mb-4">
+                <div class="card shadow-sm border-light h-100">
+                    <div class="card-header py-3 bg-judiciary-light">
+                        <h6 class="m-0 font-weight-bold text-judiciary"><i class="fas fa-upload me-2"></i> Data Management</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-4">Upload and manage monthly statistical data.</p>
+                         <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-upload me-2"></i> Upload Monthly Data</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-history me-2"></i> View Upload History</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-check-double me-2"></i> Data Quality Checks</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="col-lg-4 mb-4">
+                <div class="card shadow-sm border-light h-100">
+                    <div class="card-header py-3 bg-judiciary-light">
+                        <h6 class="m-0 font-weight-bold text-judiciary"><i class="fas fa-chart-bar me-2"></i> Analysis Tools</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-4">Explore data trends and perform analysis.</p>
+                         <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-chart-line me-2"></i> Trend Analysis</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-chart-bar me-2"></i> Comparative Analysis</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2"><i class="fas fa-chart-pie me-2"></i> Custom Analysis</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{# Embed JSON data safely #}
+<script id="all-quarters-data" type="application/json">
+    {{ all_quarters_json|safe }}
+</script>
+
+{% block javascripts %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rankSelect = document.getElementById('court_rank');
+    const yearSelect = document.getElementById('financial_year');
+    const quarterSelect = document.getElementById('quarter');
+    const viewBtn = document.getElementById('viewUnitsBtn');
+
+    // Safely parse the JSON data passed from the Django view
+    let allQuartersData = {};
+    try {
+        // Use a script tag with type="application/json" or directly assign if properly escaped
+        // Here, we assume it's directly embedded and needs parsing.
+        const jsonDataElement = document.getElementById('all-quarters-data');
+        if (jsonDataElement) {
+             allQuartersData = JSON.parse(jsonDataElement.textContent || '{}');
+        } else {
+            // Fallback if element not found, though it should be there
+             console.warn("Quarters data element not found. Using default empty object.");
+             // Attempt direct parse as fallback (less safe due to potential escaping issues)
+             allQuartersData = JSON.parse('{{ all_quarters_json|escapejs|default:"{}" }}');
+        }
+    } catch (e) {
+        console.error("Error parsing quarters JSON data:", e);
+        allQuartersData = {}; // Use empty object on error
+    }
+
+    function checkSelections() {
+        const rankId = rankSelect.value;
+        const yearId = yearSelect.value;
+        const quarterId = quarterSelect.value;
+
+        // Enable/disable year dropdown
+        yearSelect.disabled = !rankId;
+        if (!rankId) {
+            yearSelect.value = "";
+            quarterSelect.value = "";
+            quarterSelect.innerHTML = '<option value="" selected>Select Quarter</option>'; // Clear quarters
+            quarterSelect.disabled = true;
+        }
+
+        // Enable/disable quarter dropdown
+        quarterSelect.disabled = !yearId;
+        if (!yearId) {
+            quarterSelect.value = "";
+            quarterSelect.innerHTML = '<option value="" selected>Select Quarter</option>'; // Clear quarters
+        }
+
+        // Enable/disable button
+        viewBtn.disabled = !(rankId && yearId && quarterId);
+    }
+
+    rankSelect.addEventListener('change', function() {
+        checkSelections();
+        // Reset year and quarter when rank changes
+        yearSelect.value = "";
+        quarterSelect.value = "";
+        quarterSelect.innerHTML = '<option value="" selected>Select Quarter</option>';
+        quarterSelect.disabled = true;
+    });
+
+    yearSelect.addEventListener('change', function() {
+        const selectedYearId = this.value;
+        quarterSelect.innerHTML = '<option value="" selected>Select Quarter</option>'; // Clear existing options
+        quarterSelect.value = ""; // Reset selection
+
+        if (selectedYearId && allQuartersData[selectedYearId]) {
+            allQuartersData[selectedYearId].forEach(function(quarter) {
+                const option = document.createElement('option');
+                option.value = quarter.id;
+                option.textContent = quarter.name; // Assuming 'name' field exists
+                quarterSelect.appendChild(option);
+            });
+            quarterSelect.disabled = false;
+        } else {
+            quarterSelect.disabled = true;
+        }
+        checkSelections();
+    });
+
+    quarterSelect.addEventListener('change', function() {
+        checkSelections();
+    });
+
+    viewBtn.addEventListener('click', function() {
+        const rankId = rankSelect.value;
+        const yearId = yearSelect.value;
+        const quarterId = quarterSelect.value;
+
+        if (rankId && yearId && quarterId) {
+            // Construct URL using Django's url template tag is safer, but requires passing base URL
+            // Or construct manually as before
+            const url = `/statistics/rank/${rankId}/fy/${yearId}/fq/${quarterId}/units`;
+            window.location.href = url;
+        }
+    });
+
+    // Initial check in case of pre-filled values (less likely without Unicorn)
+    checkSelections();
+
+});
+</script>
+{% endblock javascripts %}

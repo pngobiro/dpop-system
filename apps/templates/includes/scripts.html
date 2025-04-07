@@ -1,43 +1,36 @@
-
-<!-- Core -->
-<script src="{{ ASSETS_ROOT }}/vendor/@popperjs/core/dist/umd/popper.min.js"></script>
-<script src="{{ ASSETS_ROOT }}/vendor/bootstrap/dist/js/bootstrap.min.js"></script>
+<!-- Core libraries are loaded from CDN in base.html -->
 
 <!-- Vendor JS -->
 <script src="{{ ASSETS_ROOT }}/vendor/onscreen/dist/on-screen.umd.min.js"></script>
+<script src="{{ ASSETS_ROOT }}/vendor/simplebar/dist/simplebar.min.js"></script>
 
-<!-- Slider -->
-<script src="{{ ASSETS_ROOT }}/vendor/nouislider/distribute/nouislider.min.js"></script>
-
-<!-- Smooth scroll -->
-<script src="{{ ASSETS_ROOT }}/vendor/smooth-scroll/dist/smooth-scroll.polyfills.min.js"></script>
-
-<!-- Charts -->
+<!-- Charts (load only if needed) -->
 <script src="{{ ASSETS_ROOT }}/vendor/chartist/dist/chartist.min.js"></script>
 <script src="{{ ASSETS_ROOT }}/vendor/chartist-plugin-tooltips/dist/chartist-plugin-tooltip.min.js"></script>
-
-<!-- Datepicker -->
-<script src="{{ ASSETS_ROOT }}/vendor/vanillajs-datepicker/dist/js/datepicker.min.js"></script>
 
 <!-- Sweet Alerts 2 -->
 <script src="{{ ASSETS_ROOT }}/vendor/sweetalert2/dist/sweetalert2.all.min.js"></script>
 
-<!-- Moment JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
-
-<!-- Vanilla JS Datepicker -->
-<script src="{{ ASSETS_ROOT }}/vendor/vanillajs-datepicker/dist/js/datepicker.min.js"></script>
-
 <!-- Notyf -->
 <script src="{{ ASSETS_ROOT }}/vendor/notyf/notyf.min.js"></script>
 
-<!-- Simplebar -->
-<script src="{{ ASSETS_ROOT }}/vendor/simplebar/dist/simplebar.min.js"></script>
-
-<!-- Github buttons -->
-<script async defer src="https://buttons.github.io/buttons.js"></script>
-
-<!-- Volt JS -->
+<!-- Volt Theme JS -->
 <script src="{{ ASSETS_ROOT }}/js/volt.js"></script>
 
+<!-- Initialize tooltips and popovers -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Initialize popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl);
+    });
+  });
+</script>
 

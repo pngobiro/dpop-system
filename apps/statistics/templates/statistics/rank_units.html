@@ -19,12 +19,14 @@
             </h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb bg-transparent p-0 mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'statistics:home' %}">Statistics Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'statistics:home' %}">DCRT Statistics Dashboard
+</a></li>
                     <li class="breadcrumb-item active" aria-current="page">FY {{ financial_year.name }} - {{ financial_quarter.name }}</li>
                 </ol>
             </nav>
         </div>
          <a href="{% url 'statistics:home' %}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+         {# Removed top-level Upload button #}
     </div>
 
 
@@ -34,14 +36,14 @@
             <h5 class="m-0 font-weight-bold" style="color: #006633;"><i class="fas fa-list-ol me-2"></i> Units List</h5> {# Judiciary Green #}
         </div>
         <div class="card-body">
-            {% if units %}
+            {% if units_data %}
                 <div class="table-responsive">
                     <table id="unitsTable" class="table table-bordered table-striped table-hover table-sm" style="width:100%">
                         <thead>
                             <tr>
                                 <th>Unit Name</th>
-                                {# Removed case count columns #}
-                                <th class="text-center">View Monthly Stats by Division</th>
+                                <th class="text-center">View Details</th>
+                                <th class="text-center">Actions</th> {# New Actions column #}
                             </tr>
                         </thead>
                         <tbody>
@@ -49,25 +51,37 @@
                             <tr>
                                 <td>{{ data.unit.name }}</td>
                                 <td class="text-center">
-                                    {# Iterate through all associated divisions #}
-                                    {% for division in data.divisions %}
-                                        {# Link uses FY/FQ from context, but division list is independent #}
-                                        <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id data.unit.id division.id %}"
-                                           class="btn btn-sm btn-outline-primary me-1 mb-1"
-                                           title="View Monthly Stats for {{ division.name }} (FY: {{ financial_year.name }} - FQ: {{ financial_quarter.name }})">
-                                            <i class="fas fa-calendar-alt"></i> {{ division.name }}
+                                    {# Show divisions if any exist #}
+                                    {% if data.divisions %}
+                                        {% for division in data.divisions %}
+                                            <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id data.unit.id division.id %}"
+                                               class="btn btn-sm btn-outline-primary me-1 mb-1"
+                                               title="View Monthly Stats for {{ division.name }} (FY: {{ financial_year.name }} - FQ: {{ financial_quarter.name }})">
+                                                <i class="fas fa-calendar-alt"></i> {{ division.name }}
+                                            </a>
+                                        {% endfor %}
+                                    {% else %}
+                                        {# If no divisions, link to default division ID 1 #}
+                                        <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id data.unit.id 1 %}"
+                                           class="btn btn-sm btn-outline-secondary me-1 mb-1"
+                                           title="View Monthly Stats for Default Division (ID: 1)">
+                                            <i class="fas fa-calendar-alt"></i> View Default Division Stats
                                         </a>
-                                    {% empty %}
-                                        <span class="text-muted small">No associated divisions</span>
-                                    {% endfor %}
+                                        <span class="text-muted small d-block mt-1">(Using Default Division ID 1)</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center"> {# Actions column content #}
+                                    {# Link Upload to the default division as well #}
+                                    <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id data.unit.id 1 %}"
+                                       class="btn btn-sm btn-outline-success"
+                                       title="Upload/Manage Data for {{ data.unit.name }} (Default Division ID: 1)">
+                                        <i class="fas fa-upload"></i> Upload Data (Default Div)
+                                    </a>
                                 </td>
                             </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="2" class="text-center text-muted">No units found for this rank.</td> {# Adjusted colspan #}
-                            </tr>
-                            {% endfor %}
+                        {% endfor %} {# End outer loop for data in units_data #}
                         </tbody>
+                        {# Removed misplaced {% empty %} block - colspan adjustment needed if re-enabled #}
                     </table>
                 </div>
             {% else %}
@@ -99,7 +113,7 @@ $(document).ready(function() {
     $('#unitsTable').DataTable({
         "order": [[ 0, "asc" ]], // Default order by Unit Name
         "columnDefs": [
-            { "orderable": false, "targets": 3 } // Disable sorting on Actions column
+            { "orderable": false, "targets": [1, 2] } // Disable sorting on View Details and Actions columns (Indices 1 and 2)
         ]
     });
 });

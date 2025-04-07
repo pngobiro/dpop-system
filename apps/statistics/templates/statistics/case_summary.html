@@ -1,0 +1,202 @@
+{% extends "layouts/base.html" %}
+{% load humanize %} {# Load humanize for number formatting #}
+
+{% block title %} Case Summary: {{ unit.name }} - {{ division.name }} ({{ month.name }}, FY {{ financial_year.name }}) {% endblock %}
+
+{% block stylesheets %}
+{{ block.super }}
+<style>
+    .text-judiciary { color: #006633 !important; }
+    .bg-judiciary-light { background-color: rgba(0, 102, 51, 0.05) !important; }
+    .breadcrumb-item a { color: #006633; text-decoration: none; }
+    .breadcrumb-item a:hover { text-decoration: underline; }
+    .card { border-radius: 0.5rem; margin-bottom: 1.5rem; }
+    .card-header { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
+    .summary-card .card-body { padding: 1.5rem; text-align: center; }
+    .summary-card h1 { font-size: 2.75rem; font-weight: bold; color: #006633; }
+    .summary-card .card-title { font-size: 0.9rem; text-transform: uppercase; color: #6c757d; margin-bottom: 0.5rem; }
+    .table th { background-color: rgba(0, 102, 51, 0.05); color: #006633; font-weight: 600; }
+    .progress { height: 8px; border-radius: 4px; }
+    .table td, .table th { vertical-align: middle; }
+    .table-sm td, .table-sm th { padding: 0.5rem; }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="py-4">
+    <div class="container-fluid px-4">
+        {# Header and Breadcrumbs #}
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <div>
+                <h2 class="mb-0 text-judiciary">
+                    <i class="fas fa-chart-pie me-2"></i> Case Summary: {{ unit.name }} - {{ division.name }}
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent p-0 mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'statistics:home' %}">Statistics Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'statistics:rank_units' unit_rank.id financial_year.id financial_quarter.id %}">{{ unit_rank.name }} Units</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id unit.id division.id %}">{{ unit.name }} - {{ division.name }} (Months)</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ month.name }} Summary <span class="badge bg-secondary ms-2">{{ data_source }}</span></li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id unit.id division.id %}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left me-1"></i> Back to Months</a>
+        </div>
+
+        {# Summary Cards Row #}
+        <div class="row g-4 mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="card shadow-sm border-light summary-card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Cases</h6>
+                        <h1>{{ total_cases|intcomma }}</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card shadow-sm border-light summary-card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">Resolved Cases</h6>
+                        <h1>{{ resolved_cases|intcomma }}</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card shadow-sm border-light summary-card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">Pending Cases</h6>
+                        <h1>{{ pending_cases|intcomma }}</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="card shadow-sm border-light summary-card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">With Legal Rep</h6>
+                        <h1>{{ legal_rep_cases|intcomma }}</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Detailed Analysis Row #}
+        <div class="row g-4">
+            {# Case Types Distribution Card #}
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-light h-100">
+                    <div class="card-header py-3 bg-judiciary-light">
+                        <h5 class="m-0 font-weight-bold text-judiciary"><i class="fas fa-tags me-2"></i> Case Types Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if case_types %}
+                        <table class="table table-sm table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Case Type</th>
+                                    <th class="text-end">Count</th>
+                                    <th class="text-end" style="width: 100px;">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ct in case_types %}
+                                <tr>
+                                    <td>{{ ct.type|default:"N/A" }}</td>
+                                    <td class="text-end">{{ ct.count|intcomma }}</td>
+                                    <td class="text-end">
+                                        <div class="d-flex align-items-center justify-content-end">
+                                            <span class="me-2">{{ ct.percentage|floatformat:1 }}%</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ ct.percentage }}%;" aria-valuenow="{{ ct.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="text-muted text-center my-3">No case type data available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# Case Outcomes Card #}
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-light h-100">
+                    <div class="card-header py-3 bg-judiciary-light">
+                        <h5 class="m-0 font-weight-bold text-judiciary"><i class="fas fa-gavel me-2"></i> Case Outcomes</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if case_outcomes %}
+                        <table class="table table-sm table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Outcome</th>
+                                    <th class="text-end">Count</th>
+                                    <th class="text-end" style="width: 100px;">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for co in case_outcomes %}
+                                <tr>
+                                    <td>{{ co.type|default:"N/A" }}</td>
+                                    <td class="text-end">{{ co.count|intcomma }}</td>
+                                    <td class="text-end">
+                                        <div class="d-flex align-items-center justify-content-end">
+                                            <span class="me-2">{{ co.percentage|floatformat:1 }}%</span>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ co.percentage }}%;" aria-valuenow="{{ co.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="text-muted text-center my-3">No case outcome data available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Demographics Row #}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-light">
+                    <div class="card-header py-3 bg-judiciary-light">
+                        <h5 class="m-0 font-weight-bold text-judiciary"><i class="fas fa-users me-2"></i> Party Demographics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-user-tie me-1"></i> Plaintiffs / Appellants</h6>
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        <tr><th>Male</th><td class="text-end">{{ plaintiff_stats.male|intcomma }}</td></tr>
+                                        <tr><th>Female</th><td class="text-end">{{ plaintiff_stats.female|intcomma }}</td></tr>
+                                        <tr><th>Organizations</th><td class="text-end">{{ plaintiff_stats.org|intcomma }}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-user-shield me-1"></i> Defendants / Accused</h6>
+                                <table class="table table-sm table-bordered">
+                                    <tbody>
+                                        <tr><th>Male</th><td class="text-end">{{ defendant_stats.male|intcomma }}</td></tr>
+                                        <tr><th>Female</th><td class="text-end">{{ defendant_stats.female|intcomma }}</td></tr>
+                                        <tr><th>Organizations</th><td class="text-end">{{ defendant_stats.org|intcomma }}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div> {# End container-fluid #}
+</div> {# End py-4 #}
+{% endblock content %}

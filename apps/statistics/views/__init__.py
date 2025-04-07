@@ -1,37 +1,5 @@
-from django.shortcuts import render
-from django.db.models import Count
-from apps.statistics.models import (
-    UnitRank, FinancialYear, FinancialQuarter,
-    Unit, Division, DcrtData, Months
-)
-
-def home(request):
-    """Dashboard view showing overall statistics and navigation options."""
-    context = {
-        'unit_ranks': UnitRank.objects.all(),
-        'total_units': Unit.objects.count(),
-        'active_divisions': Division.objects.filter(is_active=True).count(),
-        'court_units': Unit.objects.filter(is_court=True).count(),
-        'financial_year': FinancialYear.objects.first(),
-        'financial_quarter': FinancialQuarter.objects.first(),
-        
-        # Additional statistics
-        'total_cases': DcrtData.objects.count(),
-        'resolved_cases': DcrtData.objects.filter(
-            case_outcome__icontains='Resolved'
-        ).count(),
-        'pending_cases': DcrtData.objects.exclude(
-            case_outcome__icontains='Resolved'
-        ).count(),
-        
-        # Top case types
-        'top_case_types': DcrtData.objects.values(
-            'specific_case_type'
-        ).annotate(
-            count=Count('id')
-        ).order_by('-count')[:5],
-    }
-    return render(request, 'statistics/home.html', context)
+# Import the home view from dashboard module
+from .dashboard import home
 
 # Import views from modules
 from .dashboard import (

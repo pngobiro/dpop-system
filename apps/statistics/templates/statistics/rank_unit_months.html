@@ -1,0 +1,121 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Monthly Stats for {{ unit.name }} - {{ division.name }} (FY {{ financial_year.name }} - {{ financial_quarter.name }}) {% endblock %}
+
+{% block stylesheets %}
+{{ block.super }}
+{# Add DataTables Bootstrap 5 CSS #}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<style>
+    .text-judiciary { color: #006633 !important; }
+    .bg-judiciary-light { background-color: rgba(0, 102, 51, 0.05) !important; }
+    .breadcrumb-item a { color: #006633; text-decoration: none; }
+    .breadcrumb-item a:hover { text-decoration: underline; }
+    .card { border-radius: 0.5rem; }
+    .card-header { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
+    .table th { background-color: rgba(0, 102, 51, 0.05); color: #006633; font-weight: 600; }
+    .table td, .table th { vertical-align: middle; }
+    .status-badge { font-size: 0.75em; padding: 0.3em 0.6em; }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="py-4">
+    <div class="container-fluid px-4">
+        {# Header and Breadcrumbs #}
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <div>
+                <h2 class="mb-0 text-judiciary">
+                    <i class="fas fa-calendar-alt me-2"></i> Monthly Statistics: {{ unit.name }} - {{ division.name }}
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent p-0 mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'statistics:home' %}">DCRT Statistics Dashboard
+</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'statistics:rank_units' unit_rank.id financial_year.id financial_quarter.id %}">{{ unit_rank.name }} Units</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ unit.name }} - {{ division.name }} (FY {{ financial_year.name }} - {{ financial_quarter.name }})</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{% url 'statistics:rank_units' unit_rank.id financial_year.id financial_quarter.id %}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left me-1"></i> Back to Units List</a>
+        </div>
+
+    <div class="row">
+        {# Months Table Card #}
+        <div class="card shadow-sm border-light">
+            <div class="card-header py-3 bg-judiciary-light">
+                <h5 class="m-0 font-weight-bold text-judiciary"><i class="fas fa-list-ol me-2"></i> Months in Quarter: {{ financial_quarter.name }}</h5>
+            </div>
+            <div class="card-body">
+                {% if months_data %} {# Check the correct context variable #}
+                    <div class="table-responsive">
+                        <table id="monthsTable" class="table table-bordered table-striped table-hover table-sm" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-center">File Status</th> {# New Status column #}
+                                    <th class="text-center">View Data Summary</th>
+                                    <th class="text-center">Upload Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in months_data %} {# Use months_data from context #}
+                                <tr>
+                                    <td>{{ data.month.name }}</td>
+                                    <td class="text-center"> {# File Status column #}
+                                        {% if data.file_exists %}
+                                            <span class="badge rounded-pill bg-success status-badge"><i class="fas fa-check-circle me-1"></i> Uploaded</span>
+                                        {% else %}
+                                            <span class="badge rounded-pill bg-warning text-dark status-badge"><i class="fas fa-exclamation-circle me-1"></i> Not Uploaded</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center"> {# View Summary column #}
+                                        <a href="{% url 'statistics:monthly_unit_case_summary' unit_rank.id financial_year.id financial_quarter.id unit.id division.id data.month.id %}" class="btn btn-sm btn-outline-primary {% if not data.file_exists %}disabled{% endif %}" title="View Case Summary for {{ data.month.name }}">
+                                            <i class="fas fa-chart-bar"></i> View Summary
+                                        </a>
+                                    </td>
+                                    <td class="text-center"> {# Upload Data column #}
+                                        <a href="{% url 'statistics:upload_unit_monthly_dcrt_excel' unit_rank.id financial_year.id financial_quarter.id unit.id division.id data.month.id %}"
+                                           class="btn btn-sm btn-outline-success {% if data.file_exists %}disabled{% endif %}"
+                                           title="{% if data.file_exists %}Data already uploaded for {{ data.month.name }}{% else %}Upload DCRT Excel for {{ data.month.name }}{% endif %}">
+                                            <i class="fas fa-upload"></i> {% if data.file_exists %}Re-Upload{% else %}Upload Excel{% endif %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %} {# Add empty case for months_data #}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No months found for this quarter.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %} {# End the main if block #}
+                {# Removed the redundant else block, as the {% empty %} inside the loop handles this #}
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block javascripts %}
+{{ block.super }}
+{# Add jQuery (required by DataTables) and DataTables JS #}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#monthsTable').DataTable({
+        "paging": false, // Disable pagination for short list
+        "searching": false, // Disable search for short list
+        "info": false, // Disable info for short list
+        "order": [], // Disable initial sorting
+        "columnDefs": [
+            { "orderable": false, "targets": [1, 2, 3] } // Disable sorting on status and action columns
+        ]
+    });
+});
+</script>
+{% endblock javascripts %}

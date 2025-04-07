@@ -1,3 +1,7 @@
+import pandas as pd
+import os # Import os module
+import openpyxl # Import openpyxl
+from django.conf import settings # Import settings
 from django.shortcuts import render
 from django_pandas.io import read_frame
 from django.db.models import Count, Q
@@ -5,6 +9,10 @@ from apps.statistics.models import (
     UnitRank, FinancialYear, FinancialQuarter,
     Unit, Division, DcrtData, Months
 )
+from ..utils import get_dcrt_filepath # Import the helper function
+import logging
+
+logger = logging.getLogger(__name__)
 
 def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
     """
@@ -18,17 +26,42 @@ def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, 
     division = Division.objects.get(id=division_id)
     month = Months.objects.get(id=month_id)
 
-    # Get filtered queryset
-    queryset = DcrtData.objects.filter(
-        financial_year=financial_year_id,
-        financial_quarter=financial_quarter_id,
-        unit=unit_id,
-        division=division_id,
-        month=month_id
-    )
+    df = pd.DataFrame() # Initialize empty DataFrame
+    data_source = "Database" # Default source
 
-    # Convert to dataframe for analysis
-    df = read_frame(queryset)
+    # Construct the expected filepath
+    filepath = get_dcrt_filepath(unit_rank, fy, month, unit)
+
+    if filepath and os.path.exists(filepath):
+        logger.info(f"Found existing Excel file for case summary: {filepath}")
+        try:
+            # Read data directly from the Excel file using pandas
+            # Adjust sheet_name and header row if needed based on template
+            df = pd.read_excel(filepath, sheet_name=0, header=4) # Assumes data starts on row 6 (header=4 means 5th row is header)
+            df = df.where(pd.notnull(df), None) # Replace NaN with None
+            data_source = "Excel File"
+            logger.info(f"Successfully loaded {len(df)} rows from Excel file.")
+        except Exception as e:
+            logger.error(f"Error reading Excel file {filepath}: {e}. Falling back to database.")
+            df = pd.DataFrame() # Ensure df is empty on read error
+
+    # If file doesn't exist or failed to read, query the database
+    if df.empty:
+        logger.info("Excel file not found or failed to read. Querying database.")
+        queryset = DcrtData.objects.filter(
+            financial_year=financial_year_id,
+            # financial_quarter=financial_quarter_id, # Quarter info is in Month object
+            unit=unit_id,
+            division=division_id,
+            month=month_id
+        )
+        if queryset.exists():
+            df = read_frame(queryset)
+            df = df.where(pd.notnull(df), None)
+            logger.info(f"Successfully loaded {len(df)} rows from database.")
+        else:
+            logger.info("No data found in database for this context.")
+            # df remains an empty DataFrame
 
     context = {
         'unit_rank': unit_rank,
@@ -36,37 +69,45 @@ def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, 
         'financial_quarter': fq,
         'unit': unit,
         'division': division,
+        'data_source': data_source, # Add data source info to context
         'month': month,
         
         # Basic statistics
         'total_cases': len(df),
-        'resolved_cases': len(df[df['case_outcome'].str.contains(
-            'Resolved|Concluded|Completed', na=False, case=False, regex=True
-        )]),
-        'pending_cases': len(df[~df['case_outcome'].str.contains(
-            'Resolved|Concluded|Completed', na=False, case=False, regex=True
-        )]),
+        'resolved_cases': len(df[df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]) if not df.empty and 'case_outcome' in df.columns else 0,
+        'pending_cases': len(df[~df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]) if not df.empty and 'case_outcome' in df.columns else len(df), # Assume all are pending if outcome column missing
+        'legal_rep_cases': len(df[df['parties_have_legal_representation'].str.contains('Yes', na=False, case=False)]) if not df.empty and 'parties_have_legal_representation' in df.columns else 0,
         
         # Case types analysis
         'case_types': [
             {
                 'type': case_type,
                 'count': count,
-                'percentage': round(count/len(df)*100, 1)
+                'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
             }
-            for case_type, count in df['specific_case_type'].value_counts().items()
-        ],
+            for case_type, count in (df['specific_case_type'].value_counts().items() if 'specific_case_type' in df.columns else [])
+        ] if not df.empty else [],
+        
+        # Case outcomes analysis
+        'case_outcomes': [
+            {
+                'type': outcome,
+                'count': count,
+                'percentage': round(count/len(df)*100, 1) if len(df) > 0 else 0
+            }
+            for outcome, count in (df['case_outcome'].value_counts().items() if 'case_outcome' in df.columns else [])
+        ] if not df.empty else [],
         
         # Demographics
         'plaintiff_stats': {
-            'male': df['no_of_plaintiffs_or_appellants_male'].sum(),
-            'female': df['no_of_plaintiffs_or_appellants_female'].sum(),
-            'org': df['no_of_plaintiffs_or_appellants_organization'].sum(),
+            'male': int(df['no_of_plaintiffs_or_appellants_male'].sum()) if not df.empty and 'no_of_plaintiffs_or_appellants_male' in df.columns else 0,
+            'female': int(df['no_of_plaintiffs_or_appellants_female'].sum()) if not df.empty and 'no_of_plaintiffs_or_appellants_female' in df.columns else 0,
+            'org': int(df['no_of_plaintiffs_or_appellants_organization'].sum()) if not df.empty and 'no_of_plaintiffs_or_appellants_organization' in df.columns else 0,
         },
         'defendant_stats': {
-            'male': df['no_of_defendants_accused_male'].sum(),
-            'female': df['no_of_defendants_accused_female'].sum(),
-            'org': df['no_of_defendants_accused_organization'].sum(),
+            'male': int(df['no_of_defendants_accused_male'].sum()) if not df.empty and 'no_of_defendants_accused_male' in df.columns else 0,
+            'female': int(df['no_of_defendants_accused_female'].sum()) if not df.empty and 'no_of_defendants_accused_female' in df.columns else 0,
+            'org': int(df['no_of_defendants_accused_organization'].sum()) if not df.empty and 'no_of_defendants_accused_organization' in df.columns else 0,
         },
     }
     

@@ -23,7 +23,7 @@ urlpatterns = [
 
     # The /departments/<id>/modules/ URL is handled within apps.home.urls
 
-    path("unicorn/", include("django_unicorn.urls")),
+    # path("unicorn/", include("django_unicorn.urls")), # Removed as Unicorn is no longer used
     path("", include("apps.home.urls")), # This include handles the department modules URL
     path('react/', TemplateView.as_view(template_name='react.html'), name='react'),
 ]
