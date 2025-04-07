@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize', # Added for template filters like intcomma
     'authentication', # added the authentication apps
     'apps.permissions',
     'apps.home',

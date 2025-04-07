@@ -1,62 +1,107 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Dashboard {% endblock %}
+{% block title %} Units for {{ unit_rank.name }} - FY {{ financial_year.name }} - {{ financial_quarter.name }} {% endblock %}
 
 {% block stylesheets %}
-  <!-- Specific Page CSS goes HERE -->
+{{ block.super }}
+{# Add DataTables Bootstrap 5 CSS #}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 {% endblock stylesheets %}
 
 {% block content %}
+<div class="container-fluid mt-4">
 
-<div class="container mt-2" style="min-height: 100vh; background-color: #f8f9fa;">
-    <h2 class="mb-4"> List of Courts {{ unit_rank.name }} -  FY {{  financial_year.name }} - FQ {{ financial_quarter.name }} </h2>
-
-    <!-- table to list to list  units . units context variable is passed from views.py -->
-
-    <table class="table table-striped table-bordered table-hover table-sm">
-        <thead class="thead-dark">
-            <tr>
-                <th scope="col">Unit Name</th>
-                <th scope="col">FY Statistics</th>
-                <th scope="col">Quarter Statistics</th>
-                <th scope="col">Monthly Statistics</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for court in units %}
-            <tr>
-                <td>{{ court.name }}</td>
-
-                <td>
-                    <!--statistics:unit_division_fy-->
-                    <a href="{% url 'statistics:unit_division_fy' unit_rank.id financial_year.id financial_quarter.id court.id court.id  %}" class="btn btn-sm btn-outline-primary"> Go to FY Statistics </a>
-                </td>
-
-                <td>
-                    <!--statistics:unit_division_quarters-->
-                    <a href="{% url 'statistics:unit_division_quarters' unit_rank.id financial_year.id financial_quarter.id court.id court.id  %}" class="btn btn-sm btn-outline-primary"> Go to Quarter Statistics </a>
-                 </td>
-                <td>
-                    <!--statistics:unit_division_months-->
-                    <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id court.id court.id  %}" class="btn btn-sm btn-outline-primary"> Go to Monthly Statistics </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-
-    </table>
+    {# Header #}
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom" style="border-color: #DAA520 !important;"> {# Gold accent border #}
+        <div>
+            <h2 class="mb-0" style="color: #006633;"> {# Judiciary Green #}
+                <i class="fas fa-balance-scale me-2"></i> Units: {{ unit_rank.name }}
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'statistics:home' %}">Statistics Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">FY {{ financial_year.name }} - {{ financial_quarter.name }}</li>
+                </ol>
+            </nav>
+        </div>
+         <a href="{% url 'statistics:home' %}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+    </div>
 
 
-
-
-
-    
-
-
-
-
-
+    {# Units Table Card #}
+    <div class="card shadow-sm border-light">
+         <div class="card-header py-3 bg-light">
+            <h5 class="m-0 font-weight-bold" style="color: #006633;"><i class="fas fa-list-ol me-2"></i> Units List</h5> {# Judiciary Green #}
+        </div>
+        <div class="card-body">
+            {% if units %}
+                <div class="table-responsive">
+                    <table id="unitsTable" class="table table-bordered table-striped table-hover table-sm" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Unit Name</th>
+                                {# Removed case count columns #}
+                                <th class="text-center">View Monthly Stats by Division</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in units_data %} {# Iterate through restored structure #}
+                            <tr>
+                                <td>{{ data.unit.name }}</td>
+                                <td class="text-center">
+                                    {# Iterate through all associated divisions #}
+                                    {% for division in data.divisions %}
+                                        {# Link uses FY/FQ from context, but division list is independent #}
+                                        <a href="{% url 'statistics:unit_division_months' unit_rank.id financial_year.id financial_quarter.id data.unit.id division.id %}"
+                                           class="btn btn-sm btn-outline-primary me-1 mb-1"
+                                           title="View Monthly Stats for {{ division.name }} (FY: {{ financial_year.name }} - FQ: {{ financial_quarter.name }})">
+                                            <i class="fas fa-calendar-alt"></i> {{ division.name }}
+                                        </a>
+                                    {% empty %}
+                                        <span class="text-muted small">No associated divisions</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No units found for this rank.</td> {# Adjusted colspan #}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-warning" role="alert">
+                    No units found for this rank in the selected period.
+                    <p> 
+                        <a href="{% url 'statistics:home' %}" class="btn btn-sm btn-secondary mt-2">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                        </a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
 </div>
 
 {% endblock content %}
+
+{% block javascripts %}
+{{ block.super }}
+{# Add jQuery (required by DataTables) and DataTables JS #}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#unitsTable').DataTable({
+        "order": [[ 0, "asc" ]], // Default order by Unit Name
+        "columnDefs": [
+            { "orderable": false, "targets": 3 } // Disable sorting on Actions column
+        ]
+    });
+});
+</script>
+{% endblock javascripts %}

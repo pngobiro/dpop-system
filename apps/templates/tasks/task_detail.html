@@ -4,39 +4,54 @@
 {% block title %} Task: {{ task.title }} {% endblock %}
 
 {% block content %}
-{# Removed invalid {% set %} tags #}
+<div class="container-fluid mt-4">
 
-<div class="container mt-4">
-    <h3 style="color: #006633; border-bottom: 1px solid #DAA520; padding-bottom: 5px;"> {# Primary Green, Gold Accent #}
-        <i class="fas fa-check-square me-2"></i> Task: {{ task.title }}
-    </h3>
-    <p class="text-muted">
-        <strong>Project:</strong> <a href="{% url 'tasks:project_detail' task.project.id %}" style="color: #006633;">{{ task.project.name }}</a> {# Primary Green #}
-    </p>
-    <hr class="mt-0">
+    {# Task Header #}
+    <div class="d-sm-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-warning"> {# Gold accent replacement #}
+        <div>
+            <h2 class="text-primary mb-0"> {# Primary Green replacement #}
+                <i class="fas fa-check-square me-2"></i> Task: {{ task.title }}
+            </h2>
+            <p class="text-muted mb-0">
+                <strong>Project:</strong> <a href="{% url 'tasks:project_detail' task.project.id %}" class="text-primary text-decoration-none">{{ task.project.name }}</a> {# Primary Green replacement #}
+            </p>
+        </div>
+        <div class="mt-2 mt-sm-0">
+             {% if request.user == task.creator or request.user == task.assignee %}
+                <a href="{% url 'tasks:edit_task' task.id %}" class="btn btn-sm btn-warning me-2"> {# Warning Button #}
+                    <i class="fas fa-edit me-1"></i> Edit Task
+                </a>
+            {% endif %}
+             <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#addTaskAttachmentModal"> {# Secondary Button #}
+                <i class="fas fa-paperclip me-1"></i> Add Attachment
+            </button>
+        </div>
+    </div>
+
 
     <div class="row">
+        {# Left Column #}
         <div class="col-lg-8 mb-4">
-            {# Details Card #}
-            <div class="card mb-4 border-light shadow-sm">
-                 <div class="card-header" style="background-color: #f8f9fa; border-bottom: 1px solid #ddd;"> {# Light BG #}
-                    <h5 class="mb-0" style="color: #006633;"><i class="fas fa-align-left me-2"></i> Description</h5> {# Primary Green #}
+            {# Description Card #}
+            <div class="card shadow-sm mb-4">
+                 <div class="card-header bg-light">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-align-left me-2"></i> Description</h5> {# Primary Green replacement #}
                  </div>
-                 <div class="card-body" style="white-space: pre-wrap; color: #333333;"> {# Dark Text #}
+                 <div class="card-body" style="white-space: pre-wrap;"> {# Keep pre-wrap for formatting #}
                     {{ task.description|default:"No description provided." }}
                  </div>
             </div>
 
             {# Comments Card #}
-            <div class="card mb-4 border-light shadow-sm">
-                 <div class="card-header" style="background-color: #f8f9fa; border-bottom: 1px solid #ddd;"> {# Light BG #}
-                    <h5 class="mb-0" style="color: #006633;"><i class="fas fa-comments me-2"></i> Comments</h5> {# Primary Green #}
+            <div class="card shadow-sm mb-4">
+                 <div class="card-header bg-light">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-comments me-2"></i> Comments</h5> {# Primary Green replacement #}
                  </div>
                  <div class="card-body">
                     <div class="comments-section mb-3" style="max-height: 300px; overflow-y: auto;">
                         {% for comment in comments %}
-                            <div class="mb-2 pb-2" style="border-bottom: 1px dashed #eee;">
-                                <p class="mb-1" style="color: #333333;">{{ comment.content }}</p> {# Dark Text #}
+                            <div class="mb-2 pb-2 border-bottom border-light"> {# Lighter border #}
+                                <p class="mb-1">{{ comment.content }}</p>
                                 <small class="text-muted">By
                                     {% if comment.author %}
                                         {{ comment.author.get_full_name|default:comment.author.username }}
@@ -54,31 +69,56 @@
                     <form method="post" action="{% url 'tasks:task_detail' task.id %}">
                         {% csrf_token %}
                         {{ comment_form|crispy }}
-                        <button type="submit" class="btn btn-sm mt-2" style="background-color: #198754; color: #FFFFFF; border-color: #198754;"> {# Success Button #}
+                        <button type="submit" class="btn btn-sm btn-success mt-2"> {# Success Button #}
                             <i class="fas fa-plus me-1"></i> Add Comment
                         </button>
                     </form>
                  </div>
             </div>
 
-        </div>
+        </div>{# End Left Column #}
+
+        {# Right Column #}
         <div class="col-lg-4 mb-4">
             {# Task Info Card #}
-            <div class="card mb-3 border-light shadow-sm">
-                <div class="card-header" style="background-color: #006633; color: #FFFFFF;"> {# Primary Green #}
-                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i> Task Info</h6>
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white"> {# Primary Green replacement #}
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-info-circle me-2"></i> Task Info</h6>
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <span>Status:</span>
-                        <span class="badge" style="background-color: #0dcaf0; color: #000000">{{ task.get_status_display }}</span> {# Info Badge #}
+                        {# Contextual Status Badge #}
+                        {% with status=task.status %}
+                        <span class="badge
+                            {% if status == task.StatusChoices.DONE %}bg-success
+                            {% elif status == task.StatusChoices.IN_PROGRESS %}bg-warning text-dark
+                            {% elif status == task.StatusChoices.BLOCKED %}bg-danger
+                            {% else %}bg-secondary
+                            {% endif %}">
+                            {{ task.get_status_display }}
+                        </span>
+                        {% endwith %}
                     </li>
-                    <li class="list-group-item"><strong>Priority:</strong> {{ task.get_priority_display }}</li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Priority:</span>
+                         {# Contextual Priority Badge #}
+                         {% with priority=task.priority %}
+                         <span class="badge
+                             {% if priority == task.PriorityChoices.URGENT %}bg-danger
+                             {% elif priority == task.PriorityChoices.HIGH %}bg-warning text-dark
+                             {% elif priority == task.PriorityChoices.MEDIUM %}bg-info text-dark
+                             {% else %}bg-secondary
+                             {% endif %}">
+                             {{ task.get_priority_display }}
+                         </span>
+                         {% endwith %}
+                    </li>
                     <li class="list-group-item"><strong>Assignee:</strong>
                         {% if task.assignee %}
                             {{ task.assignee.get_full_name|default:task.assignee.username }}
                         {% else %}
-                            Unassigned
+                            <span class="text-muted">Unassigned</span>
                         {% endif %}
                     </li>
                     <li class="list-group-item"><strong>Creator:</strong>
@@ -92,19 +132,12 @@
                     <li class="list-group-item"><strong>Created:</strong> {{ task.created_at|date:"Y-m-d H:i" }}</li>
                     <li class="list-group-item"><strong>Updated:</strong> {{ task.updated_at|date:"Y-m-d H:i" }}</li>
                 </ul>
-                <div class="card-footer text-end">
-                     {% if request.user == task.creator or request.user == task.assignee %}
-                        <a href="{% url 'tasks:edit_task' task.id %}" class="btn btn-sm" style="background-color: #ffc107; color: #000000; border-color: #ffc107;"> {# Warning Button #}
-                            <i class="fas fa-edit me-1"></i> Edit Task
-                        </a>
-                    {% endif %}
-                </div>
             </div>
 
             {# Attachments Card #}
-            <div class="card border-light shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #f8f9fa; border-bottom: 1px solid #ddd;"> {# Light BG #}
-                    <h6 class="mb-0" style="color: #006633;"><i class="fas fa-paperclip me-2"></i> Attachments</h6> {# Primary Green #}
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 text-primary"><i class="fas fa-paperclip me-2"></i> Attachments</h6> {# Primary Green replacement #}
                     <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" data-bs-toggle="modal" data-bs-target="#addTaskAttachmentModal" title="Add Attachment">
                         <i class="fas fa-plus"></i> Add
                     </button>
@@ -114,7 +147,7 @@
                         <ul class="list-group list-group-flush">
                         {% for attachment in attachments %}
                             <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center">
-                                <a href="{{ attachment.get_file_url|default:'#' }}" target="_blank" title="{{ attachment.title }}" style="color: #006633; text-decoration: none;">{{ attachment.title|truncatechars:25 }}</a> {# Primary Green #}
+                                <a href="{{ attachment.get_file_url|default:'#' }}" target="_blank" title="{{ attachment.title }}" class="text-primary text-decoration-none">{{ attachment.title|truncatechars:25 }}</a> {# Primary Green replacement #}
                                 <small class="text-muted">({{ attachment.file_type }})</small>
                             </li>
                         {% endfor %}
@@ -125,11 +158,11 @@
                 </div>
             </div>
 
-        </div>
+        </div>{# End Right Column #}
     </div>
 
     <div class="mt-4 mb-5">
-        <a href="{% url 'tasks:project_detail' task.project.id %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Project</a> {# Secondary Button #}
+        <a href="{% url 'tasks:project_detail' task.project.id %}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left me-1"></i> Back to Project</a> {# Secondary Button #}
     </div>
 
 </div>
@@ -138,7 +171,7 @@
 <div class="modal fade" id="addTaskAttachmentModal" tabindex="-1" aria-labelledby="addTaskAttachmentModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header" style="background-color: #006633; color: #FFFFFF;"> {# Primary Green #}
+      <div class="modal-header bg-primary text-white"> {# Primary Green replacement #}
         <h5 class="modal-title" id="addTaskAttachmentModalLabel">Add Attachment to Task: {{ task.title|truncatechars:30 }}</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -153,7 +186,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="submit" class="btn" style="background-color: #006633; color: #FFFFFF;" name="submit_attachment" value="upload" {% if not attachment_form %}disabled{% endif %}>Upload Attachment</button> {# Primary Green Button #}
+            <button type="submit" class="btn btn-primary" name="submit_attachment" value="upload" {% if not attachment_form %}disabled{% endif %}>Upload Attachment</button> {# Primary Green Button replacement #}
           </div>
       </form>
     </div>

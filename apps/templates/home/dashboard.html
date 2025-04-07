@@ -1,22 +1,30 @@
 {% extends "layouts/base.html" %}
-{% block title %} Departments {% endblock %}
+{% block title %} Dashboard - Departments {% endblock %}
 
 {% block content %}
-<div class="container mt-2" style="min-height: 100vh; background-color: #f7f9f8;">
-    <h2 class="mb-4" style="color: #006633;">Departments</h2>
+<div class="container-fluid mt-4"> {# Use container-fluid for potentially wider layout #}
+    <h2 class="mb-4" style="color: #006633;">Departments</h2> {# Use Judiciary Green #}
+
     <div class="row">
         {% for department in departments %}
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                {# Use Judiciary Green for header background and white text #}
-                <div class="card-header text-white" style="background-color: #006633 !important; border-bottom: 2px solid #DAA520;">
-                    <h5 class="card-title mb-0"><i class="fas fa-building me-2"></i> {{ department.name }}</h5>
+        {# Adjust column classes for potentially 3 columns on large screens #}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm border-light"> {# Ensure cards have same height in a row #}
+                {# Use Bootstrap classes for header styling #}
+                <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: #006633; border-bottom: 2px solid #DAA520;"> {# Use Judiciary Green BG, Gold accent border #}
+                    <h5 class="card-title mb-0 d-inline-flex align-items-center">
+                        <i class="fas fa-building me-2"></i> {{ department.name }}
+                    </h5>
+                    {# Optional: Display role count or other small info #}
+                    {# <span class="badge bg-light text-primary rounded-pill">{{ department.roles.count }} Roles</span> #}
                 </div>
-                <div class="card-body" style="color: #000000;">
-                    <p class="card-text">{{ department.description }}</p>
-                    <div class="d-flex justify-content-between align-items-center mt-3">
-                        {# Use Judiciary Green for the button #}
-                        <a href="{% url 'apps.home:department_modules' department_id=department.id %}" class="btn btn-sm text-white" style="background-color: #006633; border-color: #006633;"><i class="fas fa-folder-open me-1"></i> View Modules</a>
+                <div class="card-body d-flex flex-column"> {# Use flex column for button alignment #}
+                    <p class="card-text flex-grow-1">{{ department.description|default:"No description available." }}</p> {# Ensure description takes available space #}
+                    <div class="mt-auto text-end"> {# Align button to bottom right #}
+                        {# Use Bootstrap classes for button styling #}
+                        <a href="{% url 'apps.home:department_modules' department_id=department.id %}" class="btn btn-sm text-white" style="background-color: #006633; border-color: #005a30;"> {# Use Judiciary Green BG/Border #}
+                            <i class="fas fa-folder-open me-1"></i> View Modules
+                        </a>
                     </div>
                 </div>
             </div>

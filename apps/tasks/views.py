@@ -1,4 +1,8 @@
+import json # Import json for serialization
 from django.shortcuts import render, get_object_or_404, redirect
+from django.core.serializers.json import DjangoJSONEncoder # For date encoding
+from django.db.models import Count, Q # Import Count and Q
+# No longer need Paginator
 from django.http import HttpResponse, HttpResponseNotAllowed, Http404, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
@@ -6,7 +10,10 @@ from django.utils import timezone
 import datetime
 import os # Import os for file extension
 from django.contrib.contenttypes.models import ContentType # Import ContentType
+from collections import Counter # Import Counter
 from .models import Project, Task, Comment
+from django.contrib.auth import get_user_model # Import User model
+User = get_user_model()
 from .forms import TaskForm, CommentForm, ProjectForm
 
 # Import Department model safely
@@ -37,29 +44,90 @@ def department_task_project_list(request, department_id):
     department = get_object_or_404(Department, pk=department_id)
     project_form = None
     if request.method == 'POST':
+        # --- Handle Project Creation ---
         project_form = ProjectForm(request.POST)
         if project_form.is_valid():
             project = project_form.save(commit=False)
             project.department = department
             project.owner = request.user
             project.save()
+            # Redirect to the same page but without POST data (using GET)
             return redirect('tasks:department_task_project_list', department_id=department.id)
-    department_projects = Project.objects.filter(department=department)
-    project_ids = department_projects.values_list('id', flat=True)
+        # If form is invalid, it will be passed to the context below
+
+    # --- Data Fetching & Filtering for GET request ---
+    # Base queryset for all projects in the department
+    all_projects_in_dept_qs = Project.objects.filter(department=department).select_related('owner').order_by('name')
+
+    # Calculate status counts based on ALL projects in the department BEFORE filtering/searching
+    project_status_counts = Counter()
+    # We need to iterate to use the get_status() method efficiently here
+    # Consider optimizing this if performance becomes an issue (e.g., adding a status field or denormalizing)
+    all_projects_list_for_counts = list(all_projects_in_dept_qs) # Evaluate once for counting
+    for project in all_projects_list_for_counts:
+        status = project.get_status()
+        project_status_counts[status] += 1
+    total_projects_count = len(all_projects_list_for_counts) # Total count
+
+    # Get status filter parameter
+    status_filter = request.GET.get('status_filter')
+
+    # Apply Status Filter (in Python, before passing to template)
+    # Evaluate the full queryset before Python filtering
+    all_projects_list = list(all_projects_in_dept_qs)
+    if status_filter and status_filter in project_status_counts: # Check against calculated statuses
+         projects_to_display = [p for p in all_projects_list if p.get_status() == status_filter]
+    else:
+         projects_to_display = all_projects_list # Show all if no valid filter
+    # DataTables will handle search and pagination client-side
+
+    # --- Prepare Context ---
+    # Use IDs from all projects in the department for task/workload queries
+    all_project_ids = all_projects_in_dept_qs.values_list('id', flat=True)
+
     my_tasks = Task.objects.filter(
-        project__id__in=project_ids, assignee=request.user
+        project__id__in=all_project_ids, assignee=request.user # Query based on all projects in dept
     ).exclude(status=Task.StatusChoices.DONE).select_related('project', 'assignee').order_by('due_date', 'priority')
+
     today = timezone.now().date()
     due_soon_date = today + datetime.timedelta(days=7)
     due_soon_tasks = Task.objects.filter(
-        project__id__in=project_ids, due_date__isnull=False,
+        project__id__in=all_project_ids, due_date__isnull=False, # Query based on all projects in dept
         due_date__gte=today, due_date__lte=due_soon_date
     ).exclude(status=Task.StatusChoices.DONE).select_related('project', 'assignee').order_by('due_date', 'priority')
-    if project_form is None: project_form = ProjectForm()
+
+    if project_form is None: project_form = ProjectForm() # Ensure form exists for GET
+
+    # total_projects_count calculated earlier from all_projects_list_for_counts
+
+    # --- Calculate Workload Analysis ---
+    workload_data = Task.objects.filter(
+        project__id__in=all_project_ids,
+        assignee__isnull=False # Only include assigned tasks
+    ).exclude(
+        status=Task.StatusChoices.DONE # Exclude completed tasks
+    ).values(
+        'assignee', # Group by assignee ID
+        'assignee__username', # Get username
+        'assignee__first_name',
+        'assignee__last_name'
+        # Add other relevant user fields if needed, e.g., 'assignee__profile__avatar'
+    ).annotate(
+        task_count=Count('id') # Count tasks for each assignee
+    ).order_by('-task_count') # Order by highest workload first
+
     context = {
-        'department': department, 'projects': department_projects.select_related('owner').order_by('name'),
-        'my_tasks': my_tasks, 'due_soon_tasks': due_soon_tasks, 'project_form': project_form,
-        'today': today, 'soon_date': due_soon_date
+        'department': department,
+        'projects': projects_to_display, # Pass the filtered list
+        'total_projects_count': total_projects_count, # Total count for summary cards
+        'project_status_counts': dict(project_status_counts), # Counts for summary cards
+        'status_filter': status_filter, # Current status filter (for card highlighting)
+        'my_tasks': my_tasks,
+        'due_soon_tasks': due_soon_tasks,
+        'workload_data': workload_data, # Add workload data to context
+        'project_form': project_form,
+        'today': today,
+        'soon_date': due_soon_date
     }
     return render(request, 'tasks/department_task_project_list.html', context)
 
@@ -111,11 +179,27 @@ def project_detail(request, project_id):
     if attachment_form is None and DocumentForm:
         attachment_form = DocumentForm()
 
+    # Prepare tasks data for Frappe Gantt
+    gantt_tasks_data = []
+    for task in tasks:
+        # Frappe Gantt needs specific keys: id, name, start, end
+        # Only include tasks with both start and end dates for the chart
+        if task.start_date and task.due_date:
+            gantt_tasks_data.append({
+                'id': str(task.id), # ID must be a string
+                'name': task.title,
+                'start': task.start_date.isoformat(), # Format date as YYYY-MM-DD
+                'end': task.due_date.isoformat(), # Format date as YYYY-MM-DD
+                # 'progress': 50, # Optional: Add progress calculation if needed
+                # 'dependencies': '' # Optional: Add dependencies if needed
+            })
+
     context = {
         'project': project,
-        'tasks': tasks,
+        'tasks': tasks, # Keep original tasks list for the table
         'project_attachments': project_attachments,
-        'attachment_form': attachment_form # Add attachment form to context
+        'attachment_form': attachment_form,
+        'gantt_tasks_json': json.dumps(gantt_tasks_data, cls=DjangoJSONEncoder) # Pass JSON data
     }
     return render(request, 'tasks/project_detail.html', context)
 

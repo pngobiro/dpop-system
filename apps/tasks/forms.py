@@ -38,19 +38,23 @@ class TaskForm(forms.ModelForm):
         help_text="Set a due date relative to today. Overrides specific date if both are entered."
     )
 
-    assignee = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
+    # Assignee field removed as per request for this specific form usage
     due_date = forms.DateField(
         required=False,
         label="Due Date (Specific)",
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        help_text="Optional: Select a specific deadline."
+    )
+    start_date = forms.DateField( # Add start_date field
+        required=False,
+        label="Start Date",
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        help_text="Optional: Select a start date for the task."
     )
     project = forms.ModelChoiceField(
         queryset=Project.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-control'})
+        # Make project field read-only in the form
+        widget=forms.Select(attrs={'class': 'form-control', 'disabled': 'disabled'})
     )
 
     class Meta:
@@ -61,7 +65,8 @@ class TaskForm(forms.ModelForm):
             'description',
             'status',
             'priority',
-            'assignee',
+            # 'assignee', # Removed from fields list
+            'start_date', # Add start_date
             'due_date', # Keep original field
             'due_in_days', # Add new relative field
         ]
@@ -72,9 +77,9 @@ class TaskForm(forms.ModelForm):
             'priority': forms.Select(attrs={'class': 'form-control'}),
         }
         help_texts = {
-            'project': 'Select the project this task belongs to.',
-            'assignee': 'Select the user responsible for this task (optional).',
-            'due_date': 'Optional: Select a specific deadline.',
+            'project': 'The project this task belongs to (read-only).',
+            # 'assignee': 'Select the user responsible for this task (optional).', # Removed help text
+            # Removed help_text for due_date as it's now part of the field definition
         }
 
     def clean(self):

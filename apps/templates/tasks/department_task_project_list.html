@@ -3,6 +3,12 @@
 
 {% block title %} Task Dashboard - {{ department.name }} {% endblock %}
 
+{% block stylesheets %}
+{{ block.super }}
+{# Add DataTables Bootstrap 5 CSS #}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+{% endblock stylesheets %}
+
 {% block content %}
 <style>
     /* Custom styles for Judiciary Theme */
@@ -166,6 +172,35 @@
 
     </div>
 
+    {# Workload Analysis Card #}
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow h-100 task-card"> {# Reusing task-card style for consistency #}
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-users me-2 judiciary-text-gold"></i> Active Task Workload</h6>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if workload_data %}
+                        <ul class="list-group list-group-flush">
+                            {% for user_load in workload_data %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
+                                <span>
+                                    <i class="fas fa-user me-2 text-muted"></i>
+                                    {{ user_load.assignee__first_name|default:'' }} {{ user_load.assignee__last_name|default:'' }}
+                                    ({{ user_load.assignee__username }})
+                                </span>
+                                <span class="badge bg-primary rounded-pill">{{ user_load.task_count }} task{{ user_load.task_count|pluralize }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center mt-3 text-muted">No active assigned tasks found for workload analysis.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     {# Projects Summary Card #}
     <div class="row">
         <div class="col-12">
@@ -174,17 +209,218 @@
                     <h6 class="m-0 font-weight-bold"><i class="fas fa-folder me-2 judiciary-text-gold"></i> Project Summary</h6>
                 </div>
                 <div class="card-body">
-                    {% if projects %}
-                        <div class="list-group list-group-horizontal-sm flex-wrap">
-                            {% for project in projects %}
-                                 <a href="{% url 'tasks:project_detail' project.id %}" class="list-group-item list-group-item-action mb-2 me-2" style="flex-basis: auto; min-width: 180px;">
-                                    <i class="fas fa-project-diagram me-1"></i> {{ project.name }}
-                                    <br><small>Owner: {{ project.owner.username|default:'N/A' }}</small>
-                                 </a>
-                            {% endfor %}
+                    {# Removed custom search form - DataTables provides its own #}
+                    {# Project Status Summary Cards - Modern UI #}
+                    <div class="row mb-4">
+                        {% with current_url_path=request.path %}
+                        {# Use pre-calculated total_projects_count from context #}
+                        {# All Projects Card #}
+                        <div class="col-xl col-md-6 mb-2">
+                            {# Link for 'All' card - preserves search query #}
+                            {# Link for 'All' card - no search query needed now #}
+                            <a href="?" class="text-decoration-none">
+                                <div class="card {% if not status_filter %}border-left-primary shadow{% else %}border-left-secondary{% endif %} h-100 py-2"> {# Use total_projects_count for display #}
+                                    <div class="card-body">
+                                        <div class="row no-gutters align-items-center">
+                                            <div class="col mr-2">
+                                                <div class="text-xs font-weight-bold {% if not status_filter %}text-primary{% else %}text-secondary{% endif %} text-uppercase mb-1">
+                                                    All Projects</div>
+                                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_projects_count|default:0 }}</div>
+                                            </div>
+                                            <div class="col-auto">
+                                                <i class="fas fa-layer-group fa-2x text-gray-300"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
                         </div>
-                    {% else %}
-                        <p class="text-muted">No projects found for this department.</p>
+
+                        {# Status Cards Loop #}
+                        {% for status, count in project_status_counts.items %}
+                            {% if count > 0 %}
+                                {# Wrap the column div with the link #}
+                                <div class="col-xl col-md-6 mb-2">
+                                    {# Link for status cards - no search query needed now #}
+                                    <a href="?status_filter={{ status|urlencode }}" class="text-decoration-none">
+                                        {# Determine card style and icon based on status and render card #}
+                                        {% if status == 'Completed' %}
+                                            {% with card_style='success' icon='fa-check-circle' %}
+                                                <div class="card {% if status_filter == status %}border-left-{{ card_style }} shadow{% else %}border-left-{{ card_style }}{% endif %} h-100 py-2">
+                                                    <div class="card-body">
+                                                        <div class="row no-gutters align-items-center">
+                                                            <div class="col mr-2">
+                                                                <div class="text-xs font-weight-bold text-{{ card_style }} text-uppercase mb-1">{{ status }}</div>
+                                                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count }}</div>
+                                                            </div>
+                                                            <div class="col-auto"><i class="fas {{ icon }} fa-2x text-gray-300"></i></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endwith %}
+                                        {% elif status == 'Overdue' %}
+                                            {% with card_style='danger' icon='fa-exclamation-triangle' %}
+                                                <div class="card {% if status_filter == status %}border-left-{{ card_style }} shadow{% else %}border-left-{{ card_style }}{% endif %} h-100 py-2">
+                                                    <div class="card-body">
+                                                        <div class="row no-gutters align-items-center">
+                                                            <div class="col mr-2">
+                                                                <div class="text-xs font-weight-bold text-{{ card_style }} text-uppercase mb-1">{{ status }}</div>
+                                                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count }}</div>
+                                                            </div>
+                                                            <div class="col-auto"><i class="fas {{ icon }} fa-2x text-gray-300"></i></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endwith %}
+                                        {% elif status == 'In Progress' %}
+                                            {% with card_style='warning' icon='fa-tasks' %}
+                                                <div class="card {% if status_filter == status %}border-left-{{ card_style }} shadow{% else %}border-left-{{ card_style }}{% endif %} h-100 py-2">
+                                                    <div class="card-body">
+                                                        <div class="row no-gutters align-items-center">
+                                                            <div class="col mr-2">
+                                                                <div class="text-xs font-weight-bold text-{{ card_style }} text-uppercase mb-1">{{ status }}</div>
+                                                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count }}</div>
+                                                            </div>
+                                                            <div class="col-auto"><i class="fas {{ icon }} fa-2x text-gray-300"></i></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endwith %}
+                                        {% else %} {# Default for Pending etc. #}
+                                            {% with card_style='secondary' icon='fa-pause-circle' %}
+                                                <div class="card {% if status_filter == status %}border-left-{{ card_style }} shadow{% else %}border-left-{{ card_style }}{% endif %} h-100 py-2">
+                                                    <div class="card-body">
+                                                        <div class="row no-gutters align-items-center">
+                                                            <div class="col mr-2">
+                                                                <div class="text-xs font-weight-bold text-{{ card_style }} text-uppercase mb-1">{{ status }}</div>
+                                                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count }}</div>
+                                                            </div>
+                                                            <div class="col-auto"><i class="fas {{ icon }} fa-2x text-gray-300"></i></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endwith %}
+                                        {% endif %}
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        {# Removed the {% with total_projects... %} block #}
+                        {% endwith %} {# end current_url_path #}
+                    </div>
+                    {# Removed the <hr> as cards provide separation #}
+
+                    {# Project List (uses the paginated 'projects_page' variable from context) #}
+
+                    {# Project List Table for DataTables #}
+                    <div class="table-responsive">
+                        <table id="projectsTable" class="table table-bordered table-striped table-hover" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Owner</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in projects %} {# Iterate over the full (filtered) list #}
+                                <tr>
+                                    <td>{{ project.name }}</td>
+                                    <td>{{ project.owner.username|default:'N/A' }}</td>
+                                    <td>
+                                        {% with status=project.get_status %}
+                                            <span class="badge
+                                                {% if status == 'Completed' %}bg-success
+                                                {% elif status == 'Overdue' %}bg-danger
+                                                {% elif status == 'In Progress' %}bg-warning text-dark
+                                                {% else %}bg-secondary
+                                                {% endif %}">
+                                                {{ status }}
+                                            </span>
+                                            {# Display overdue days if applicable #}
+                                            {% if status == 'Overdue' %}
+                                                {% with overdue_days=project.get_overdue_days %}
+                                                    {% if overdue_days is not None %}
+                                                        <small class="text-danger ms-1">({{ overdue_days }} day{{ overdue_days|pluralize }} overdue)</small>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'tasks:project_detail' project.id %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {# Add other actions like edit/delete if needed #}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        {% if status_filter %}
+                                            No projects found with status '{{ status_filter }}'.
+                                        {% else %}
+                                            No projects found for this department.
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {# Pagination Controls #}
+                    {% if projects_page.has_other_pages %}
+                        <nav aria-label="Project pagination" class="mt-4 d-flex justify-content-center">
+                            <ul class="pagination pagination-sm">
+                                {% if projects_page.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1&status_filter={{ status_filter|default:'' }}&search_query={{ search_query|default:'' }}" aria-label="First">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ projects_page.previous_page_number }}&status_filter={{ status_filter|default:'' }}&search_query={{ search_query|default:'' }}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">&laquo;&laquo;</span></li>
+                                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                                {% endif %}
+            
+                                {# Removed custom pagination controls - DataTables handles this #}
+
+                                {% for i in projects_page.paginator.page_range %}
+                                    {% if projects_page.number == i %}
+                                        <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+                                    {% elif i > projects_page.number|add:'-3' and i < projects_page.number|add:'3' %}
+                                        {# Show nearby pages #}
+                                        <li class="page-item"><a class="page-link" href="?page={{ i }}&status_filter={{ status_filter|default:'' }}&search_query={{ search_query|default:'' }}">{{ i }}</a></li>
+                                    {% elif i == projects_page.number|add:'-3' or i == projects_page.number|add:'3' %}
+                                        {# Show ellipsis #}
+                                        <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if projects_page.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ projects_page.next_page_number }}&status_filter={{ status_filter|default:'' }}&search_query={{ search_query|default:'' }}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ projects_page.paginator.num_pages }}&status_filter={{ status_filter|default:'' }}&search_query={{ search_query|default:'' }}" aria-label="Last">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                                    <li class="page-item disabled"><span class="page-link">&raquo;&raquo;</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
                     {% endif %}
                 </div>
             </div>
@@ -203,7 +439,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="createProjectModalLabel"><i class="fas fa-folder-plus me-2 judiciary-text-gold"></i> Create New Project for {{ department.name }}</h5>
+        <h5 class="modal-title fw-bold text-white" id="createProjectModalLabel"><i class="fas fa-folder-plus me-2 judiciary-text-gold"></i> Create New Project for {{ department.name }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form method="post" action="{% url 'tasks:department_task_project_list' department.id %}">
@@ -221,3 +457,21 @@
 </div>
 
 {% endblock content %}
+
+{% block javascripts %}
+{{ block.super }}
+{# Add jQuery (required by DataTables) and DataTables JS #}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#projectsTable').DataTable({
+        // Add any custom DataTables options here if needed
+        // e.g., ordering, page length, language options
+        "order": [[ 0, "asc" ]] // Default order by first column (Name)
+    });
+});
+</script>
+{% endblock javascripts %}

@@ -101,19 +101,16 @@ class Command(BaseCommand):
         project_data_index = 0 # Keep track of project ideas used
         for dept in departments:
             self.stdout.write(f"--- Seeding for Department: {dept.name} ---")
-            num_projects_for_dept = random.randint(2, 3) # Create 2-3 projects per dept
+            num_projects_for_dept = 10 # Create a fixed number of projects per dept
             dept_projects = []
 
-            for _ in range(num_projects_for_dept):
-                if project_data_index >= len(project_data):
-                    self.stdout.write(self.style.WARNING("Ran out of unique project ideas."))
-                    break # Stop if we run out of unique project ideas
-
-                owner = random.choice(users)
-                proj_name_base, proj_desc = project_data[project_data_index]
-                project_name = f"{dept.name[:15]}... - {proj_name_base}" # Ensure unique name prefix
+            for i in range(num_projects_for_dept):
+                # Cycle through project data if needed, make names unique per run
+                proj_name_base, proj_desc = project_data[project_data_index % len(project_data)]
+                project_name = f"{dept.name[:15]} - {proj_name_base} (Set {project_data_index // len(project_data) + 1}, Proj {i+1})"
                 project_data_index += 1
 
+                owner = random.choice(users)
                 project = Project.objects.create(
                     name=project_name,
                     description=proj_desc,
@@ -124,27 +121,62 @@ class Command(BaseCommand):
                 all_created_projects.append(project)
                 self.stdout.write(f"  Created Project: {project.name}")
 
+            if not dept_projects:
+                self.stdout.write(self.style.WARNING(f"  No projects created for {dept.name}, skipping tasks."))
+                continue
+
             # --- Create Tasks for this Department's Projects ---
             dept_tasks = []
-            for project in dept_projects:
-                num_tasks = random.randint(4, 8)
-                k = min(num_tasks, len(task_data))
-                project_tasks_info = random.sample(task_data, k)
+            target_tasks_per_dept = 110 # Aim for slightly more than 100
+            task_data_index = 0
 
-                for task_title, task_desc_base in project_tasks_info:
-                    creator = random.choice(users)
-                    assignee = random.choice(users) if random.random() > 0.1 else None
-                    status = random.choice(Task.StatusChoices.values)
-                    priority = random.choice(Task.PriorityChoices.values)
-                    due_date = random.choice([None] + [timezone.now().date() + datetime.timedelta(days=random.randint(-10, 90)) for _ in range(4)])
+            for i in range(target_tasks_per_dept):
+                project = random.choice(dept_projects) # Assign task to a random project in this dept
+                task_title_base, task_desc_base = task_data[task_data_index % len(task_data)]
+                task_title = f"{task_title_base} (DeptTask {i+1})" # Make titles slightly unique per dept
+                task_data_index += 1
 
-                    task = Task.objects.create(
-                        project=project, title=task_title, description=task_desc_base,
-                        status=status, priority=priority, assignee=assignee,
-                        creator=creator, due_date=due_date
-                    )
-                    dept_tasks.append(task)
-                    all_created_tasks.append(task)
+                creator = random.choice(users)
+                assignee = random.choice(users) if random.random() > 0.1 else None
+                priority = random.choice(Task.PriorityChoices.values)
+
+                # Explicitly control status and due date for variety
+                rand_status_choice = random.random()
+                if rand_status_choice < 0.25: # ~25% DONE
+                    status = Task.StatusChoices.DONE
+                    due_date = timezone.now().date() - datetime.timedelta(days=random.randint(5, 60)) # Done tasks usually have past due dates
+                elif rand_status_choice < 0.50: # ~25% Overdue
+                    status = random.choice([Task.StatusChoices.TODO, Task.StatusChoices.IN_PROGRESS, Task.StatusChoices.BLOCKED])
+                    due_date = timezone.now().date() - datetime.timedelta(days=random.randint(1, 15)) # Past due date, not DONE
+                elif rand_status_choice < 0.90: # ~40% In Progress/Todo
+                    status = random.choice([Task.StatusChoices.TODO, Task.StatusChoices.IN_PROGRESS])
+                    due_date = random.choice([None] + [timezone.now().date() + datetime.timedelta(days=random.randint(0, 90)) for _ in range(3)]) # Future or no due date
+                else: # ~10% Blocked
+                    status = Task.StatusChoices.BLOCKED
+                    due_date = random.choice([None] + [timezone.now().date() + datetime.timedelta(days=random.randint(-10, 90)) for _ in range(3)])
+                # Generate start_date (usually before due_date if due_date exists) - Correctly indented
+                start_date = None
+                if due_date:
+                    # Start date between 1 and 30 days before due date, or today if due date is soon
+                    days_before = random.randint(1, 30)
+                    potential_start = due_date - datetime.timedelta(days=days_before)
+                    # Ensure start date isn't accidentally *after* due date for short tasks
+                    start_date = min(potential_start, due_date - datetime.timedelta(days=1))
+                    # Don't start too far in past relative to today either
+                    start_date = max(start_date, timezone.now().date() - datetime.timedelta(days=random.randint(0, 45)))
+                elif random.random() < 0.5: # 50% chance of start date even if no due date
+                    start_date = timezone.now().date() - datetime.timedelta(days=random.randint(0, 15))
+
+                # Create Task - Correctly indented
+                task = Task.objects.create(
+                    project=project, title=task_title, description=task_desc_base,
+                    status=status, priority=priority, assignee=assignee,
+                    creator=creator, start_date=start_date, due_date=due_date # Added start_date
+                )
+                # Removed extra parenthesis from previous line
+                dept_tasks.append(task)
+                all_created_tasks.append(task)
+
             self.stdout.write(f"  Created {len(dept_tasks)} tasks for this department.")
 
         # --- Create Comments (for all created tasks) ---

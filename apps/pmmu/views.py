@@ -13,20 +13,68 @@ def pmmu_dashboard(request):
     pmmus = PMMU.objects.all().order_by('-financial_year') 
     latest_pmmu = pmmus.first()  # Get the most recent PMMU
     
+    total_indicators_latest_pmmu = 0
+    categories_with_indicators_data = [] # New structure to hold processed data
+    categories_with_indicators_data = [] # Structure to hold processed data
+    total_indicators_latest_pmmu = 0 # Initialize count
+
     if latest_pmmu:
-        # Get categories with indicators for the latest PMMU
-        indicator_categories = IndicatorCategory.objects.prefetch_related(
-            'indicators__financial_year_data'
-        ).filter(
+        # 1. Get relevant categories for the specific financial year
+        relevant_category_ids = IndicatorCategory.objects.filter(
             indicators__financial_year_data__financial_year=latest_pmmu.financial_year
+        ).values_list('id', flat=True).distinct()
+
+        # 2. Get relevant indicators within those categories for the specific financial year
+        relevant_indicators_qs = PerformanceIndicator.objects.filter(
+            subcategory__id__in=relevant_category_ids, # Corrected field lookup based on model definition
+            financial_year_data__financial_year=latest_pmmu.financial_year
         ).distinct()
-    else:
-        indicator_categories = IndicatorCategory.objects.none()
+
+        # 3. Calculate total count from the relevant indicators
+        total_indicators_latest_pmmu = relevant_indicators_qs.count()
+
+        # 4. Pre-fetch all relevant FinancialYearPerformance data for these indicators and FY
+        fy_performances = FinancialYearPerformance.objects.filter(
+            financial_year=latest_pmmu.financial_year,
+            indicator__in=relevant_indicators_qs # Filter by the relevant indicators QuerySet
+        ).select_related('indicator') # Select related indicator
+
+        # 5. Create a lookup dictionary: {indicator_id: fy_performance_object}
+        fy_performance_lookup = {perf.indicator_id: perf for perf in fy_performances}
+
+        # 6. Fetch categories (ordered) and structure data for the template
+        categories_for_display = IndicatorCategory.objects.filter(
+            pk__in=relevant_category_ids
+        ).prefetch_related(
+           'indicators' # Prefetch indicators again for iteration
+        ).order_by('name') # Order categories
+
+        for category in categories_for_display:
+            category_data = {
+                'category': category,
+                'indicators': []
+            }
+            # Iterate through prefetched indicators for this category
+            for indicator in category.indicators.all():
+                # Check if this indicator has performance data for the target year using the lookup
+                fy_data = fy_performance_lookup.get(indicator.id)
+                if fy_data: # Only include indicators that have data for this FY
+                    category_data['indicators'].append({
+                        'indicator': indicator,
+                        'fy_data': fy_data # Attach the specific performance data object
+                    })
+
+            # Only add category if it has relevant indicators for the year
+            if category_data['indicators']:
+                categories_with_indicators_data.append(category_data)
+
+    # else: categories_with_indicators_data remains [] and total_indicators_latest_pmmu remains 0
 
     context = {
         'pmmus': pmmus,
         'latest_pmmu': latest_pmmu,
-        'indicator_categories': indicator_categories,
+        'categories_data': categories_with_indicators_data, # Pass the processed data structure
+        'total_indicators_latest_pmmu': total_indicators_latest_pmmu,
     }
     return render(request, 'pmmu/pmmu_dashboard.html', context)
 
