@@ -6,10 +6,11 @@ from django.db.models import Q
 from calendar import monthcalendar
 import calendar
 from datetime import datetime, date, timedelta
-from ..models import Meeting
+from ..models import Meeting, MeetingType
 from apps.organization.models import Department
 from apps.statistics.models import FinancialYear, FinancialQuarter
 from django.utils.safestring import mark_safe
+from itertools import chain
 
 class Calendar:
     def __init__(self, year=None, month=None):
@@ -39,9 +40,19 @@ class Calendar:
         if day != 0:
             today = timezone.localtime().date()
             today_class = 'table-primary' if today == date(self.year, self.month, day) else ''
+            current_date = date(self.year, self.month, day)
             return f"""
                 <td class="align-top p-3 {today_class}" style="height: 180px; min-width: 200px;">
-                    <div class="fs-4 fw-bold mb-3">{day}</div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="fs-4 fw-bold">{day}</div>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary quick-add-meeting"
+                                data-date="{current_date}"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addMeetingModal">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                     <div class="overflow-hidden">{d}</div>
                 </td>
             """
@@ -180,6 +191,10 @@ def calendar_view(request):
             for q in FinancialQuarter.objects.filter(financial_year=current_fy).order_by('quarter_number')
         ]
     
+    # Get meeting types from database
+    meeting_types = [{'value': mt.id, 'display': mt.name}
+                    for mt in MeetingType.objects.filter(is_active=True)]
+    
     context = {
         'calendar': calendar_html,
         'prev_month': prev_month,
@@ -193,6 +208,7 @@ def calendar_view(request):
         'quarters': quarters,
         'selected_quarter': selected_quarter,
         'current_fy': current_fy,
+        'meeting_types': meeting_types,
     }
     
     return render(request, 'meetings/calendar.html', context)

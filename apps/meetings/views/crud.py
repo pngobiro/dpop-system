@@ -3,7 +3,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from apps.meetings.models import Meeting, MeetingParticipant
+from django.http import JsonResponse
+from datetime import datetime
+from apps.meetings.models import Meeting, MeetingParticipant, MeetingType
 from apps.meetings.forms import MeetingForm
 
 @login_required
@@ -98,3 +100,39 @@ def meeting_delete(request, pk):
     return render(request, 'meetings/meeting_confirm_delete.html', {
         'meeting': meeting
     })
+
+@login_required
+def add_quick_meeting(request):
+    """Add a meeting quickly from calendar view"""
+    if request.method == 'POST':
+        try:
+            # Parse the date and times
+            date = request.POST.get('date')
+            start_time = request.POST.get('start_time')
+            end_time = request.POST.get('end_time')
+            
+            # Combine date and times
+            start_datetime = datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M")
+            end_datetime = datetime.strptime(f"{date} {end_time}", "%Y-%m-%d %H:%M")
+            
+            # Get meeting type
+            meeting_type = get_object_or_404(MeetingType, id=request.POST.get('meeting_type'))
+            
+            # Create the meeting
+            meeting = Meeting.objects.create(
+                title=request.POST.get('title'),
+                date=date,
+                start_time=start_datetime,
+                end_time=end_datetime,
+                meeting_type=meeting_type,
+                location=request.POST.get('location'),
+                agenda=request.POST.get('agenda'),
+                organizer=request.user,
+                department=request.user.department
+            )
+            
+            return JsonResponse({'success': True, 'meeting_id': meeting.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+            
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
