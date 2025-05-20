@@ -16,9 +16,9 @@
         {# Back button logic updated #}
         {% if from_dept_id %}
              {# Preserve filters from library if needed? Maybe too complex for now. Just go back to library with dept context. #}
-             <a href="{% url 'document_management:digital_library' %}?from_dept={{ from_dept_id }}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Library</a>
+             <a href="{% url 'document_management:library' %}?from_dept={{ from_dept_id }}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Library</a>
         {% else %}
-             <a href="{% url 'document_management:digital_library' %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Library</a>
+             <a href="{% url 'document_management:library' %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"><i class="fas fa-arrow-left me-1"></i> Back to Library</a>
         {% endif %}
     </div>
     <hr class="mt-0">

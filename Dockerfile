@@ -4,6 +4,7 @@ FROM python:3.9
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV OPENAI_API_KEY=your_openai_api_key_here
 
 # Set work directory
 WORKDIR /code
@@ -15,6 +16,7 @@ RUN apt-get update && \
     ffmpeg \
     postgresql-client \
     netcat-openbsd \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install dependencies

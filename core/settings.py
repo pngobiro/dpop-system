@@ -22,7 +22,7 @@ LOGIN_URL = 'authentication:login'  # Correct
 LOGIN_URL = '/accounts/login/' # Correct - explicitly specifies
 
 # allow all hosts in development
-ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost','69f8-196-202-207-77.ngrok-free.app','www.dspop.info']
+ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'localhost','www.dspop.info']
 
 
 # Application definition
@@ -114,8 +114,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB', 'judiciary'),
+        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }
 
@@ -220,10 +224,20 @@ LOGGING = {
     },
 }
 
-
 # Google Drive settings
-GOOGLE_OAUTH_CLIENT_SECRETS_FILE = os.path.join(BASE_DIR, 'client_secrets.json')
-GOOGLE_OAUTH_REDIRECT_URI = 'http://your-domain/documents/google-auth-callback/'
+GOOGLE_DRIVE_CREDENTIALS_FILE = os.path.join(BASE_DIR, os.environ.get('GOOGLE_DRIVE_CREDENTIALS_FILE', 'client_secrets.json'))
+GOOGLE_DRIVE_DOCUMENT_ROOT = os.environ.get('GOOGLE_DRIVE_DOCUMENT_ROOT', '')  # Root folder ID for documents
+
+# Google Drive API scopes
+GOOGLE_DRIVE_SCOPES = [
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/drive.readonly'
+]
+
+# Check if credentials file exists
+if not os.path.exists(GOOGLE_DRIVE_CREDENTIALS_FILE):
+    print(f"Warning: Google Drive credentials file not found at {GOOGLE_DRIVE_CREDENTIALS_FILE}")
+
 
 
 # Add Webpack loader settings

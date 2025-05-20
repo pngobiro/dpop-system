@@ -1,7 +1,7 @@
 # apps/pmmu/management/commands/seed_pmmu_from_ocr.py
 from django.core.management.base import BaseCommand
-from apps.pmmu.models import Indicator, IndicatorNote, PMMU
-from apps.organization.models import FinancialYear
+from apps.pmmu.models import PerformanceIndicator, IndicatorNote, PMMU
+from apps.statistics.models import FinancialYear
 from apps.organization.models import Department
 from django.contrib.auth import get_user_model
 from apps.document_management.utils.document_manager import DocumentManager
@@ -82,15 +82,11 @@ class Command(BaseCommand):
 
         # --- Create Indicator Items ---
         for indicator_data in indicators_data:
-            indicator = Indicator.objects.create( # Updated model name
-                pmmu=pmmu_instance, # Link to the PMMU instance
+            indicator = PerformanceIndicator.objects.create(
                 name=indicator_data['name'],
-                description=indicator_data.get('description', ''), # Description not in page 5, using empty string as default
-                department=directorate_dept,
+                description=indicator_data.get('description', ''),
                 unit_of_measure=indicator_data['unit_of_measure'],
                 weight=indicator_data['weight'],
-                baseline_2023_2024=indicator_data['baseline_2023_2024'],
-                target_2024_2025=indicator_data['target_2024_2025'],
             )
             self.stdout.write(self.style.SUCCESS(f'  Created PMMU Indicator: {indicator.name}'))
 

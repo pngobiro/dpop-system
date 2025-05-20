@@ -51,3 +51,7 @@ Thumbs.db
 
 # Ignore all files in data/db
 data/*
+
+# Google Drive credentials
+client_secrets.json
+token.pickle

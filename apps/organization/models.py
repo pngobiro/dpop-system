@@ -5,6 +5,7 @@ from django.contrib.auth.models import Permission  # Import Permission
 
 class Department(models.Model):
     name = models.CharField(max_length=200)
+    email = models.EmailField(blank=True)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)

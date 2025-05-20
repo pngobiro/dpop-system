@@ -1,0 +1,184 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+<style>
+    .table thead th { font-weight: 600; }
+    .btn-outline-primary:hover { color: #fff; }
+</style>
+{% endblock %}
+
+{% block title %} Google Drive Files {% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="d-flex align-items-center">
+                                <a href="/" class="btn btn-sm btn-outline-secondary me-3">
+                                    <i class="fas fa-home me-1"></i> Dashboard
+                                </a>
+                                <h2 class="fs-5 fw-bold mb-0">Google Drive Documents</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <form method="GET" class="mb-0">
+                                <div class="input-group">
+                                    <input type="text" name="q" class="form-control" placeholder="Search documents..." value="{{ search_query }}">
+                                    <button class="btn btn-outline-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="row">
+                        <div class="col-12">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="table-responsive shadow-sm rounded">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0">Document Name</th>
+                                    <th class="border-0">Last Modified</th>
+                                    <th class="border-0">Size</th>
+                                    <th class="border-0">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in files %}
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center">
+                                            {% if file.mimeType == 'application/pdf' %}
+                                            <i class="fas fa-file-pdf text-danger me-2 fa-lg"></i>
+                                            {% else %}
+                                            <i class="fas fa-file text-primary me-2 fa-lg"></i>
+                                            {% endif %}
+                                            <a href="{{ file.webViewLink }}" target="_blank" class="text-decoration-none">{{ file.name }}</a>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">{{ file.modifiedTime|date:"F j, Y" }}</td>
+                                    <td class="align-middle">
+                                        {% if file.size %}
+                                        {{ file.size|filesizeformat }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="btn-group">
+                                            <a href="{{ file.webViewLink }}" target="_blank"
+                                               class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                <i class="fas fa-external-link-alt me-1"></i> Open
+                                            </a>
+                                            {% if file.mimeType == 'application/pdf' %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-success rounded-pill px-3 ms-2"
+                                                    onclick="summarizeDocument('{{ file.id }}', '{{ file.name }}')">
+                                                <i class="fas fa-robot me-1"></i> AI Summarize
+                                            </button>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Summary Modal -->
+                                        <div class="modal fade" id="summaryModal" tabindex="-1">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Document Summary</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div id="summarySpinner" class="text-center py-5" style="display: none;">
+                                                            <div class="spinner-border text-primary" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
+                                                            <p class="mt-2">Analyzing document...</p>
+                                                        </div>
+                                                        <div id="summaryContent"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="fas fa-folder-open fa-3x mb-3"></i>
+                                            <p class="h5 mb-0">No documents available at this time</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    function summarizeDocument(fileId, fileName) {
+        // Show modal with loading state
+        const modal = new bootstrap.Modal(document.getElementById('summaryModal'));
+        const summarySpinner = document.getElementById('summarySpinner');
+        const summaryContent = document.getElementById('summaryContent');
+        
+        summarySpinner.style.display = 'block';
+        summaryContent.innerHTML = '';
+        modal.show();
+        
+        // Make API request
+        fetch(`/documents/drive/summarize/${fileId}/`)
+            .then(response => response.json())
+            .then(data => {
+                summarySpinner.style.display = 'none';
+                if (data.status === 'success') {
+                    summaryContent.innerHTML = `
+                        <h6 class="mb-3">${fileName}</h6>
+                        <div class="alert alert-light border">
+                            ${data.summary.split('\n').join('<br>')}
+                        </div>
+                    `;
+                } else {
+                    summaryContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${data.message}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                summarySpinner.style.display = 'none';
+                summaryContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error: Could not generate summary. Please try again later.
+                    </div>
+                `;
+            });
+    }
+</script>
+{% endblock javascripts %}

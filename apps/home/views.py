@@ -89,7 +89,7 @@ def department_modules(request, department_id):
     if document_app_exists:
          try:
             # Add query parameter to track originating department
-            library_url = reverse('document_management:digital_library') + f'?from_dept={department_id}'
+            library_url = reverse('document_management:library') + f'?from_dept={department_id}'
             if request.user.has_perm('document_management.view_document'):
                 library_module = SimpleNamespace(
                     name="Digital Library", url=library_url, url_name='dynamic_library_url',

@@ -1,0 +1,194 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Tasks Dashboard {% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <!-- Tasks Due Today -->
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize font-weight-bold">Due Today</p>
+                                <h5 class="font-weight-bolder mb-0">{{ due_today.count }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                                <i class="fas fa-clock text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Tasks -->
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize font-weight-bold">Overdue</p>
+                                <h5 class="font-weight-bolder mb-0 text-danger">{{ overdue_tasks.count }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-md">
+                                <i class="fas fa-exclamation-circle text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Tasks -->
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize font-weight-bold">Pending Tasks</p>
+                                <h5 class="font-weight-bolder mb-0">{{ pending_tasks.count }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                                <i class="fas fa-tasks text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-capitalize font-weight-bold">Completed</p>
+                                <h5 class="font-weight-bolder mb-0 text-success">{{ completed_tasks.count }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                                <i class="fas fa-check text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks Lists -->
+    <div class="row">
+        <!-- Assigned Tasks -->
+        <div class="col-12 col-xl-8 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between">
+                        <h6>My Tasks</h6>
+                        <a href="{% url 'tasks:add_task' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> New Task
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Task</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Project</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Due Date</th>
+                                    <th class="text-secondary opacity-7"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in assigned_tasks %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{ task.title }}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{ task.description|truncatechars:50 }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ task.project.name }}</p>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        {% if task.status == 'DONE' %}
+                                            <span class="badge badge-sm bg-gradient-success">Completed</span>
+                                        {% elif task.status == 'IN_PROGRESS' %}
+                                            <span class="badge badge-sm bg-gradient-info">In Progress</span>
+                                        {% elif task.status == 'BLOCKED' %}
+                                            <span class="badge badge-sm bg-gradient-danger">Blocked</span>
+                                        {% else %}
+                                            <span class="badge badge-sm bg-gradient-secondary">To Do</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">{{ task.due_date|date:"M d, Y" }}</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <a href="{% url 'tasks:task_detail' task.id %}" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="View task">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recently Completed -->
+        <div class="col-12 col-xl-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <h6>Recently Completed Tasks</h6>
+                </div>
+                <div class="card-body p-3">
+                    {% for task in completed_tasks %}
+                    <div class="timeline timeline-one-side">
+                        <div class="timeline-block mb-3">
+                            <span class="timeline-step">
+                                <i class="fas fa-check text-success text-gradient"></i>
+                            </span>
+                            <div class="timeline-content">
+                                <h6 class="text-dark text-sm font-weight-bold mb-0">{{ task.title }}</h6>
+                                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ task.updated_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-secondary text-sm">No completed tasks yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+    // Any additional JavaScript for the dashboard
+</script>
+{% endblock javascripts %}
