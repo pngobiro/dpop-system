@@ -14,7 +14,7 @@ def user_tasks_dashboard(request):
     today = timezone.now().date()
     
     # Get tasks assigned to the user
-    assigned_tasks = Task.objects.filter(assignee=request.user).select_related('project').order_by('due_date')
+    assigned_tasks = Task.objects.filter(assignees=request.user).select_related('project').prefetch_related('assignees').order_by('due_date')
     
     # Tasks created by the user
     created_tasks = Task.objects.filter(creator=request.user).select_related('project').order_by('due_date')
@@ -51,7 +51,7 @@ def my_dashboard(request):
     today = timezone.now().date()
     
     # Get tasks assigned to me with detailed stats
-    my_tasks = Task.objects.filter(assignee=request.user)
+    my_tasks = Task.objects.filter(assignees=request.user)
     my_tasks_stats = {
         'total': my_tasks.count(),
         'pending': my_tasks.exclude(status=Task.StatusChoices.DONE).count(),
@@ -90,8 +90,8 @@ def tasks_assigned_by_me(request):
     """View for tasks that the user has assigned to others"""
     tasks = Task.objects.filter(
         creator=request.user
-    ).select_related(
-        'assignee', 'project'
+    ).prefetch_related(
+        'assignees', 'project'
     ).order_by('-created_at')
 
     # Get all users for the assign task modal
@@ -140,20 +140,7 @@ def assign_task(request):
             for assignee_id in assignee_ids:
                 try:
                     assignee = CustomUser.objects.get(id=assignee_id)
-                    # Create a copy of the task for each assignee
-                    if len(assignee_ids) > 1:
-                        assignee_task = Task.objects.create(
-                            project=project,
-                            title=f"{title} (Assigned to {assignee.get_full_name() or assignee.username})",
-                            description=description,
-                            assignee=assignee,
-                            creator=request.user,
-                            due_date=due_date,
-                            parent_task=task
-                        )
-                    else:
-                        task.assignee = assignee
-                        task.save()
+                    task.assignees.add(assignee)
                     assigned_users.append(assignee.get_full_name() or assignee.username)
                 except CustomUser.DoesNotExist:
                     messages.warning(request, f'User with ID {assignee_id} not found.')
@@ -181,6 +168,8 @@ def assign_task(request):
                 f'{attachment_count} file(s) attached.'
             )
 
+        except Project.DoesNotExist:
+            messages.error(request, 'Selected project does not exist.')
         except ValueError as ve:
             messages.error(request, f'Invalid data provided: {str(ve)}')
         except Exception as e:
