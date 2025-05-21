@@ -1,6 +1,6 @@
 from django.urls import path
 from django.urls import path
-from .views.dashboard import user_tasks_dashboard, my_dashboard, tasks_assigned_by_me
+from .views.dashboard import user_tasks_dashboard, my_dashboard, tasks_assigned_by_me, assign_task
 from .views.projects import project_list, department_task_project_list, project_detail
 from .views.tasks import task_detail, add_task, edit_task
 
@@ -11,6 +11,7 @@ urlpatterns = [
     path('admin/', user_tasks_dashboard, name='dashboard'),
     path('my_dashboard/', my_dashboard, name='my_dashboard'),
     path('assigned/', tasks_assigned_by_me, name='tasks_assigned_by_me'),
+    path('assign-task/', assign_task, name='assign_task'),
     
     # Department-specific project list
     path('department/<int:department_id>/projects/', department_task_project_list, name='department_task_project_list'),

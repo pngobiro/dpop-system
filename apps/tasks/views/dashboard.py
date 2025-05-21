@@ -1,6 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.contrib import messages
+from django.contrib.contenttypes.models import ContentType
+from authentication.models import CustomUser
 from apps.tasks.models import Task
 from apps.meetings.models import Meeting
 from apps.document_management.models import Document
@@ -95,8 +98,88 @@ def tasks_assigned_by_me(request):
         'assignee', 'project'
     ).order_by('-created_at')
 
+    # Get all users for the assign task modal
+    users = CustomUser.objects.filter(is_active=True).exclude(id=request.user.id)
+    
     context = {
         'tasks': tasks,
-        'title': 'Tasks I Assigned'
+        'title': 'Tasks I Assigned',
+        'users': users
     }
     return render(request, 'tasks/tasks_assigned.html', context)
+
+
+@login_required
+def assign_task(request):
+    """Handle assigning a new task to someone"""
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        assignee_ids = request.POST.getlist('assignees[]')
+        due_date = request.POST.get('due_date')
+        files = request.FILES.getlist('attachments[]')
+
+        if not all([title, description, assignee_ids, due_date]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('tasks:tasks_assigned_by_me')
+
+        try:
+            # Create the base task
+            task = Task.objects.create(
+                title=title,
+                description=description,
+                creator=request.user,
+                due_date=due_date
+            )
+
+            # Handle multiple assignees
+            assigned_users = []
+            for assignee_id in assignee_ids:
+                try:
+                    assignee = CustomUser.objects.get(id=assignee_id)
+                    # Create a copy of the task for each assignee
+                    if len(assignee_ids) > 1:
+                        assignee_task = Task.objects.create(
+                            title=f"{title} (Assigned to {assignee.get_full_name() or assignee.username})",
+                            description=description,
+                            assignee=assignee,
+                            creator=request.user,
+                            due_date=due_date,
+                            parent_task=task
+                        )
+                    else:
+                        task.assignee = assignee
+                        task.save()
+                    assigned_users.append(assignee.get_full_name() or assignee.username)
+                except CustomUser.DoesNotExist:
+                    messages.warning(request, f'User with ID {assignee_id} not found.')
+
+            # Handle file attachments using Document model
+            for file in files:
+                if file.size <= 10 * 1024 * 1024:  # 10MB limit
+                    Document.objects.create(
+                        title=file.name,
+                        file=file,
+                        content_type=ContentType.objects.get_for_model(task),
+                        object_id=task.id,
+                        uploaded_by=request.user
+                    )
+                else:
+                    messages.warning(request, f'File {file.name} exceeds 10MB limit and was not uploaded.')
+
+            # Success message
+            assignee_list = ", ".join(assigned_users)
+            attachment_count = len([f for f in files if f.size <= 10 * 1024 * 1024])
+            messages.success(
+                request,
+                f'Task "{title}" has been successfully assigned to {assignee_list}. '
+                f'Due date: {task.due_date.strftime("%B %d, %Y")}. '
+                f'{attachment_count} file(s) attached.'
+            )
+
+        except ValueError as ve:
+            messages.error(request, f'Invalid data provided: {str(ve)}')
+        except Exception as e:
+            messages.error(request, f'Error assigning task: {str(e)}')
+
+    return redirect('tasks:tasks_assigned_by_me')
