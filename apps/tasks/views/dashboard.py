@@ -4,10 +4,9 @@ from django.utils import timezone
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from authentication.models import CustomUser
-from apps.tasks.models import Task
+from apps.tasks.models import Task, Project
 from apps.meetings.models import Meeting
 from apps.document_management.models import Document
-
 
 @login_required
 def user_tasks_dashboard(request):
@@ -77,14 +76,11 @@ def my_dashboard(request):
         'this_week': Meeting.objects.filter(date__gte=today, date__lte=today + timezone.timedelta(days=7)).count()
     }
     
-    # Get document count
-    document_count = Document.objects.count()
-    
     context = {
         'my_tasks_stats': my_tasks_stats,
         'assigned_tasks_stats': assigned_tasks_stats,
         'meetings_stats': meetings_stats,
-        'document_count': document_count
+        'document_count': 0 #Document.objects.count()
     }
     return render(request, 'tasks/my_dashboard.html', context)
 
@@ -100,11 +96,13 @@ def tasks_assigned_by_me(request):
 
     # Get all users for the assign task modal
     users = CustomUser.objects.filter(is_active=True).exclude(id=request.user.id)
+    projects = Project.objects.all()
     
     context = {
         'tasks': tasks,
         'title': 'Tasks I Assigned',
-        'users': users
+        'users': users,
+        'projects': projects,
     }
     return render(request, 'tasks/tasks_assigned.html', context)
 
@@ -117,15 +115,19 @@ def assign_task(request):
         description = request.POST.get('description')
         assignee_ids = request.POST.getlist('assignees[]')
         due_date = request.POST.get('due_date')
+        project_id = request.POST.get('project')
         files = request.FILES.getlist('attachments[]')
 
-        if not all([title, description, assignee_ids, due_date]):
+        if not all([title, description, assignee_ids, due_date, project_id]):
             messages.error(request, 'Please fill in all required fields.')
             return redirect('tasks:tasks_assigned_by_me')
 
         try:
+            project = Project.objects.get(id=project_id)
+
             # Create the base task
             task = Task.objects.create(
+                project=project,
                 title=title,
                 description=description,
                 creator=request.user,
@@ -140,6 +142,7 @@ def assign_task(request):
                     # Create a copy of the task for each assignee
                     if len(assignee_ids) > 1:
                         assignee_task = Task.objects.create(
+                            project=project,
                             title=f"{title} (Assigned to {assignee.get_full_name() or assignee.username})",
                             description=description,
                             assignee=assignee,
