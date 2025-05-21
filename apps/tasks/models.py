@@ -90,11 +90,14 @@ class Project(models.Model):
             due_date__lt=today
         ).exclude(status=Task.StatusChoices.DONE).order_by('due_date')
 
-        # Fallback return for the outer 'if overdue_tasks.exists()'
-        # (Handles case where status is Overdue but no suitable task found)
+        if overdue_tasks.exists():
+            oldest_task = overdue_tasks.first()
+            return (today - oldest_task.due_date).days
+
+        # Fallback return
         return None
 
-    class Meta: # Correct indentation (aligned with method definitions)
+    class Meta:
         ordering = ['department__name', 'name']
         verbose_name = _("Project")
         verbose_name_plural = _("Projects")
@@ -130,12 +133,18 @@ class Task(models.Model):
         default=PriorityChoices.MEDIUM,
         help_text=_("Priority level of the task")
     )
-    assignee = models.ForeignKey(User, related_name='assigned_tasks', on_delete=models.SET_NULL, null=True, blank=True, help_text=_("User assigned to this task"))
+    assignees = models.ManyToManyField(
+        User,
+        related_name='tasks_assigned',
+        blank=True,
+        help_text=_("Users assigned to this task")
+    )
     creator = models.ForeignKey(User, related_name='created_tasks', on_delete=models.SET_NULL, null=True, blank=True, help_text=_("User who created this task"))
-    start_date = models.DateField(null=True, blank=True, help_text=_("Optional start date for the task")) # Added start_date
+    start_date = models.DateField(null=True, blank=True, help_text=_("Optional start date for the task"))
     due_date = models.DateField(null=True, blank=True, help_text=_("Optional due date for the task"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    parent_task = models.ForeignKey('self', null=True, blank=True, related_name='subtasks', on_delete=models.CASCADE)
 
     # Generic relation to the Document model for task-level attachments
     if Document:
@@ -143,56 +152,14 @@ class Task(models.Model):
             Document,
             content_type_field='content_type',
             object_id_field='object_id',
-            related_query_name='task' # Keep this distinct from project's relation
+            related_query_name='task'
         )
 
     def __str__(self):
         return f"{self.project.name} - {self.title}"
 
     class Meta:
-        ordering = ['project', 'start_date', 'due_date', 'priority', 'created_at'] # Correct ordering for Task
-        verbose_name = _("Task")
-        verbose_name_plural = _("Tasks")
-
-
-# Removed duplicate Task model definition
-        HIGH = 3, _('High')
-        URGENT = 4, _('Urgent')
-
-    project = models.ForeignKey(Project, related_name='tasks', on_delete=models.CASCADE, help_text=_("The project this task belongs to"))
-    title = models.CharField(max_length=255, help_text=_("Title of the task"))
-    description = models.TextField(blank=True, null=True, help_text=_("Detailed description of the task"))
-    status = models.CharField(
-        max_length=20,
-        choices=StatusChoices.choices,
-        default=StatusChoices.TODO,
-        help_text=_("Current status of the task")
-    )
-    priority = models.IntegerField(
-        choices=PriorityChoices.choices,
-        default=PriorityChoices.MEDIUM,
-        help_text=_("Priority level of the task")
-    )
-    assignee = models.ForeignKey(User, related_name='assigned_tasks', on_delete=models.SET_NULL, null=True, blank=True, help_text=_("User assigned to this task"))
-    creator = models.ForeignKey(User, related_name='created_tasks', on_delete=models.SET_NULL, null=True, blank=True, help_text=_("User who created this task"))
-    due_date = models.DateField(null=True, blank=True, help_text=_("Optional due date for the task"))
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    # Generic relation to the Document model for task-level attachments
-    if Document:
-        attachments = GenericRelation(
-            Document,
-            content_type_field='content_type',
-            object_id_field='object_id',
-            related_query_name='task' # Keep this distinct from project's relation
-        )
-
-    def __str__(self):
-        return f"{self.project.name} - {self.title}"
-
-    class Meta:
-        ordering = ['project', 'priority', 'due_date', 'created_at']
+        ordering = ['project', 'start_date', 'due_date', 'priority', 'created_at']
         verbose_name = _("Task")
         verbose_name_plural = _("Tasks")
 

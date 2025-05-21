@@ -53,22 +53,26 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'project', 'status', 'priority', 'assignee', 'due_date', 'created_at')
-    search_fields = ('title', 'description', 'project__name')
-    list_filter = ('status', 'priority', 'project', 'assignee', 'due_date', 'project__department' if Department else 'project')
+    list_display = ('title', 'project', 'status', 'priority', 'get_assignees', 'due_date', 'created_at')
+    search_fields = ('title', 'description', 'project__name', 'assignees__username')
+    list_filter = ('status', 'priority', 'project', 'due_date', 'project__department' if Department else 'project')
     readonly_fields = ('created_at', 'updated_at', 'creator')
     fieldsets = (
         (None, {
             'fields': ('project', 'title', 'description')
         }),
         ('Details', {
-            'fields': ('status', 'priority', 'assignee', 'due_date')
+            'fields': ('status', 'priority', 'assignees', 'due_date')
         }),
         ('Metadata', {
             'fields': ('creator', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
+
+    def get_assignees(self, obj):
+        return ", ".join([user.get_full_name() or user.username for user in obj.assignees.all()])
+    get_assignees.short_description = 'Assignees'
     # Add inlines based on whether Document model is available
     inlines = [CommentInline]
     if Document:

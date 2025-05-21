@@ -48,6 +48,17 @@
                                 </div>
 
                                 <div class="mb-3">
+                                    <label for="taskProject" class="form-label">Project</label>
+                                    <select class="form-select" id="taskProject" name="project" required>
+                                        <option value="">Select project...</option>
+                                        {% for project in projects %}
+                                        <option value="{{ project.id }}">{{ project.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">Please select a project.</div>
+                                </div>
+
+                                <div class="mb-3">
                                     <label for="taskAssignees" class="form-label">Assign To</label>
                                     <select class="form-select select2-multiple" id="taskAssignees" name="assignees[]"
                                         multiple required>
@@ -58,17 +69,6 @@
                                     </select>
                                     <div class="invalid-feedback">Please select at least one user to assign the task
                                         to.</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="taskProject" class="form-label">Project</label>
-                                    <select class="form-select" id="taskProject" name="project" required>
-                                        <option value="">Select project...</option>
-                                        {% for project in projects %}
-                                        <option value="{{ project.id }}">{{ project.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <div class="invalid-feedback">Please select a project.</div>
                                 </div>
 
                                 <div class="mb-3">
