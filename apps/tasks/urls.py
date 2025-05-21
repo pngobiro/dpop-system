@@ -1,19 +1,16 @@
 from django.urls import path
 from django.urls import path
-from .views import (
-    user_tasks_dashboard,
-    project_list,
-    department_task_project_list,
-    project_detail,
-    task_detail,
-    add_task,
-    edit_task
-)
+from .views.dashboard import user_tasks_dashboard, my_dashboard, tasks_assigned_by_me
+from .views.projects import project_list, department_task_project_list, project_detail
+from .views.tasks import task_detail, add_task, edit_task
+
 
 app_name = 'tasks' # Namespace for the tasks app
 urlpatterns = [
     # User dashboard
-    path('', user_tasks_dashboard, name='dashboard'),
+    path('admin/', user_tasks_dashboard, name='dashboard'),
+    path('my_dashboard/', my_dashboard, name='my_dashboard'),
+    path('assigned/', tasks_assigned_by_me, name='tasks_assigned_by_me'),
     
     # Department-specific project list
     path('department/<int:department_id>/projects/', department_task_project_list, name='department_task_project_list'),
