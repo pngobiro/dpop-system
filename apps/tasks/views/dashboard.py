@@ -103,6 +103,7 @@ def tasks_assigned_by_me(request):
         'title': 'Tasks I Assigned',
         'users': users,
         'projects': projects,
+        'request': request,
     }
     return render(request, 'tasks/tasks_assigned.html', context)
 

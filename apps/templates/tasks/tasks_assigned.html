@@ -56,20 +56,20 @@
                                         </option>
                                         {% endfor %}
                                     </select>
-                                                      <div class="invalid-feedback">Please select at least one user to assign the task
-                                                          to.</div>
-                                                  </div>
-                  
-                                                  <div class="mb-3">
-                                                      <label for="taskProject" class="form-label">Project</label>
-                                                      <select class="form-select" id="taskProject" name="project" required>
-                                                          <option value="">Select project...</option>
-                                                          {% for project in projects %}
-                                                          <option value="{{ project.id }}">{{ project.name }}</option>
-                                                          {% endfor %}
-                                                      </select>
-                                                      <div class="invalid-feedback">Please select a project.</div>
-                                                  </div>
+                                    <div class="invalid-feedback">Please select at least one user to assign the task
+                                        to.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="taskProject" class="form-label">Project</label>
+                                    <select class="form-select" id="taskProject" name="project" required>
+                                        <option value="">Select project...</option>
+                                        {% for project in projects %}
+                                        <option value="{{ project.id }}">{{ project.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="invalid-feedback">Please select a project.</div>
+                                </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Attachments</label>
@@ -156,7 +156,6 @@
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-{% block javascript %}
     <script>
         $(document).ready(function () {
             // Initialize Select2 for multiple user selection
@@ -214,7 +213,6 @@
             const fileInputs = document.querySelectorAll('input[type="file"]');
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
-
             fileInputs.forEach(input => {
                 if (input.files.length > 0) {
                     Array.from(input.files).forEach(file => {
@@ -260,156 +258,4 @@
             container.appendChild(div);
         }
     </script>
-    {% endblock %}
-
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Task</th>
-                            <th>Assigned To</th>
-                            <th>Project</th>
-                            <th>Due Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for task in tasks %}
-                        <tr>
-                            <td>{{ task.title }}</td>
-                            <td>{{ task.assignee.get_full_name|default:task.assignee.username }}</td>
-                            <td>{{ task.project.name }}</td>
-                            <td>{{ task.due_date|date:"M d, Y" }}</td>
-                            <td>
-                                {% if task.status == 'DONE' %}
-                                <span class="badge bg-success">Completed</span>
-                                {% else %}
-                                <span class="badge bg-warning">In Progress</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center">
-                                <p class="text-muted my-3">You haven't assigned any tasks yet.</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-{% block scripts %}
-<script>
-    // Initialize Bootstrap tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
-    // Initialize Bootstrap popovers
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl)
-    })
-
-    // Initialize Select2 for multiple user selection
-    $('.select2-multiple').select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-        placeholder: 'Select users to assign the task to...',
-        allowClear: true
-    });
-    // Form validation
-    const form = document.getElementById('assignTaskForm');
-    form.addEventListener('submit', function (event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-    });
-    // Due date calculation
-    const dueInDaysInput = document.getElementById('taskDueInDays');
-    const dueDateInput = document.getElementById('taskDueDate');
-    // Due date calculation function
-    function updateDueDate() {
-        const days = parseInt(dueInDaysInput.value, 10) || 0;
-        const today = new Date();
-        const targetDate = new Date(today.setDate(today.getDate() + days));
-        const year = targetDate.getFullYear();
-        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-        const day = String(targetDate.getDate()).padStart(2, '0');
-        dueDateInput.value = `${year}-${month}-${day}`;
-    }
-    // Set default due date and update on input
-    updateDueDate(); // Set initial due date
-    dueInDaysInput.addEventListener('input', updateDueDate);
-    dueInDaysInput.addEventListener('keyup', updateDueDate);
-    dueInDaysInput.addEventListener('change', updateDueDate);
-    // Reset form and set default due date when modal is shown
-    $('#assignTaskModal').on('shown.bs.modal', function () {
-        updateDueDate();
-    });
-    // Update due date every time the modal is shown
-    $('#assignTaskModal').on('show.bs.modal', function () {
-        dueInDaysInput.value = '0';
-        updateDueDate();
-    });
-    // File upload preview
-    function updateFilePreview() {
-        const fileInputs = document.querySelectorAll('input[type="file"]');
-        const fileList = document.getElementById('fileList');
-        fileList.innerHTML = '';
-        fileInputs.forEach(input => {
-            if (input.files.length > 0) {
-                Array.from(input.files).forEach(file => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    li.innerHTML = `
-              <span>
-                <i class="fas fa-file me-2"></i>
-                ${file.name}
-              </span>
-              <span class="badge bg-secondary">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
-            `;
-                    fileList.appendChild(li);
-                });
-            }
-        });
-        if (fileList.children.length > 0) {
-            new bootstrap.Modal(document.getElementById('uploadPreviewModal')).show();
-        }
-    }
-    // Monitor file inputs for changes
-    document.getElementById('attachmentsContainer').addEventListener('change', function (e) {
-        if (e.target.type === 'file') {
-            updateFilePreview();
-        }
-    });
-    // Add attachment function
-    function addAttachment() {
-        const container = document.getElementById('attachmentsContainer');
-        const div = document.createElement('div');
-        div.className = 'input-group mb-2';
-        div.innerHTML = `
-        <input type="file" class="form-control" name="attachments[]">
-        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
-          <i class="fas fa-trash"></i>
-        </button>
-      `;
-        container.appendChild(div);
-    }
-</script>
-{% endblock %}
-{% endblock %}
-
+{% endblock javascripts %}
