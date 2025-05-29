@@ -4,10 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
-from apps.meetings.models import Meeting, MeetingParticipant
+from apps.meetings.models import Meeting, MeetingParticipant, MeetingType
 from apps.organization.models import Department
+from authentication.models import CustomUser
+from datetime import datetime, timedelta
 
-@login_required 
+@login_required
 def dashboard(request):
     user = request.user
     today = timezone.now().date()
@@ -46,10 +48,17 @@ def dashboard(request):
         ).distinct().count()
     }
 
+    # Get data for new meeting modal
+    meeting_types = MeetingType.objects.filter(is_active=True)
+    # Get users in the same departments as the current user
+    department_users = CustomUser.objects.filter(departments__in=user.departments.all(), is_active=True).distinct()
+
     context = {
         'stats': stats,
         'todays_meetings': todays_meetings,
         'upcoming_meetings': upcoming_meetings,
+        'meeting_types': meeting_types,
+        'department_users': department_users,
     }
     return render(request, 'meetings/dashboard.html', context)
 

@@ -10,9 +10,9 @@
         </div>
         <div class="col-auto">
             <div class="btn-group">
-                <a href="{% url 'meetings:meeting_create' %}" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMeetingModal">
                     <i class="fas fa-plus"></i> New Meeting
-                </a>
+                </button>
                 <a href="{% url 'meetings:calendar' %}" class="btn btn-outline-primary">
                     <i class="fas fa-calendar-alt"></i> Calendar View
                 </a>
@@ -187,15 +187,114 @@
         </div>
     </div>
 </div>
+
+<!-- New Meeting Modal -->
+<div class="modal fade" id="newMeetingModal" tabindex="-1" aria-labelledby="newMeetingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newMeetingModalLabel">Schedule New Meeting</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'meetings:meeting_create' %}" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <!-- Basic Information -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Meeting Title*</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="meeting_type" class="form-label">Meeting Type*</label>
+                            <select class="form-control" id="meeting_type" name="meeting_type" required>
+                                {% for type in meeting_types %}
+                                    <option value="{{ type.id }}">{{ type.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="meeting_mode" class="form-label">Meeting Mode*</label>
+                            <select class="form-control" id="meeting_mode" name="meeting_mode" required>
+                                <option value="physical">Physical</option>
+                                <option value="virtual">Virtual</option>
+                                <option value="hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="date" class="form-label">Date*</label>
+                            <input type="date" class="form-control" id="date" name="date" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="start_time" class="form-label">Start Time*</label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_time" class="form-label">End Time</label>
+                            <input type="time" class="form-control" id="end_time" name="end_time">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="agenda" class="form-label">Agenda*</label>
+                        <textarea class="form-control" id="agenda" name="agenda" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="participants" class="form-label">Participants*</label>
+                        <select class="form-control select2" id="participants" name="participants" multiple required>
+                            {% for user in department_users %}
+                                <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Select participants from your department</small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Schedule Meeting</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Highlight current day's meetings
+    // Initialize select2 for participants
+    $('#participants').select2({
+        theme: 'bootstrap-5',
+        dropdownParent: $('#newMeetingModal'),
+        placeholder: 'Select participants',
+        width: '100%'
+    });
+
+    // Add current date as minimum date
     const today = new Date();
+    document.getElementById('date').min = today.toISOString().split('T')[0];
+
+    // Meeting mode change handler
+    document.getElementById('meeting_mode').addEventListener('change', function() {
+        const mode = this.value;
+        const virtualFields = document.getElementById('virtualMeetingFields');
+        const physicalFields = document.getElementById('physicalLocationField');
+
+        if (mode === 'physical') {
+            virtualFields.style.display = 'none';
+            physicalFields.style.display = 'block';
+        } else if (mode === 'virtual') {
+            virtualFields.style.display = 'block';
+            physicalFields.style.display = 'none';
+        } else {
+            virtualFields.style.display = 'block';
+            physicalFields.style.display = 'block';
+        }
+    });
+
+    // Highlight current day's meetings
     const todayStr = today.toISOString().split('T')[0];
-    
     document.querySelectorAll('.meeting-date').forEach(elem => {
         if (elem.dataset.date === todayStr) {
             elem.closest('.list-group-item').classList.add('list-group-item-primary');

@@ -1,34 +1,96 @@
 # apps/meetings/forms.py
 from django import forms
+from django.utils import timezone
 from .models import Meeting, MeetingParticipant, MeetingDocument, MeetingAction
 
 class MeetingForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['date'].widget = forms.DateInput(attrs={'type': 'date'})
-        self.fields['start_time'].widget = forms.TimeInput(attrs={'type': 'time'})
-        self.fields['end_time'].widget = forms.TimeInput(attrs={'type': 'time'})
-        self.fields['participants'].widget.attrs['class'] = 'form-control select2'
         
-        # Make virtual meeting fields not required initially
+        # Make end_time not required
+        self.fields['end_time'].required = False
+
+        # Apply form-control class to all fields
+        for field_name, field in self.fields.items():
+            css_class = 'form-control'
+            if field_name == 'participants':
+                css_class += ' select2'
+            field.widget.attrs.update({
+                'class': css_class,
+                'data-required': field.required
+            })
+
+        # Special handling for specific fields
+        self.fields['date'].widget = forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control',
+            'required': True,
+            'min': timezone.now().date().isoformat()
+        })
+        self.fields['start_time'].widget = forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control',
+            'required': True
+        })
+        self.fields['end_time'].widget = forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control',
+            'required': False
+        })
+        
+        # Department field handling
+        if user and user.department:
+            self.fields['department'].initial = user.department
+            self.fields['department'].widget.attrs['readonly'] = True
+            self.fields['department'].widget.attrs['class'] += ' bg-light'
+            # Hide department field since it's automatically set
+            self.fields['department'].widget = forms.HiddenInput()
+        
+        # Handle virtual meeting fields
+        for field in ['virtual_meeting_id', 'virtual_meeting_password', 'physical_location']:
+            self.fields[field].required = False
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'data-conditional': 'true'
+            })
+            
+        # Special handling for virtual_meeting_url to be more flexible
         self.fields['virtual_meeting_url'].required = False
-        self.fields['virtual_meeting_id'].required = False
-        self.fields['virtual_meeting_password'].required = False
-        self.fields['physical_location'].required = False
+        self.fields['virtual_meeting_url'].widget = forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'https://meet.google.com/abc-defg-hij or meeting ID',
+            'data-conditional': 'true'
+        })
+        self.fields['virtual_meeting_url'].help_text = 'Can be a URL or meeting ID'
+
+        self.fields['virtual_meeting_url'].help_text = 'Required for virtual or hybrid meetings'
+        self.fields['physical_location'].help_text = 'Required for physical or hybrid meetings'
 
     def clean(self):
         cleaned_data = super().clean()
+        
+        # Basic date/time validation
+        date = cleaned_data.get('date')
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+        
+        if date and start_time:
+            if end_time and start_time >= end_time:
+                self.add_error('end_time', 'End time must be after start time')
+        
+        # Meeting mode validation
         meeting_mode = cleaned_data.get('meeting_mode')
-
-        # Validate based on meeting mode
-        if meeting_mode == 'virtual' or meeting_mode == 'hybrid':
-            if not cleaned_data.get('virtual_meeting_url'):
-                self.add_error('virtual_meeting_url', 'Virtual meeting URL is required for virtual/hybrid meetings')
-
-        if meeting_mode == 'physical' or meeting_mode == 'hybrid':
-            if not cleaned_data.get('physical_location'):
-                self.add_error('physical_location', 'Physical location is required for physical/hybrid meetings')
-
+        if meeting_mode:
+            if meeting_mode in ['virtual', 'hybrid']:
+                if not cleaned_data.get('virtual_meeting_url'):
+                    self.add_error('virtual_meeting_url', 'Virtual meeting URL is required for virtual/hybrid meetings')
+                if not cleaned_data.get('virtual_platform'):
+                    self.add_error('virtual_platform', 'Virtual platform must be selected for virtual/hybrid meetings')
+            
+            if meeting_mode in ['physical', 'hybrid']:
+                if not cleaned_data.get('physical_location'):
+                    self.add_error('physical_location', 'Physical location is required for physical/hybrid meetings')
+        
         return cleaned_data
 
     class Meta:
@@ -41,7 +103,19 @@ class MeetingForm(forms.ModelForm):
             'virtual_meeting_password', 'agenda', 'participants'
         ]
         widgets = {
-            'agenda': forms.Textarea(attrs={'rows': 4}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'department': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'meeting_type': forms.Select(attrs={'class': 'form-control'}),
+            'meeting_mode': forms.Select(attrs={'class': 'form-control'}),
+            'physical_location': forms.TextInput(attrs={'class': 'form-control'}),
+            'virtual_platform': forms.Select(attrs={'class': 'form-control'}),
+            'virtual_meeting_url': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://meet.google.com/abc-defg-hij or meeting ID'
+            }),
+            'virtual_meeting_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'virtual_meeting_password': forms.TextInput(attrs={'class': 'form-control'}),
+            'agenda': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
         }
         
 class MeetingActionForm(forms.ModelForm):

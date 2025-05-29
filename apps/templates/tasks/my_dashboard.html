@@ -16,7 +16,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
            <h5 class="card-title mb-0">
-             <i class="fas fa-tasks text-primary"></i> My Tasks
+             <i class="fas fa-tasks text-primary"></i> Tasks Assigned to Me
            </h5>
            <span class="badge bg-primary rounded-pill">{{ my_tasks_stats.total|default:"0" }}</span>
          </div>
@@ -26,8 +26,8 @@
            <p class="mb-1"><i class="fas fa-exclamation-triangle text-danger"></i> Overdue: {{ my_tasks_stats.overdue|default:"0" }}</p>
            <p class="mb-1"><i class="fas fa-calendar-day text-info"></i> Due Today: {{ my_tasks_stats.due_today|default:"0" }}</p>
          </div>
-         <a href="/tasks/admin/" class="btn btn-primary w-100">
-           <i class="fas fa-arrow-right"></i> View All Tasks
+         <a href="/tasks/assigned/" class="btn btn-primary w-100">
+           <i class="fas fa-arrow-right"></i> My Tasks
           </a>
         </div>
       </div>
@@ -39,7 +39,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="card-title mb-0">
-              <i class="fas fa-user-check text-warning"></i> Tasks I Assigned
+              <i class="fas fa-user-check text-warning"></i> Tasks I Assigned to Others
             </h5>
             <span class="badge bg-warning rounded-pill">{{ assigned_tasks_stats.total }}</span>
           </div>
@@ -47,9 +47,9 @@
             <p class="mb-1"><i class="fas fa-clock text-muted"></i> Pending: {{ assigned_tasks_stats.pending }}</p>
             <p class="mb-1"><i class="fas fa-check text-success"></i> Completed: {{ assigned_tasks_stats.completed }}</p>
           </div>
-          <a href="/tasks/assigned/" class="btn btn-warning w-100">
-            <i class="fas fa-arrow-right"></i> View Assigned Tasks
-          </a>
+          <a href="{% url 'tasks:tasks_created_by_me' %}" class="btn btn-warning w-100">
+            <i class="fas fa-arrow-right"></i> View Tasks I Assigned
+           </a>
         </div>
       </div>
     </div>

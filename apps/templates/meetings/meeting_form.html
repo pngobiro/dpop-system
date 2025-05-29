@@ -29,11 +29,17 @@
                     <form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
                         {% csrf_token %}
 
-                        {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {% for error in form.non_field_errors %}
-                                {{ error }}
-                            {% endfor %}
+                        {% if form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Form Errors:</strong>
+                            <ul class="mb-0">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                         {% endif %}
 
@@ -149,9 +155,11 @@
                                 {{ form.virtual_meeting_url }}
                                 {% if form.virtual_meeting_url.errors %}
                                     <div class="invalid-feedback d-block">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
                                         {{ form.virtual_meeting_url.errors|join:", " }}
                                     </div>
                                 {% endif %}
+                                <small class="form-text text-muted">Example: https://meet.google.com/abc-defg-hij</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.virtual_meeting_id.id_for_label }}" class="form-label">Meeting ID</label>

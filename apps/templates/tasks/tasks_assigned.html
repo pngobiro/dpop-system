@@ -6,12 +6,57 @@
     <div class="row mb-4">
         <div class="col">
             <h1 class="display-4 text-light mb-0">{{ title }}</h1>
-            <p class="text-light-50">Track the progress of tasks you've assigned to others</p>
+            <p class="text-light-50">Track the progress of tasks assigned to you and manage your workload effectively.</p>
         </div>
         <div class="col-auto">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assignTaskModal">
                 <i class="fas fa-plus"></i> Assign New Task
             </button>
+        </div>
+    </div>
+
+    <!-- Task Status Summary -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-12"> {# Use full width for summary #}
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar text-primary"></i> Assigned Tasks Summary
+                        </h5>
+                        <span class="badge bg-primary rounded-pill">{{ assigned_tasks_stats.total|default:"0" }} Total</span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-clock text-warning"></i> To Do: {{ assigned_tasks_stats.TODO|default:"0" }}</p>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-spinner text-info"></i> In Progress: {{ assigned_tasks_stats.IN_PROGRESS|default:"0" }}</p>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-check-circle text-success"></i> Done: {{ assigned_tasks_stats.DONE|default:"0" }}</p>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-times-circle text-danger"></i> Blocked: {{ assigned_tasks_stats.BLOCKED|default:"0" }}</p>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-thumbs-up text-success"></i> Approved: {{ assigned_tasks_stats.APPROVED|default:"0" }}</p>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-thumbs-down text-danger"></i> Rejected: {{ assigned_tasks_stats.REJECTED|default:"0" }}</p>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-exchange-alt text-secondary"></i> Reassigned: {{ assigned_tasks_stats.REASSIGNED|default:"0" }}</p>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-search text-primary"></i> In Review: {{ assigned_tasks_stats.IN_REVIEW|default:"0" }}</p>
+                        </div>
+                         <div class="col-md-3 col-sm-6 mb-2">
+                            <p class="mb-1"><i class="fas fa-pause-circle text-secondary"></i> On Hold: {{ assigned_tasks_stats.ON_HOLD|default:"0" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

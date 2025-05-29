@@ -215,9 +215,15 @@
     </div>
 
     <div class="mt-4 mb-5">
-        <a href="{% url 'tasks:tasks_assigned_by_me' %}" class="btn btn-primary">
-            <i class="fas fa-arrow-left me-1"></i> Back to Tasks Assigned by Me
-        </a>
+        {% if referring_url %}
+            <a href="{{ referring_url }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-1"></i> {{ back_button_text }}
+            </a>
+        {% else %}
+            <a href="{% url 'tasks:my_dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-1"></i> {{ back_button_text }}
+            </a>
+        {% endif %}
     </div>
 
     {# Task History and Actions #}

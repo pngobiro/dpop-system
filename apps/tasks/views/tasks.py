@@ -94,9 +94,20 @@ def task_detail(request, task_id):
 
             return redirect('tasks:task_detail', task_id=task.id)
 
+    referring_url = request.META.get('HTTP_REFERER')
+    back_button_text = "Back to Dashboard" # Default text
+
+    if referring_url:
+        if '/tasks/assigned/' in referring_url:
+            back_button_text = "Back to Tasks Assigned to Me"
+        elif '/tasks/created_by_me/' in referring_url:
+            back_button_text = "Back to Tasks I Assigned"
+
     context = {
         'task': task,
-        'attachments': task_attachments
+        'attachments': task_attachments,
+        'referring_url': referring_url,
+        'back_button_text': back_button_text,
     }
     return render(request, 'tasks/task_detail.html', context)
 

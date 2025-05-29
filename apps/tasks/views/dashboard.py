@@ -87,8 +87,9 @@ def my_dashboard(request):
 
 @login_required
 def tasks_assigned_by_me(request):
-    """View for tasks that the user has assigned to others"""
-    tasks = Task.objects.filter(
+    """View for tasks that are assigned to the current user"""
+    # Get tasks assigned to the user
+    tasks_assigned_to_me = Task.objects.filter(
         assignees=request.user
     ).select_related(
         'project'
@@ -100,16 +101,80 @@ def tasks_assigned_by_me(request):
         '-created_at'  # Then by creation date
     )
 
-    # Get all users for the assign task modal
+    # Calculate statistics for tasks assigned to the user
+    assigned_tasks_stats = {
+        'total': tasks_assigned_to_me.count(),
+        'TODO': tasks_assigned_to_me.filter(status=Task.StatusChoices.TODO).count(),
+        'IN_PROGRESS': tasks_assigned_to_me.filter(status=Task.StatusChoices.IN_PROGRESS).count(),
+        'DONE': tasks_assigned_to_me.filter(status=Task.StatusChoices.DONE).count(),
+        'BLOCKED': tasks_assigned_to_me.filter(status=Task.StatusChoices.BLOCKED).count(),
+        'APPROVED': tasks_assigned_to_me.filter(status=Task.StatusChoices.APPROVED).count(),
+        'REJECTED': tasks_assigned_to_me.filter(status=Task.StatusChoices.REJECTED).count(),
+        'REASSIGNED': tasks_assigned_to_me.filter(status=Task.StatusChoices.REASSIGNED).count(),
+        'IN_REVIEW': tasks_assigned_to_me.filter(status=Task.StatusChoices.IN_REVIEW).count(),
+        'ON_HOLD': tasks_assigned_to_me.filter(status=Task.StatusChoices.ON_HOLD).count(),
+    }
+
+
+    # Get all users for the assign task modal (still needed for the modal)
     users = CustomUser.objects.filter(is_active=True).exclude(id=request.user.id)
     projects = Project.objects.all()
-    
+
     context = {
-        'tasks': tasks,
-        'title': 'Tasks Assigned to Me',
+        'tasks': tasks_assigned_to_me, # Pass tasks assigned to the user
+        'title': 'Tasks Assigned to Me', # Revert title
         'users': users,
         'projects': projects,
         'request': request,
+        'assigned_tasks_stats': assigned_tasks_stats, # Pass the calculated stats
+    }
+    return render(request, 'tasks/tasks_assigned.html', context)
+
+
+    return render(request, 'tasks/tasks_assigned.html', context)
+
+
+@login_required
+def tasks_created_by_me(request):
+    """View for tasks that the user has created"""
+    # Get tasks created by the user
+    tasks_created_by_me = Task.objects.filter(
+        creator=request.user
+    ).select_related(
+        'project'
+    ).prefetch_related(
+        'assignees'
+    ).order_by(
+        'status',  # Order by status first
+        '-due_date',  # Then by due date (most recent first)
+        '-created_at'  # Then by creation date
+    )
+
+    # Calculate statistics for tasks created by the user
+    created_tasks_stats = {
+        'total': tasks_created_by_me.count(),
+        'TODO': tasks_created_by_me.filter(status=Task.StatusChoices.TODO).count(),
+        'IN_PROGRESS': tasks_created_by_me.filter(status=Task.StatusChoices.IN_PROGRESS).count(),
+        'DONE': tasks_created_by_me.filter(status=Task.StatusChoices.DONE).count(),
+        'BLOCKED': tasks_created_by_me.filter(status=Task.StatusChoices.BLOCKED).count(),
+        'APPROVED': tasks_created_by_me.filter(status=Task.StatusChoices.APPROVED).count(),
+        'REJECTED': tasks_created_by_me.filter(status=Task.StatusChoices.REJECTED).count(),
+        'REASSIGNED': tasks_created_by_me.filter(status=Task.StatusChoices.REASSIGNED).count(),
+        'IN_REVIEW': tasks_created_by_me.filter(status=Task.StatusChoices.IN_REVIEW).count(),
+        'ON_HOLD': tasks_created_by_me.filter(status=Task.StatusChoices.ON_HOLD).count(),
+    }
+
+    # Get all users for the assign task modal (still needed for the modal)
+    users = CustomUser.objects.filter(is_active=True).exclude(id=request.user.id)
+    projects = Project.objects.all()
+
+    context = {
+        'tasks': tasks_created_by_me, # Pass tasks created by the user
+        'title': 'Tasks I Assigned', # Title for this page
+        'users': users,
+        'projects': projects,
+        'request': request,
+        'assigned_tasks_stats': created_tasks_stats, # Pass the calculated stats (using assigned_tasks_stats key for template compatibility)
     }
     return render(request, 'tasks/tasks_assigned.html', context)
 
