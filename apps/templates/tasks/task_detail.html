@@ -42,40 +42,112 @@
                  </div>
             </div>
 
-            {# Comments Card #}
+            {# Comments and Attachments Card #}
             <div class="card shadow-sm mb-4">
-                 <div class="card-header bg-light">
-                    <h5 class="mb-0 text-primary"><i class="fas fa-comments me-2"></i> Comments</h5> {# Primary Green replacement #}
-                 </div>
-                 <div class="card-body">
-                    <div class="comments-section mb-3" style="max-height: 300px; overflow-y: auto;">
-                        {% for comment in comments %}
-                            <div class="mb-2 pb-2 border-bottom border-light"> {# Lighter border #}
-                                <p class="mb-1">{{ comment.content }}</p>
-                                <small class="text-muted">By
-                                    {% if comment.author %}
-                                        {{ comment.author.get_full_name|default:comment.author.username }}
-                                    {% else %}
-                                        Unknown User
-                                    {% endif %}
-                                    on {{ comment.created_at|date:"Y-m-d H:i" }}
-                                </small>
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 text-primary"><i class="fas fa-paperclip me-2"></i> Attachments</h5>
+                </div>
+                <div class="card-body">
+                    {# Attachments Section #}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0"><i class="fas fa-paperclip me-2"></i>Attachments</h6>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addTaskAttachmentModal">
+                                <i class="fas fa-plus me-1"></i> Add File
+                            </button>
+                        </div>
+                        {% if attachments %}
+                            <div class="list-group list-group-flush">
+                            {% for attachment in attachments %}
+                                <div class="list-group-item px-0 py-2 border-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            {% if attachment.storage_type == 'google_drive' %}
+                                                <i class="fab fa-google-drive me-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-file me-1"></i>
+                                            {% endif %}
+                                            {{ attachment.title|truncatechars:30 }}
+                                            {% if attachment.file_size %}
+                                                <small class="text-muted">({{ attachment.file_size|filesizeformat }})</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ attachment.drive_view_link|default:attachment.get_file_url }}"
+                                                   target="_blank"
+                                                   rel="noopener noreferrer"
+                                                   class="btn btn-outline-primary btn-sm"
+                                                   title="View {{ attachment.title }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if attachment.storage_type == 'google_drive' %}
+                                                    <a href="{{ attachment.drive_view_link|default:attachment.get_file_url }}&export=download"
+                                                       class="btn btn-outline-primary btn-sm"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer"
+                                                       title="Download {{ attachment.title }}">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ attachment.get_file_url }}"
+                                                       class="btn btn-outline-primary btn-sm"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer"
+                                                       download="{{ attachment.title }}"
+                                                       title="Download {{ attachment.title }}">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <button type="button"
+                                                        class="btn btn-outline-primary btn-sm"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#attachment-comments-{{ attachment.id }}"
+                                                        title="Show Comments">
+                                                    <i class="fas fa-comments"></i>
+                                                    {% if attachment.comments.count %}
+                                                        <span class="badge bg-primary">{{ attachment.comments.count }}</span>
+                                                    {% endif %}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="collapse mt-2" id="attachment-comments-{{ attachment.id }}">
+                                        <div class="card card-body bg-light">
+                                            {% if attachment.comments.all %}
+                                                {% for comment in attachment.comments.all %}
+                                                <div class="mb-2">
+                                                    <p class="mb-1">{{ comment.content }}</p>
+                                                    <small class="text-muted">
+                                                        {{ comment.author.get_full_name|default:comment.author.username }}
+                                                        on {{ comment.created_at|date:"Y-m-d H:i" }}
+                                                    </small>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <p class="text-muted mb-2">No comments yet</p>
+                                            {% endif %}
+                                            <form method="post" action="{% url 'tasks:add_attachment_comment' attachment.id %}">
+                                                {% csrf_token %}
+                                                <div class="input-group input-group-sm">
+                                                    <input type="text" class="form-control" name="content" placeholder="Add a comment...">
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
                             </div>
-                        {% empty %}
-                            <p class="text-muted">No comments yet.</p>
-                        {% endfor %}
+                        {% else %}
+                            <p class="text-muted small mb-0">No attachments yet.</p>
+                        {% endif %}
+                        <hr class="my-3">
                     </div>
-                    {# Add Comment Form #}
-                    <form method="post" action="{% url 'tasks:task_detail' task.id %}">
-                        {% csrf_token %}
-                        {{ comment_form|crispy }}
-                        <button type="submit" class="btn btn-sm btn-success mt-2"> {# Success Button #}
-                            <i class="fas fa-plus me-1"></i> Add Comment
-                        </button>
-                    </form>
-                 </div>
+                </div>
             </div>
-
         </div>{# End Left Column #}
 
         {# Right Column #}
@@ -114,9 +186,14 @@
                          </span>
                          {% endwith %}
                     </li>
-                    <li class="list-group-item"><strong>Assignee:</strong>
-                        {% if task.assignee %}
-                            {{ task.assignee.get_full_name|default:task.assignee.username }}
+                    <li class="list-group-item">
+                        <strong>Assignees:</strong>
+                        {% if task.assignees.all %}
+                            <div class="mt-1">
+                                {% for assignee in task.assignees.all %}
+                                <span class="badge bg-primary me-1">{{ assignee.get_full_name|default:assignee.username }}</span>
+                                {% endfor %}
+                            </div>
                         {% else %}
                             <span class="text-muted">Unassigned</span>
                         {% endif %}
@@ -134,35 +211,73 @@
                 </ul>
             </div>
 
-            {# Attachments Card #}
-            <div class="card shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 text-primary"><i class="fas fa-paperclip me-2"></i> Attachments</h6> {# Primary Green replacement #}
-                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" data-bs-toggle="modal" data-bs-target="#addTaskAttachmentModal" title="Add Attachment">
-                        <i class="fas fa-plus"></i> Add
-                    </button>
-                </div>
-                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-                    {% if attachments %}
-                        <ul class="list-group list-group-flush">
-                        {% for attachment in attachments %}
-                            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center">
-                                <a href="{{ attachment.get_file_url|default:'#' }}" target="_blank" title="{{ attachment.title }}" class="text-primary text-decoration-none">{{ attachment.title|truncatechars:25 }}</a> {# Primary Green replacement #}
-                                <small class="text-muted">({{ attachment.file_type }})</small>
-                            </li>
-                        {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="text-muted small mb-0">No attachments.</p>
-                    {% endif %}
-                </div>
-            </div>
-
         </div>{# End Right Column #}
     </div>
 
     <div class="mt-4 mb-5">
-        <a href="{% url 'tasks:project_detail' task.project.id %}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left me-1"></i> Back to Project</a> {# Secondary Button #}
+        <a href="{% url 'tasks:tasks_assigned_by_me' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Tasks Assigned by Me
+        </a>
+    </div>
+
+    {# Task History and Actions #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0 text-primary"><i class="fas fa-history me-2"></i> Task History and Actions</h5>
+        </div>
+        <div class="card-body">
+            {# Status Change Form #}
+            <form method="post" action="{% url 'tasks:update_task_status' task.id %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="status" class="form-label">Change Status</label>
+                    <select class="form-select" id="status" name="status">
+                        {% for status_choice in task.StatusChoices.choices %}
+                            <option value="{{ status_choice.0 }}" {% if task.status == status_choice.0 %}selected{% endif %}>
+                                {{ status_choice.1 }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-success">
+                    <i class="fas fa-check me-1"></i> Update Status
+                </button>
+            </form>
+
+            <hr class="my-3">
+
+            {# Task History #}
+            <h6><i class="fas fa-list-alt me-2"></i> Task History</h6>
+            {% if task.history.all %}
+                <ul class="list-group list-group-flush">
+                    {% for history_item in task.history.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">
+                                    {{ history_item.timestamp|date:"Y-m-d H:i" }} -
+                                    {% if history_item.user %}
+                                        {{ history_item.user.get_full_name|default:history_item.user.username }}
+                                    {% else %}
+                                        System
+                                    {% endif %}
+                                    {% if history_item.comment %}
+                                        - Comment: {{ history_item.comment }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <form method="post" action="{% url 'tasks:revert_task_to_history' task.id history_item.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-undo"></i> Revert to this state
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No history available for this task.</p>
+            {% endif %}
+        </div>
     </div>
 
 </div>
@@ -178,11 +293,16 @@
       <form method="post" action="{% url 'tasks:task_detail' task.id %}" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="modal-body">
-              {% if attachment_form %}
-                 {{ attachment_form|crispy }}
-              {% else %}
-                 <p class="text-danger">Attachment form could not be loaded. Document Management app might be misconfigured.</p>
-              {% endif %}
+              <div class="mb-3">
+                  <label for="file" class="form-label">Select File</label>
+                  <input type="file" class="form-control" id="file" name="file" required>
+                  <small class="text-muted">Files will be stored in Google Drive</small>
+              </div>
+              <div class="mb-3">
+                  <label for="initial_comment" class="form-label">Add a Comment (Optional)</label>
+                  <textarea class="form-control" id="initial_comment" name="initial_comment" rows="2"
+                            placeholder="Add a description or comment about this attachment..."></textarea>
+              </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

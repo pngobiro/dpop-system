@@ -169,6 +169,11 @@
                                 <i class="fas fa-calendar-alt"></i> Calendar View
                             </a>
                         </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'tasks:my_dashboard' %}" class="btn btn-outline-success btn-block w-100 mb-2">
+                                <i class="fas fa-tachometer-alt"></i> My Dashboard
+                            </a>
+                        </div>
                         {% if perms.meetings.view_all_meetings %}
                         <div class="col-md-3">
                             <a href="{% url 'meetings:director_dashboard' %}" class="btn btn-outline-dark btn-block w-100 mb-2">

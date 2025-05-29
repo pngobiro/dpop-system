@@ -20,9 +20,9 @@ except ImportError:
     Department = None
 
 try:
-    from apps.document_management.forms import DocumentForm
+    from apps.document_management.models import Document
 except ImportError:
-    DocumentForm = None
+    Document = None
 
 try:
     from apps.document_management.forms import DocumentForm

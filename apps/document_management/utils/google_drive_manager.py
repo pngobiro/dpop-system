@@ -214,6 +214,8 @@ class GoogleDriveManager:
     def create_folder(self, name, parent_folder_id=None):
         """Create a new folder in Google Drive"""
         try:
+            print(f"Creating folder '{name}' in parent: {parent_folder_id}")
+            
             file_metadata = {
                 'name': name,
                 'mimeType': 'application/vnd.google-apps.folder'
@@ -224,8 +226,31 @@ class GoogleDriveManager:
                 
             file = self.service.files().create(
                 body=file_metadata,
-                fields='id'
+                fields='id',
+                supportsAllDrives=True
             ).execute()
+
+            # Set folder permissions
+            if file.get('id'):
+                # Get service account email from credentials
+                creds_info = service_account.Credentials.from_service_account_file(
+                    settings.GOOGLE_DRIVE_CREDENTIALS_FILE
+                ).service_account_email
+
+                permission = {
+                    'type': 'user',
+                    'role': 'writer',
+                    'emailAddress': creds_info
+                }
+                
+                self.service.permissions().create(
+                    fileId=file['id'],
+                    body=permission,
+                    fields='id',
+                    supportsAllDrives=True
+                ).execute()
+                
+                print(f"Created folder with ID: {file.get('id')}")
             
             return file.get('id')
         except Exception as e:
@@ -255,3 +280,56 @@ class GoogleDriveManager:
         except Exception as e:
             print(f"Error sharing file: {str(e)}")
             return False
+
+    def upload_file(self, file_obj, filename, folder_id=None):
+        """Upload a file to Google Drive"""
+        try:
+            print(f"Uploading file '{filename}' to folder: {folder_id}")
+            folder_id = folder_id or self.DEFAULT_FOLDER_ID
+            
+            file_metadata = {
+                'name': filename,
+                'parents': [folder_id]
+            }
+
+            from googleapiclient.http import MediaIoBaseUpload
+            media = MediaIoBaseUpload(
+                file_obj,
+                mimetype=file_obj.content_type,
+                resumable=True,
+                chunksize=1024*1024
+            )
+
+            print("Creating file in Google Drive...")
+            file = self.service.files().create(
+                body=file_metadata,
+                media_body=media,
+                fields='id,webViewLink',
+                supportsTeamDrives=True,
+                supportsAllDrives=True
+            ).execute()
+
+            if file.get('id'):
+                print(f"File created with ID: {file.get('id')}")
+                
+                # Set file permissions
+                permission = {
+                    'type': 'anyone',
+                    'role': 'reader'
+                }
+                
+                print("Setting file permissions...")
+                self.service.permissions().create(
+                    fileId=file['id'],
+                    body=permission,
+                    fields='id',
+                    supportsAllDrives=True
+                ).execute()
+                
+                return file.get('id'), file.get('webViewLink')
+            else:
+                print("Failed to create file - no ID returned")
+                return None, None
+        except Exception as e:
+            print(f"Error uploading file: {str(e)}")
+            return None, None

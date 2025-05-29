@@ -112,6 +112,11 @@ class Task(models.Model):
         IN_PROGRESS = 'IN_PROGRESS', _('In Progress')
         DONE = 'DONE', _('Done')
         BLOCKED = 'BLOCKED', _('Blocked')
+        APPROVED = 'APPROVED', _('Approved')
+        REJECTED = 'REJECTED', _('Rejected')
+        REASSIGNED = 'REASSIGNED', _('Reassigned')
+        IN_REVIEW = 'IN_REVIEW', _('In Review')
+        ON_HOLD = 'ON_HOLD', _('On Hold')
 
     class PriorityChoices(models.IntegerChoices):
         LOW = 1, _('Low')
@@ -181,3 +186,23 @@ class Comment(models.Model):
         ordering = ['created_at']
         verbose_name = _("Comment")
         verbose_name_plural = _("Comments")
+
+class TaskHistory(models.Model):
+    """
+    Represents a history entry for a task, tracking changes to its status,
+    assignees, or other important fields.
+    """
+    task = models.ForeignKey('Task', related_name='history', on_delete=models.CASCADE, help_text=_("The task this history entry belongs to"))
+    user = models.ForeignKey(User, related_name='task_history', on_delete=models.SET_NULL, null=True, blank=True, help_text=_("User who made the change"))
+    timestamp = models.DateTimeField(auto_now_add=True, help_text=_("Timestamp of the change"))
+    # Store the complete task state as a JSON
+    task_state = models.JSONField(help_text=_("The complete state of the task at this point in time"))
+    comment = models.TextField(blank=True, null=True, help_text=_("Optional comment describing the change"))
+
+    def __str__(self):
+        return f"History for {self.task.title} at {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = _("Task History")
+        verbose_name_plural = _("Task Histories")

@@ -110,18 +110,37 @@
       </a>
     </li>
 
-    <li class="nav-item {% if 'tasks' in request.resolver_match.app_names %} active {% endif %}">
-      <a href="{% url 'tasks:dashboard' %}" class="nav-link">
+    <li class="nav-item {% if request.resolver_match.url_name == 'tasks_assigned_by_me' %} active {% endif %}">
+      <a href="{% url 'tasks:tasks_assigned_by_me' %}" class="nav-link">
         <span class="sidebar-icon">
-          <i class="fas fa-tasks me-2"></i>
+          <i class="fas fa-clipboard-check me-2"></i>
         </span>
-        <span class="sidebar-text">My Tasks</span>
+        <span class="sidebar-text">Assigned Tasks</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if request.resolver_match.url_name == 'dashboard' and 'meetings' in request.resolver_match.app_names %} active {% endif %}">
+      <a href="{% url 'meetings:dashboard' %}" class="nav-link">
+        <span class="sidebar-icon">
+          <i class="fas fa-calendar me-2"></i>
+        </span>
+        <span class="sidebar-text">Meetings</span>
       </a>
     </li>
 
 
 
+    <li class="nav-item {% if 'library' in request.resolver_match.url_name %} active {% endif %}">
+      <a href="{% url 'document_management:library' %}" class="nav-link">
+        <span class="sidebar-icon">
+          <i class="fas fa-book me-2"></i>
+        </span>
+        <span class="sidebar-text">Library</span>
+      </a>
+    </li>
+
     {# Settings Submenu #}
+    {% if user.is_staff %}
     <li class="nav-item">
       <span class="nav-link collapsed d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#submenu-settings">
         <span>
@@ -147,6 +166,7 @@
         </ul>
       </div>
     </li>
+    {% endif %}
 
 
     <li role="separator" class="dropdown-divider mt-4 mb-3 border-gray-700"></li>

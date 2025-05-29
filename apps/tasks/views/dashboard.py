@@ -89,10 +89,16 @@ def my_dashboard(request):
 def tasks_assigned_by_me(request):
     """View for tasks that the user has assigned to others"""
     tasks = Task.objects.filter(
-        creator=request.user
+        assignees=request.user
+    ).select_related(
+        'project'
     ).prefetch_related(
-        'assignees', 'project'
-    ).order_by('-created_at')
+        'assignees'
+    ).order_by(
+        'status',  # Order by status first
+        '-due_date',  # Then by due date (most recent first)
+        '-created_at'  # Then by creation date
+    )
 
     # Get all users for the assign task modal
     users = CustomUser.objects.filter(is_active=True).exclude(id=request.user.id)
@@ -100,7 +106,7 @@ def tasks_assigned_by_me(request):
     
     context = {
         'tasks': tasks,
-        'title': 'Tasks I Assigned',
+        'title': 'Tasks Assigned to Me',
         'users': users,
         'projects': projects,
         'request': request,
@@ -145,16 +151,51 @@ def assign_task(request):
                 except CustomUser.DoesNotExist:
                     messages.warning(request, f'User with ID {assignee_id} not found.')
 
-            # Handle file attachments using Document model
+            # Handle file attachments using Google Drive
+            from apps.document_management.utils.google_drive_manager import GoogleDriveManager
+            drive_manager = GoogleDriveManager()
+            
             for file in files:
                 if file.size <= 10 * 1024 * 1024:  # 10MB limit
-                    Document.objects.create(
-                        title=file.name,
-                        file=file,
-                        content_type=ContentType.objects.get_for_model(task),
-                        object_id=task.id,
-                        uploaded_by=request.user
-                    )
+                    try:
+                        # Get or create Tasks folder
+                        tasks_folder_name = 'Tasks'
+                        tasks_folder = drive_manager.service.files().list(
+                            q=f"name='{tasks_folder_name}' and mimeType='application/vnd.google-apps.folder' and '{drive_manager.DEFAULT_FOLDER_ID}' in parents",
+                            fields='files(id, name)',
+                            supportsAllDrives=True,
+                            includeItemsFromAllDrives=True
+                        ).execute()
+
+                        if not tasks_folder.get('files'):
+                            tasks_folder_id = drive_manager.create_folder(tasks_folder_name, drive_manager.DEFAULT_FOLDER_ID)
+                        else:
+                            tasks_folder_id = tasks_folder['files'][0]['id']
+
+                        # Upload file to Google Drive
+                        filename = f"Task_{task.id}_{task.title[:20]}_{file.name}"
+                        file_id, web_link = drive_manager.upload_file(
+                            file_obj=file,
+                            filename=filename,
+                            folder_id=tasks_folder_id
+                        )
+                        
+                        if file_id and web_link:
+                            Document.objects.create(
+                                title=file.name,
+                                file_type=file.content_type,
+                                file_size=file.size,
+                                storage_type='google_drive',
+                                drive_file_id=file_id,
+                                drive_view_link=web_link,
+                                content_type=ContentType.objects.get_for_model(task),
+                                object_id=task.id,
+                                source_module='tasks',
+                                uploaded_by=request.user,
+                                description=f"Attachment for Task: {task.title}"
+                            )
+                    except Exception as e:
+                        messages.error(request, f'Error uploading file {file.name}: {str(e)}')
                 else:
                     messages.warning(request, f'File {file.name} exceeds 10MB limit and was not uploaded.')
 

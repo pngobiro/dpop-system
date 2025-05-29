@@ -35,7 +35,7 @@ class Document(models.Model):
     # Basic fields
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    file = models.FileField(upload_to='documents/%Y/%m/%d/')
+    file = models.FileField(upload_to='documents/%Y/%m/%d/', null=True, blank=True)
     file_type = models.CharField(max_length=50)  # e.g., pdf, doc, image
     file_size = models.BigIntegerField()  # in bytes
     
@@ -125,3 +125,18 @@ class DocumentActivity(models.Model):
     class Meta:
         verbose_name_plural = "Document Activities"
         ordering = ['-timestamp']
+
+class DocumentComment(models.Model):
+    """Comments on documents"""
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    parent_comment = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
+    
+    class Meta:
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Comment by {self.author} on {self.document.title}"

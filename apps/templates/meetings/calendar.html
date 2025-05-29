@@ -154,7 +154,9 @@
                         <label class="form-label">Meeting Type</label>
                         <select name="meeting_type" class="form-select" required>
                             {% for type in meeting_types %}
-                            <option value="{{ type.value }}">{{ type.display }}</option>
+                            <option value="{{ type.value }}" {% if type.value == 'department' %}selected{% endif %}>
+                                {{ type.display }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -212,6 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
     // Handle form submission
     document.getElementById('quickMeetingForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -221,16 +226,49 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-            }
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addMeetingModal'));
+                modal.hide();
+                
+                // Show success message
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show';
+                successAlert.innerHTML = `
+                    Meeting created successfully!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container-fluid').insertBefore(successAlert, document.querySelector('.row'));
+                
+                // Reload page after a short delay
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                alert('Error creating meeting: ' + data.error);
+                // Show error message in modal
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger mt-3';
+                errorDiv.textContent = 'Error creating meeting: ' + data.error;
+                document.getElementById('quickMeetingForm').insertBefore(
+                    errorDiv,
+                    document.querySelector('.text-end')
+                );
             }
+        })
+        .catch(error => {
+            // Show network error in modal
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger mt-3';
+            errorDiv.textContent = 'Network error: ' + error.message;
+            document.getElementById('quickMeetingForm').insertBefore(
+                errorDiv,
+                document.querySelector('.text-end')
+            );
         });
     });
 });
