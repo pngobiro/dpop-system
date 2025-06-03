@@ -53,12 +53,15 @@ def dashboard(request):
     # Get users in the same departments as the current user
     department_users = CustomUser.objects.filter(departments__in=user.departments.all(), is_active=True).distinct()
 
+    current_date = timezone.now().date()
+    
     context = {
         'stats': stats,
         'todays_meetings': todays_meetings,
         'upcoming_meetings': upcoming_meetings,
         'meeting_types': meeting_types,
         'department_users': department_users,
+        'current_date': current_date
     }
     return render(request, 'meetings/dashboard.html', context)
 

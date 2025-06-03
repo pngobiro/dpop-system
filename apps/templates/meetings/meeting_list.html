@@ -17,7 +17,7 @@
             <div class="card bg-primary text-white">
                 <div class="card-body">
                     <h5 class="card-title">Total Meetings</h5>
-                    <h2 class="mb-0">{{ stats.total_meetings }}</h2>
+                    <h2 class="mb-0">{{ stats.total_meetings|default:0 }}</h2>
                     <small>Last 30 days</small>
                 </div>
             </div>
@@ -26,7 +26,7 @@
             <div class="card bg-success text-white">
                 <div class="card-body">
                     <h5 class="card-title">Upcoming</h5>
-                    <h2 class="mb-0">{{ stats.upcoming_count }}</h2>
+                    <h2 class="mb-0">{{ stats.upcoming_count|default:0 }}</h2>
                     <small>Scheduled meetings</small>
                 </div>
             </div>
@@ -35,7 +35,7 @@
             <div class="card bg-info text-white">
                 <div class="card-body">
                     <h5 class="card-title">Completed</h5>
-                    <h2 class="mb-0">{{ stats.completed_count }}</h2>
+                    <h2 class="mb-0">{{ stats.completed_count|default:0 }}</h2>
                     <small>Last 30 days</small>
                 </div>
             </div>
@@ -44,7 +44,7 @@
             <div class="card bg-warning text-white">
                 <div class="card-body">
                     <h5 class="card-title">Cancelled</h5>
-                    <h2 class="mb-0">{{ stats.cancelled_count }}</h2>
+                    <h2 class="mb-0">{{ stats.cancelled_count|default:0 }}</h2>
                     <small>Last 30 days</small>
                 </div>
             </div>
@@ -78,7 +78,7 @@
                                     <td>
                                         {{ meeting.date|date:"M d, Y" }}<br>
                                         <small class="text-muted">
-                                            {{ meeting.start_time|time:"g:i A" }} - {{ meeting.end_time|time:"g:i A" }}
+                                            {{ meeting.start_time|time:"g:i A" }} - {{ meeting.end_time|time:"g:i A"|default:"" }}
                                         </small>
                                     </td>
                                     <td>
@@ -186,22 +186,17 @@
                 </div>
                 <div class="card-body">
                     {% for type in meetings_by_type %}
+                    {% if type.meeting_type %}
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-1">
                             <span>{{ type.meeting_type|title }}</span>
                             <span class="fw-bold">{{ type.count }}</span>
                         </div>
                         <div class="progress" style="height: 6px;">
-                            <div 
-                                class="progress-bar" 
-                                role="progressbar" 
-                                style="width: {% widthratio type.count stats.total_meetings 100 %}%"
-                                aria-valuenow="{% widthratio type.count stats.total_meetings 100 %}"
-                                aria-valuemin="0" 
-                                aria-valuemax="100">
-                            </div>
+                            <div class="progress-bar" role="progressbar" style="width: {% widthratio type.count stats.total_meetings 100 %}%" aria-valuenow="{{ type.count }}" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                     </div>
+                    {% endif %}
                     {% endfor %}
                 </div>
             </div>
@@ -213,22 +208,17 @@
                 </div>
                 <div class="card-body">
                     {% for mode in meetings_by_mode %}
+                    {% if mode.meeting_mode %}
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-1">
                             <span>{{ mode.meeting_mode|title }}</span>
                             <span class="fw-bold">{{ mode.count }}</span>
                         </div>
                         <div class="progress" style="height: 6px;">
-                            <div 
-                                class="progress-bar bg-success" 
-                                role="progressbar" 
-                                style="width: {% widthratio mode.count stats.total_meetings 100 %}%"
-                                aria-valuenow="{% widthratio mode.count stats.total_meetings 100 %}"
-                                aria-valuemin="0" 
-                                aria-valuemax="100">
-                            </div>
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {% widthratio mode.count stats.total_meetings 100 %}%" aria-valuenow="{{ mode.count }}" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                     </div>
+                    {% endif %}
                     {% endfor %}
                 </div>
             </div>

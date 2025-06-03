@@ -22,17 +22,17 @@
     <div class="row mb-4 align-items-center">
         <div class="col-md-4">
             <div class="btn-group">
-                <a href="?month={{ prev_month }}&year={{ prev_year }}{% if selected_quarter %}&quarter={{ selected_quarter }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}" 
+                <a href="?month={{ prev_month }}&year={{ prev_year }}{% if selected_quarter %}&quarter={{ selected_quarter }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}"
                    class="btn btn-outline-primary btn-lg">
                     <i class="fas fa-chevron-left"></i> Previous
                 </a>
-                <a href="?month={{ next_month }}&year={{ next_year }}{% if selected_quarter %}&quarter={{ selected_quarter }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}" 
+                <a href="?month={{ next_month }}&year={{ next_year }}{% if selected_quarter %}&quarter={{ selected_quarter }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}"
                    class="btn btn-outline-primary btn-lg">
                     Next <i class="fas fa-chevron-right"></i>
                 </a>
             </div>
         </div>
-        
+
         <div class="col-md-4">
             <form method="get" id="quarterForm">
                 {% if selected_department %}
@@ -42,7 +42,7 @@
                     <select name="quarter" class="form-select form-select-lg" onchange="this.form.submit()">
                         <option value="">All Quarters</option>
                         {% for quarter_num, quarter_name in quarters %}
-                        <option value="{{ quarter_num }}" 
+                        <option value="{{ quarter_num }}"
                                 {% if quarter_num|stringformat:"s" == selected_quarter|stringformat:"s" %}selected{% endif %}>
                             {{ quarter_name }}
                         </option>
@@ -62,7 +62,7 @@
                     <select name="department" class="form-select form-select-lg" onchange="this.form.submit()">
                         <option value="">All Departments</option>
                         {% for dept in departments %}
-                        <option value="{{ dept.id }}" 
+                        <option value="{{ dept.id }}"
                                 {% if dept.id|stringformat:"s" == selected_department %}selected{% endif %}>
                             {{ dept.name }}
                         </option>
@@ -100,6 +100,9 @@
             <div class="card">
                 <div class="card-body p-0">
                     <div class="table-responsive">
+                        {# This is where your calendar HTML is rendered from the backend #}
+                        {# Ensure each day cell that allows adding meetings has a button like: #}
+                        {# <button type="button" class="btn btn-sm btn-success quick-add-meeting" data-date="YYYY-MM-DD"><i class="fas fa-plus"></i> Add</button> #}
                         {{ calendar|safe }}
                     </div>
                 </div>
@@ -109,12 +112,12 @@
 </div>
 
 <!-- Meeting Quick View Modal -->
-<div class="modal fade" id="meetingQuickView" tabindex="-1">
+<div class="modal fade" id="meetingQuickView" tabindex="-1" aria-labelledby="meetingQuickViewLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fs-4">Meeting Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title fs-4" id="meetingQuickViewLabel">Meeting Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Meeting details will be loaded here -->
@@ -122,58 +125,68 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
 <!-- Add Meeting Modal -->
-<div class="modal fade" id="addMeetingModal" tabindex="-1">
+<div class="modal fade" id="addMeetingModal" tabindex="-1" aria-labelledby="addMeetingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fs-4">Add New Meeting</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title fs-4" id="addMeetingModalLabel">Add New Meeting</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="post" action="{% url 'meetings:add_quick_meeting' %}" id="quickMeetingForm">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">Date</label>
-                        <input type="date" name="date" id="meetingDate" class="form-control" readonly>
+                        <label for="meetingDateDisplay" class="form-label">Meeting Date</label>
+                        <input type="text" name="date_display" id="meetingDateDisplay" class="form-control" placeholder="dd/mm/yyyy" readonly required>
+                        <input type="hidden" name="date" id="meetingDate">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Title</label>
-                        <input type="text" name="title" class="form-control" required>
+                        <label for="meetingTitle" class="form-label">Title</label>
+                        <input type="text" name="title" id="meetingTitle" class="form-control" required>
                     </div>
                     <div class="row mb-3">
                         <div class="col">
-                            <label class="form-label">Start Time</label>
-                            <input type="time" name="start_time" class="form-control" required>
+                            <label for="meetingStartTime" class="form-label">Start Time</label>
+                            <input type="time" name="start_time" id="meetingStartTime" class="form-control" required>
                         </div>
                         <div class="col">
-                            <label class="form-label">End Time</label>
-                            <input type="time" name="end_time" class="form-control" required>
+                            <label for="meetingEndTime" class="form-label">End Time</label>
+                            <input type="time" name="end_time" id="meetingEndTime" class="form-control">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Meeting Type</label>
-                        <select name="meeting_type" class="form-select" required>
+                        <label for="meetingType" class="form-label">Meeting Type</label>
+                        <select name="meeting_type" id="meetingType" class="form-select" required>
                             {% for type in meeting_types %}
-                            <option value="{{ type.value }}" {% if type.value == 'department' %}selected{% endif %}>
-                                {{ type.display }}
-                            </option>
+                            <option value="{{ type.value }}">{{ type.display }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3" id="otherTypeField" style="display: none;">
-                        <label class="form-label">Other Meeting Type Description</label>
-                        <input type="text" name="other_type_description" class="form-control">
+                        <label for="otherTypeDescription" class="form-label">Other Meeting Type Description</label>
+                        <input type="text" name="other_type_description" id="otherTypeDescription" class="form-control">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Location</label>
-                        <input type="text" name="location" class="form-control">
+                        <label for="meetingMode" class="form-label">Meeting Mode</label>
+                        <select name="meeting_mode" id="meetingMode" class="form-select" required onchange="toggleLocationFields(this.value)">
+                            <option value="physical">Physical</option>
+                            <option value="virtual">Virtual</option>
+                            <option value="hybrid">Hybrid</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="physicalLocationField">
+                        <label for="physicalLocation" class="form-label">Physical Location</label>
+                        <input type="text" name="location" id="physicalLocation" class="form-control">
+                    </div>
+                    <div class="mb-3" id="virtualLocationFields" style="display:none;">
+                        <label for="virtualMeetingUrl" class="form-label">Virtual Meeting URL</label>
+                        <input type="text" name="virtual_meeting_url" id="virtualMeetingUrl" class="form-control" placeholder="https://meet.google.com/...">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Agenda</label>
-                        <textarea name="agenda" class="form-control" rows="3"></textarea>
+                        <label for="meetingAgenda" class="form-label">Agenda</label>
+                        <textarea name="agenda" id="meetingAgenda" class="form-control" rows="3"></textarea>
                     </div>
                     <div class="text-end">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -185,45 +198,188 @@
     </div>
 </div>
 
+{% endblock content %}
+
 {% block javascripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize modals
-    const addMeetingModal = new bootstrap.Modal(document.getElementById('addMeetingModal'));
-    const quickViewModal = new bootstrap.Modal(document.getElementById('meetingQuickView'));
-    
-    // Handle meeting link clicks for quick view
-    document.querySelectorAll('td a').forEach(link => {
+    const addMeetingModalElement = document.getElementById('addMeetingModal');
+    const addMeetingModal = new bootstrap.Modal(addMeetingModalElement);
+    const quickViewModalElement = document.getElementById('meetingQuickView');
+    const quickViewModal = new bootstrap.Modal(quickViewModalElement);
+
+    // Function to toggle location fields based on meeting mode
+    window.toggleLocationFields = function(mode) {
+        const physicalField = document.getElementById('physicalLocationField');
+        const virtualFields = document.getElementById('virtualLocationFields');
+        const physicalLocationInput = document.querySelector('[name="location"]');
+        const virtualUrlInput = document.querySelector('[name="virtual_meeting_url"]');
+
+        if (mode === 'physical') {
+            physicalField.style.display = 'block';
+            virtualFields.style.display = 'none';
+            physicalLocationInput.required = true;
+            virtualUrlInput.required = false;
+            virtualUrlInput.value = ''; // Clear if not needed
+        } else if (mode === 'virtual') {
+            physicalField.style.display = 'none';
+            virtualFields.style.display = 'block';
+            physicalLocationInput.required = false;
+            physicalLocationInput.value = ''; // Clear if not needed
+            virtualUrlInput.required = true;
+        } else { // hybrid
+            physicalField.style.display = 'block';
+            virtualFields.style.display = 'block';
+            physicalLocationInput.required = true;
+            virtualUrlInput.required = true;
+        }
+    }
+
+    // Set initial required fields based on default meeting mode
+    const initialMode = document.querySelector('[name="meeting_mode"]').value;
+    toggleLocationFields(initialMode);
+
+    // Handle meeting link clicks for quick view (assuming links are in the calendar table)
+    document.querySelectorAll('.table-responsive td a:not(.quick-add-meeting)').forEach(link => { // Exclude quick-add buttons
         link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const meetingUrl = this.getAttribute('href');
-            
-            fetch(meetingUrl)
-                .then(response => response.text())
-                .then(html => {
-                    document.querySelector('#meetingQuickView .modal-body').innerHTML = html;
-                    quickViewModal.show();
-                });
+            // Check if it's a link that should open the quick view modal
+            // You might need more specific selectors if there are other types of links
+            if (this.getAttribute('href') && this.getAttribute('href').includes('/meetings/view/')) { // Example condition
+                e.preventDefault();
+                const meetingUrl = this.getAttribute('href');
+
+                fetch(meetingUrl) // Make sure this URL returns the content for the modal body
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.text();
+                    })
+                    .then(html => {
+                        document.querySelector('#meetingQuickView .modal-body').innerHTML = html;
+                        quickViewModal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching meeting details:', error);
+                        document.querySelector('#meetingQuickView .modal-body').innerHTML = `<p class="text-danger">Could not load meeting details. ${error.message}</p>`;
+                        quickViewModal.show();
+                    });
+            }
         });
     });
 
     // Handle quick add meeting button clicks
+    // These buttons must be generated by your backend calendar HTML
+    // e.g., <button class="quick-add-meeting" data-date="YYYY-MM-DD">Add</button>
     document.querySelectorAll('.quick-add-meeting').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
-            // Get date from data attribute and set it in the form
-            const date = this.getAttribute('data-date');
+            const dateStr = this.getAttribute('data-date'); // Expects YYYY-MM-DD
+
             const dateInput = document.getElementById('meetingDate');
-            dateInput.value = date;
-            
+            const dateDisplayInput = document.getElementById('meetingDateDisplay');
+            const quickMeetingForm = document.getElementById('quickMeetingForm');
+
+            // Clear previous form values and errors
+            quickMeetingForm.reset();
+            toggleLocationFields(quickMeetingForm.querySelector('[name="meeting_mode"]').value); // Reset visibility based on default
+            quickMeetingForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            quickMeetingForm.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+            quickMeetingForm.querySelectorAll('.alert-danger').forEach(el => el.remove());
+
+            // Add time validation
+            quickMeetingForm.onsubmit = function(e) {
+                e.preventDefault(); // Prevent default submission
+                
+                // Validate times
+                const startTime = document.querySelector('input[name="start_time"]').value;
+                const endTime = document.querySelector('input[name="end_time"]').value;
+                
+                // Compare times properly using Date objects
+                const [startHours, startMinutes] = startTime.split(':');
+                const [endHours, endMinutes] = endTime.split(':');
+                const startDate = new Date(2000, 0, 1, parseInt(startHours), parseInt(startMinutes));
+                const endDate = new Date(2000, 0, 1, parseInt(endHours), parseInt(endMinutes));
+                
+                if (endTime && startDate >= endDate) {
+                    const input = document.querySelector('input[name="end_time"]');
+                    input.classList.add('is-invalid');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback error-message';
+                    errorDiv.textContent = 'End time must be after start time';
+                    input.parentNode.appendChild(errorDiv);
+                    return false;
+                }
+
+                // If validation passes, submit the form
+                const formData = new FormData(quickMeetingForm);
+                fetch(quickMeetingForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        addMeetingModal.hide();
+                        window.location.reload(); // Refresh calendar
+                    } else {
+                        // Handle server validation errors
+                        const error = data.error;
+                        if (typeof error === 'object') {
+                            Object.entries(error).forEach(([field, messages]) => {
+                                const input = quickMeetingForm.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    input.classList.add('is-invalid');
+                                    const errorDiv = document.createElement('div');
+                                    errorDiv.className = 'invalid-feedback error-message';
+                                    errorDiv.textContent = Array.isArray(messages) ? messages.join(', ') : messages;
+                                    input.parentNode.appendChild(errorDiv);
+                                }
+                            });
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+                return false;
+            };
+
+
+            if (dateStr) {
+                dateInput.value = dateStr; // YYYY-MM-DD for submission
+
+                // Format date for display (dd/mm/yyyy)
+                const [year, month, day] = dateStr.split('-');
+                dateDisplayInput.value = `${day}/${month}/${year}`; // DD/MM/YYYY for display
+                dateDisplayInput.readOnly = true; // Make it read-only as it's set from calendar
+            } else {
+                console.error("data-date attribute not found or is empty on the clicked button.");
+                dateInput.value = '';
+                dateDisplayInput.value = 'Error: Date not found'; // Or keep it empty
+                // Optionally, prevent modal from opening or show an error
+                return;
+            }
+
             // Set default times
             const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.querySelector('input[name="start_time"]').value = `${hours}:${minutes}`;
-            document.querySelector('input[name="end_time"]').value = `${hours + 1}:${minutes}`;
-            
-            // Show the modal
+            const currentHours = now.getHours();
+            const currentMinutes = now.getMinutes();
+
+            const startTimeHours = String(currentHours).padStart(2, '0');
+            const startTimeMinutes = String(currentMinutes).padStart(2, '0');
+            document.querySelector('input[name="start_time"]').value = `${startTimeHours}:${startTimeMinutes}`;
+
+            let endTimeHours = currentHours + 1;
+            if (endTimeHours > 23) {
+                endTimeHours = 23; // Cap at 23:59 for simplicity
+            }
+            const endTimeHoursStr = String(endTimeHours).padStart(2, '0');
+            document.querySelector('input[name="end_time"]').value = `${endTimeHoursStr}:${startTimeMinutes}`;
+
             addMeetingModal.show();
         });
     });
@@ -231,60 +387,162 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get CSRF token
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    // Handle form submission
-    document.getElementById('quickMeetingForm').addEventListener('submit', function(e) {
+    // Handle form submission for Add Meeting Modal
+    const quickMeetingForm = document.getElementById('quickMeetingForm');
+    quickMeetingForm.addEventListener('submit', function(e) {
         e.preventDefault();
+
+        // Clear previous error messages
+        this.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        this.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+        this.querySelectorAll('.alert.alert-danger').forEach(el => el.remove());
+
+
+        // Basic client-side validation (HTML5 `required` should also work)
+        let isValid = true;
+        const requiredFields = this.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim() && field.offsetParent !== null) { // Check if visible and empty
+                isValid = false;
+                field.classList.add('is-invalid');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = 'This field is required.';
+                field.parentNode.appendChild(errorDiv);
+            }
+        });
+
+        // Specific validation for location based on mode (already handled by toggleLocationFields for `required` attribute)
+        const mode = this.querySelector('[name="meeting_mode"]').value;
+        if (mode === 'physical' || mode === 'hybrid') {
+            const locationInput = this.querySelector('[name="location"]');
+            if (!locationInput.value.trim()) {
+                isValid = false;
+                locationInput.classList.add('is-invalid');
+                if (!locationInput.parentNode.querySelector('.invalid-feedback')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = 'Physical location is required for this mode.';
+                    locationInput.parentNode.appendChild(errorDiv);
+                }
+            }
+        }
+        if (mode === 'virtual' || mode === 'hybrid') {
+            const virtualUrlInput = this.querySelector('[name="virtual_meeting_url"]');
+            if (!virtualUrlInput.value.trim()) {
+                isValid = false;
+                virtualUrlInput.classList.add('is-invalid');
+                 if (!virtualUrlInput.parentNode.querySelector('.invalid-feedback')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = 'Virtual meeting URL is required for this mode.';
+                    virtualUrlInput.parentNode.appendChild(errorDiv);
+                }
+            } else {
+                // Optional: Basic URL validation
+                try {
+                    new URL(virtualUrlInput.value);
+                } catch (_) {
+                    isValid = false;
+                    virtualUrlInput.classList.add('is-invalid');
+                    if (!virtualUrlInput.parentNode.querySelector('.invalid-feedback')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'Please enter a valid URL.';
+                        virtualUrlInput.parentNode.appendChild(errorDiv);
+                    }
+                }
+            }
+        }
+
+
+        if (!isValid) {
+            return;
+        }
+
         const formData = new FormData(this);
-        
+
         fetch(this.action, {
             method: 'POST',
             body: formData,
             headers: {
                 'X-CSRFToken': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'same-origin'
+                'X-Requested-With': 'XMLHttpRequest' // Important for Django to recognize AJAX
+            }
+            // credentials: 'same-origin' // Usually not needed with CSRF and same-origin requests
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addMeetingModal'));
-                modal.hide();
-                
-                // Show success message
-                const successAlert = document.createElement('div');
-                successAlert.className = 'alert alert-success alert-dismissible fade show';
-                successAlert.innerHTML = `
-                    Meeting created successfully!
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                document.querySelector('.container-fluid').insertBefore(successAlert, document.querySelector('.row'));
-                
-                // Reload page after a short delay
-                setTimeout(() => window.location.reload(), 1500);
+                addMeetingModal.hide();
+                // Optionally show a success message (e.g., using a toast)
+                // Reload the page to see the new meeting
+                window.location.reload(); // Simple reload
             } else {
-                // Show error message in modal
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger mt-3';
-                errorDiv.textContent = 'Error creating meeting: ' + data.error;
-                document.getElementById('quickMeetingForm').insertBefore(
-                    errorDiv,
-                    document.querySelector('.text-end')
-                );
+                // Show error messages
+                const errorData = data.errors || data.error; // Support different error structures
+                if (typeof errorData === 'string') {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger mt-3';
+                    errorDiv.textContent = errorData;
+                    this.insertBefore(errorDiv, this.querySelector('.text-end'));
+                } else if (typeof errorData === 'object') {
+                    Object.entries(errorData).forEach(([field, messages]) => {
+                        const input = this.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            input.classList.add('is-invalid');
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'invalid-feedback';
+                            errorDiv.textContent = Array.isArray(messages) ? messages.join(', ') : messages;
+                            // Insert after the input, or its direct parent if it's in an input-group
+                            if (input.parentNode.classList.contains('input-group')) {
+                                input.parentNode.parentNode.appendChild(errorDiv);
+                            } else {
+                                input.parentNode.appendChild(errorDiv);
+                            }
+                        } else if (field === '__all__') { // Handle non-field errors
+                             const errorDiv = document.createElement('div');
+                             errorDiv.className = 'alert alert-danger mt-3';
+                             errorDiv.textContent = Array.isArray(messages) ? messages.join(', ') : messages;
+                             this.insertBefore(errorDiv, this.querySelector('.text-end'));
+                        }
+                    });
+                }
             }
         })
         .catch(error => {
-            // Show network error in modal
+            console.error('Form submission error:', error);
             const errorDiv = document.createElement('div');
             errorDiv.className = 'alert alert-danger mt-3';
-            errorDiv.textContent = 'Network error: ' + error.message;
-            document.getElementById('quickMeetingForm').insertBefore(
-                errorDiv,
-                document.querySelector('.text-end')
-            );
+            errorDiv.textContent = 'A network error occurred. Please try again. (' + error.message + ')';
+            this.insertBefore(errorDiv, this.querySelector('.text-end'));
         });
     });
+
+    // Handle "Other" meeting type description field visibility
+    const meetingTypeSelect = document.getElementById('meetingType');
+    const otherTypeField = document.getElementById('otherTypeField');
+    const otherTypeDescriptionInput = document.querySelector('[name="other_type_description"]');
+
+    if (meetingTypeSelect) {
+        meetingTypeSelect.addEventListener('change', function() {
+            if (this.value === 'other' || this.value === 'OTH') { // Adjust 'other' value if different
+                otherTypeField.style.display = 'block';
+                otherTypeDescriptionInput.required = true;
+            } else {
+                otherTypeField.style.display = 'none';
+                otherTypeDescriptionInput.required = false;
+                otherTypeDescriptionInput.value = ''; // Clear if not needed
+            }
+        });
+        // Initial check in case 'other' is pre-selected
+        if (meetingTypeSelect.value === 'other' || meetingTypeSelect.value === 'OTH') {
+             otherTypeField.style.display = 'block';
+             otherTypeDescriptionInput.required = true;
+        }
+    }
+
+
 });
 </script>
-{% endblock %}
+{% endblock javascripts %}

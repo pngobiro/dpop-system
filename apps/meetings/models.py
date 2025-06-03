@@ -4,6 +4,47 @@ from django.conf import settings
 from apps.organization.models import Department
 from apps.document_management.models import Document
 
+class MeetingParticipant(models.Model):
+    PARTICIPANT_ROLE = [
+        ('attendee', 'Attendee'),
+        ('guest', 'Guest')
+    ]
+
+    meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
+    participant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    role = models.CharField(max_length=20, choices=PARTICIPANT_ROLE, default='attendee')
+    
+    # Fields for non-staff participants
+    name = models.CharField(max_length=255, blank=True)
+    email = models.EmailField(blank=True)
+    mobile = models.CharField(max_length=20, blank=True)
+    is_external = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ['meeting', 'participant']
+        verbose_name = 'Meeting Participant'
+        verbose_name_plural = 'Meeting Participants'
+
+    def __str__(self):
+        if self.participant:
+            return f"{self.participant.get_full_name()} - {self.get_role_display()}"
+        return f"{self.name} - {self.get_role_display()} (External)"
+
+    def get_display_name(self):
+        if self.participant:
+            return self.participant.get_full_name()
+        return self.name
+
+    def get_contact_info(self):
+        if self.participant:
+            return {
+                'email': self.participant.email,
+                'mobile': getattr(self.participant, 'mobile', '')
+            }
+        return {
+            'email': self.email,
+            'mobile': self.mobile
+        }
 
 class MeetingAction(models.Model):
     meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
@@ -17,8 +58,6 @@ class MeetingAction(models.Model):
 
     def __str__(self):
         return f"{self.description} - {self.meeting.title}"
-    
-    
 
 class MeetingDocument(models.Model):
     DOCUMENT_TYPES = [
@@ -44,29 +83,6 @@ class MeetingDocument(models.Model):
 
     def __str__(self):
         return f"{self.get_document_type_display()} for {self.meeting}"
-
-
-
-class MeetingParticipant(models.Model):
-    PARTICIPANT_ROLE = [
-        ('organizer', 'Organizer'),
-        ('attendee', 'Attendee'),
-        ('guest', 'Guest')
-    ]
-
-    meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE)
-    participant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=PARTICIPANT_ROLE, default='attendee')
-
-    class Meta:
-        unique_together = ['meeting', 'participant']
-        verbose_name = 'Meeting Participant'
-        verbose_name_plural = 'Meeting Participants'
-
-    def __str__(self):
-        return f"{self.participant.get_full_name()} - {self.get_role_display()}"
-    
-    
 
 class MeetingType(models.Model):
     name = models.CharField(max_length=100)

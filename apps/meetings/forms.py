@@ -13,8 +13,6 @@ class MeetingForm(forms.ModelForm):
         # Apply form-control class to all fields
         for field_name, field in self.fields.items():
             css_class = 'form-control'
-            if field_name == 'participants':
-                css_class += ' select2'
             field.widget.attrs.update({
                 'class': css_class,
                 'data-required': field.required
@@ -61,8 +59,6 @@ class MeetingForm(forms.ModelForm):
             'placeholder': 'https://meet.google.com/abc-defg-hij or meeting ID',
             'data-conditional': 'true'
         })
-        self.fields['virtual_meeting_url'].help_text = 'Can be a URL or meeting ID'
-
         self.fields['virtual_meeting_url'].help_text = 'Required for virtual or hybrid meetings'
         self.fields['physical_location'].help_text = 'Required for physical or hybrid meetings'
 
@@ -100,7 +96,7 @@ class MeetingForm(forms.ModelForm):
             'date', 'start_time', 'end_time',
             'physical_location', 'virtual_platform',
             'virtual_meeting_url', 'virtual_meeting_id',
-            'virtual_meeting_password', 'agenda', 'participants'
+            'virtual_meeting_password', 'agenda'
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -143,9 +139,6 @@ class MeetingActionForm(forms.ModelForm):
         self.fields['assigned_to'].label = 'Assign To'
         self.fields['due_date'].label = 'Due Date'
         
-        
-
-# apps/meetings/forms.py
 
 class MeetingDocumentForm(forms.ModelForm):
     DOCUMENT_TYPES = [

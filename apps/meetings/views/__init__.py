@@ -1,21 +1,28 @@
-# apps/meetings/views/__init__.py
+from .calendar import calendar_view
 from .base import dashboard, director_dashboard
+from .lists import meeting_list
 from .crud import (
     meeting_create,
     meeting_detail,
     meeting_update,
-    meeting_delete
+    meeting_delete,
+    add_quick_meeting,
+    add_meeting_attachment_comment,
+    add_meeting_participant,
+    meeting_action
 )
-from .lists import meeting_list
-from .calendar import calendar_view
 
 __all__ = [
+    'calendar_view',
     'dashboard',
     'director_dashboard',
+    'meeting_list',
     'meeting_create',
     'meeting_detail',
     'meeting_update',
     'meeting_delete',
-    'meeting_list',
-    'calendar_view'
+    'add_quick_meeting',
+    'add_meeting_attachment_comment',
+    'add_meeting_participant',
+    'meeting_action'
 ]
