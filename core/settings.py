@@ -156,22 +156,20 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-#STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media') # Point to the correct volume mount
 MEDIA_URL = '/media/'
 
-
 # Extra places for collectstatic to find static files.
-STATICFILES_DIRS = (
+STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
-)
-
+]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-ASSETS_ROOT = '/static/assets'
+ASSETS_ROOT = STATIC_URL + 'assets'
 
 
 # FILE_UPLOAD_MAX_MEMORY_SIZE 8GB
@@ -248,8 +246,3 @@ WEBPACK_LOADER = {
     }
 }
 
-
-# Update STATICFILES_DIRS
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]

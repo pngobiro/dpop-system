@@ -24,16 +24,23 @@ COPY requirements.txt /code/
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copy static files first
+COPY static/ /code/static/
+
+# Copy the rest of the project files
 COPY . /code/
 
-# Create data directory
-RUN mkdir -p /code/data/db
+# Create necessary directories and collect static files
+RUN mkdir -p /code/data/db && \
+    mkdir -p /code/staticfiles && \
+    mkdir -p /code/static/assets/img/brand
 
 # Set permissions as root
 RUN chmod +x /code/entrypoint.sh && \
     chmod -R 755 /code && \
-    chmod -R 777 /code/data
+    chmod -R 777 /code/data && \
+    chmod -R 755 /code/staticfiles && \
+    chmod -R 755 /code/static
 
 # Command to run
 CMD ["/bin/bash", "/code/entrypoint.sh"]
