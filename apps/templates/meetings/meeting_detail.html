@@ -360,55 +360,8 @@
     </div>
 </div>
 
-{# Add Participant Modal #}
-<div class="modal fade" id="addParticipantModal" tabindex="-1" aria-labelledby="addParticipantModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="addParticipantModalLabel">Add Participant</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" action="{% url 'meetings:add_meeting_participant' meeting.pk %}">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="participant_id" class="form-label">Select Existing User</label>
-                        <select class="form-select" id="participant_id" name="participant_id">
-                            <option value="">Select a user...</option>
-                            {% for user in available_users %}
-                            <option value="{{ user.id }}">{{ user.get_full_name }}</option>
-                            {% endfor %}
-                        </select>
-                        <small class="text-muted">Or add a new external participant below</small>
-                    </div>
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="name" name="name">
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email">
-                    </div>
-                    <div class="mb-3">
-                        <label for="mobile" class="form-label">Mobile</label>
-                        <input type="text" class="form-control" id="mobile" name="mobile">
-                    </div>
-                    <div class="mb-3">
-                        <label for="role" class="form-label">Role</label>
-                        <select class="form-select" id="role" name="role">
-                            <option value="attendee">Attendee</option>
-                            <option value="guest">Guest</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Add Participant</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+{# Include Add Participant Modal #}
+{% include 'meetings/includes/add_participant_modal.html' %}
 
 <!-- Postpone Meeting Modal -->
 <div class="modal fade" id="postponeModal" tabindex="-1" aria-labelledby="postponeModalLabel" aria-hidden="true">
@@ -449,32 +402,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle Add Participant form fields visibility
-    const participantSelect = document.getElementById('participant_id');
-    const externalFields = ['name', 'email', 'mobile'].map(id => document.getElementById(id));
-    
-    function toggleExternalFields() {
-        const showExternal = !participantSelect.value;
-        externalFields.forEach(field => {
-            field.parentElement.style.display = showExternal ? 'block' : 'none';
-            field.required = showExternal;
-        });
-        participantSelect.required = !showExternal;
-    }
-    
-    participantSelect.addEventListener('change', toggleExternalFields);
-    externalFields.forEach(field => {
-        field.addEventListener('input', () => {
-            if (field.value) {
-                participantSelect.value = '';
-                participantSelect.required = false;
-                externalFields.forEach(f => f.required = true);
-            }
-        });
-    });
-    
-    // Initial state
-    toggleExternalFields();
+    // Participant form handling moved to includes/add_participant_modal.html
 
     // Set minimum date for postpone modal
     const today = new Date().toISOString().split('T')[0];

@@ -104,16 +104,22 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="taskAssignees" class="form-label">Assign To</label>
-                                    <select class="form-select select2-multiple" id="taskAssignees" name="assignees[]"
-                                        multiple required>
-                                        {% for user in users %}
-                                        <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <div class="invalid-feedback">Please select at least one user to assign the task
-                                        to.</div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="assignToSelf" checked>
+                                        <label class="form-check-label" for="assignToSelf">
+                                            <i class="fas fa-user-check"></i> Assign to myself
+                                        </label>
+                                    </div>
+                                    <div class="mt-3">
+                                        <label for="taskAssignees" class="form-label">Additional Assignees (Optional)</label>
+                                        <select class="form-select select2-multiple" id="taskAssignees" name="assignees[]"
+                                            multiple>
+                                            {% for user in users %}
+                                            <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div class="mb-3">
@@ -344,6 +350,30 @@
                 placeholder: 'Select users to assign the task to...',
                 allowClear: true
             });
+            // Handle self-assignment
+            const assignToSelfCheckbox = document.getElementById('assignToSelf');
+            const taskAssigneesSelect = document.getElementById('taskAssignees');
+
+            function updateAssignees() {
+                if (assignToSelfCheckbox.checked) {
+                    // Add current user to assignees if not already present
+                    const currentUserId = '{{ request.user.id }}';
+                    const currentUserOption = new Option(
+                        '{{ request.user.get_full_name|default:request.user.username }}',
+                        currentUserId,
+                        true,
+                        true
+                    );
+                    
+                    if (!Array.from(taskAssigneesSelect.options).some(opt => opt.value === currentUserId)) {
+                        $(taskAssigneesSelect).append(currentUserOption).trigger('change');
+                    }
+                }
+            }
+
+            // Update assignees when self-assignment changes
+            assignToSelfCheckbox.addEventListener('change', updateAssignees);
+
             // Form validation
             const form = document.getElementById('assignTaskForm');
             form.addEventListener('submit', function (event) {
@@ -351,7 +381,18 @@
                     event.preventDefault();
                     event.stopPropagation();
                 }
+                // Ensure at least one assignee is selected
+                if (taskAssigneesSelect.selectedOptions.length === 0 && !assignToSelfCheckbox.checked) {
+                    event.preventDefault();
+                    alert('Please either assign to yourself or select other assignees');
+                    return;
+                }
                 form.classList.add('was-validated');
+            });
+
+            // Initialize self-assignment on modal show
+            $('#assignTaskModal').on('show.bs.modal', function () {
+                updateAssignees();
             });
 
             // Due date calculation

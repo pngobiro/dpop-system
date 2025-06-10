@@ -44,6 +44,7 @@ class FinancialQuarter(models.Model):
     
 class Unit(models.Model):
     name = models.CharField(max_length=255)
+    dcrt_unique_id = models.CharField(max_length=255, blank=True, null=True)
     unique_id = models.CharField(max_length=255)
     unique_code = models.CharField(max_length=255)
     unit_rank = models.ForeignKey(UnitRank, on_delete=models.CASCADE)
@@ -53,6 +54,8 @@ class Unit(models.Model):
     is_court = models.BooleanField(default=False)
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
+    is_template = models.BooleanField(default=False)
+    template_unit = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='template_for')
     
     def __str__(self):
         return self.name

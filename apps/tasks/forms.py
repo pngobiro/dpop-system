@@ -29,6 +29,13 @@ class TaskForm(forms.ModelForm):
     Form for creating and editing tasks.
     Allows setting due date by specific date OR number of days from today.
     """
+    # Add self-assignment field
+    assign_to_self = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="Assign to myself",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
     # Allow setting due date relative to today
     due_in_days = forms.IntegerField(
         required=False,
@@ -65,10 +72,10 @@ class TaskForm(forms.ModelForm):
             'description',
             'status',
             'priority',
-            # 'assignee', # Removed from fields list
-            'start_date', # Add start_date
-            'due_date', # Keep original field
-            'due_in_days', # Add new relative field
+            'assign_to_self',  # Add self-assignment field
+            'start_date',
+            'due_date',
+            'due_in_days',
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),

@@ -63,7 +63,7 @@
     <!-- Main Content Area -->
     <div class="row">
         <!-- Today's Meetings -->
-        <div class="col-md-6 mb-4">
+        <div class="col-md-12 mb-4">
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Today's Meetings</h5>
@@ -189,19 +189,94 @@
             </div>
         </div>
 
-        <!-- Upcoming Meetings -->
-        <div class="col-md-6 mb-4">
+        <!-- Tomorrow's Meetings -->
+        <div class="col-md-12 mb-4">
             <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Upcoming Meetings</h5>
-                    <a href="{% url 'meetings:calendar' %}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-calendar-alt"></i> View Calendar
-                    </a>
+                <div class="card-header d-flex justify-content-between align-items-center bg-warning bg-opacity-10">
+                    <h5 class="mb-0"><i class="fas fa-sun"></i> Tomorrow's Meetings</h5>
+                    <span class="badge bg-warning">{{ tomorrows_meetings|length }}</span>
                 </div>
                 <div class="card-body">
-                    {% if upcoming_meetings %}
+                    {% if tomorrows_meetings %}
                         <div class="list-group">
-                            {% for meeting in upcoming_meetings %}
+                            {% for meeting in tomorrows_meetings %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <div>
+                                            <h6 class="mb-1">{{ meeting.title }}</h6>
+                                            <p class="mb-1">
+                                                <span class="badge bg-primary">{{ meeting.meeting_type.name }}</span>
+                                                <span class="badge bg-secondary">{{ meeting.department.name }}</span>
+                                            </p>
+                                            <small class="text-muted">
+                                                <strong>Time:</strong> {{ meeting.start_time|time:"H:i" }}
+                                                {% if meeting.end_time %} - {{ meeting.end_time|time:"H:i" }}{% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            {% include "meetings/includes/meeting_controls.html" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center my-3">No meetings scheduled for tomorrow</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- This Week's Meetings -->
+        <div class="col-md-12 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center bg-info bg-opacity-10">
+                    <h5 class="mb-0"><i class="fas fa-calendar-week"></i> This Week's Meetings</h5>
+                    <span class="badge bg-info">{{ this_week_meetings|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if this_week_meetings %}
+                        <div class="list-group">
+                            {% for meeting in this_week_meetings %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <div>
+                                            <h6 class="mb-1">{{ meeting.title }}</h6>
+                                            <p class="mb-1">
+                                                <span class="badge bg-primary">{{ meeting.meeting_type.name }}</span>
+                                                <span class="badge bg-secondary">{{ meeting.department.name }}</span>
+                                            </p>
+                                            <small class="text-muted">
+                                                <strong>Date:</strong> {{ meeting.date|date:"D, d M" }}<br>
+                                                <strong>Time:</strong> {{ meeting.start_time|time:"H:i" }}
+                                                {% if meeting.end_time %} - {{ meeting.end_time|time:"H:i" }}{% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            {% include "meetings/includes/meeting_controls.html" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center my-3">No meetings scheduled for this week</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Week's Meetings -->
+        <div class="col-md-12 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center bg-success bg-opacity-10">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Next Week's Meetings</h5>
+                    <span class="badge bg-success">{{ next_week_meetings|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if next_week_meetings %}
+                        <div class="list-group">
+                            {% for meeting in next_week_meetings %}
                                 <div class="list-group-item">
                                     <div class="d-flex w-100 justify-content-between">
                                         <div>

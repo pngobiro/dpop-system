@@ -46,23 +46,111 @@ def handle_uploaded_file(uploaded_file, unit_rank, fy, fq, unit, division, month
     Handles uploaded Excel file, saves it to a structured path, and processes its data.
     Path: MEDIA_ROOT/TEMPLATE <rank_id>/<unit_name>/<year_name>/<month_number>/<unit_code>.xlsx
     """
-def get_dcrt_filepath(unit_rank, fy, month, unit, base_dir=os.path.join(settings.BASE_DIR, 'DCRT'), extension=".xlsx"): # Changed base_dir default
-    """Constructs the structured filepath for a DCRT Excel file."""
+def get_dcrt_filepath(unit_rank, fy, month, unit, base_dir=os.path.join(settings.BASE_DIR, 'DCRT'), extension=".xlsx"):
+    """
+    Constructs the structured filepath for a DCRT Excel file.
+    Pattern: DCRT/TEMPLATE {rank_id}/{unit name}/{year}/{month}/{unique_code}.xlsx
+    Example: DCRT/TEMPLATE 4/Kisumu ELRC/2024/01/KSMERC.xlsx
+    """
     try:
-        # Sanitize names for directory creation
-        unit_name_sanitized = "".join(c if c.isalnum() or c in (' ', '-') else '_' for c in unit.name)
-        year_name_sanitized = fy.name.replace('/', '-') # Replace slashes in year name
+        import glob
 
+        # Map month names to their numbers in file system
+        month_numbers = {
+            'July': '07',
+            'August': '08',
+            'September': '09',
+            'October': '10',
+            'November': '11',
+            'December': '12',
+            'January': '01',
+            'February': '02',
+            'March': '03',
+            'April': '04',
+            'May': '05',
+            'June': '06'
+        }
+        month_str = month_numbers[month.name]
+        
+        # For Q1 months (July-September), use the first year of financial year
+        # For other months, use second year
+        if month.name in ['July', 'August', 'September']:
+            year = fy.name.split('/')[0]  # Use first year (e.g., "2024" from "2024/2025")
+        else:
+            year = fy.name.split('/')[1]  # Use second year (e.g., "2025" from "2024/2025")
+            
+        logger.info(f"Processing month: {month.name} ({month_str}), year: {year}")
+        year = fy.name.split('/')[0]
+        
+        # First look for files in this unit's directory
+        unit_pattern = os.path.join(
+            base_dir,
+            f"TEMPLATE {unit_rank.id}",
+            f"*{unit.name}*",  # Allow partial matches of unit name
+            year,
+            month_str,
+            "*.xlsx"
+        )
+        logger.info(f"Checking unit pattern: {unit_pattern}")
+        
+        # Look for existing files in unit's directory
+        unit_files = glob.glob(unit_pattern)
+        if unit_files:
+            logger.info(f"Found file in unit directory: {unit_files[0]}")
+            return unit_files[0]
+        
+        # Look for template files in other court directories
+        template_pattern = os.path.join(
+            base_dir,
+            f"TEMPLATE {unit_rank.id}",
+            "*",  # Any court directory
+            year,
+            month_str,
+            "*.xlsx"
+        )
+        logger.info(f"Checking template pattern: {template_pattern}")
+        
+        # Look for template files
+        template_files = glob.glob(template_pattern)
+        if template_files:
+            logger.info("Available template files:")
+            for template in template_files:
+                court_dir = os.path.basename(os.path.dirname(os.path.dirname(template)))
+                logger.info(f"- {court_dir}: {os.path.basename(template)}")
+            selected_template = template_files[0]
+            logger.info(f"Using template file: {selected_template}")
+            return selected_template
+        
+        # If no existing files found, construct expected path for new file
+        expected_path = os.path.join(
+            base_dir,
+            f"TEMPLATE {unit_rank.id}",
+            unit.name,
+            year,
+            month_str,
+            f"{unit.unique_code}{extension}"
+        )
+        logger.info(f"No existing files found. Using new path: {expected_path}")
+        return expected_path
+
+    except AttributeError as e:
+        logger.error(f"Invalid attribute access while constructing path: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Error generating DCRT filepath: {e}")
+        return None
+        unit_name = unit.name
+        
         # Construct the relative path components
         relative_path = os.path.join(
-            f"TEMPLATE {unit_rank.id}",
-            unit_name_sanitized,
-            year_name_sanitized,
-            f"{month.month_number:02d}" # Use month number (padded) for folder
+            f"TEMPLATE {unit_rank.id}",  # e.g., "TEMPLATE 4"
+            unit_name,                    # e.g., "Kisumu ELRC"
+            year,                         # e.g., "2024"
+            f"{month.month_number:02d}"   # e.g., "01"
         )
         
         # Construct the filename using unit unique code
-        filename = f"{unit.unique_code}{extension}"
+        filename = f"{unit.unique_code}{extension}"  # e.g., "KSMERC.xlsx"
         
         # Return the full path
         return os.path.join(base_dir, relative_path, filename)

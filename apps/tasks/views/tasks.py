@@ -45,12 +45,30 @@ def task_detail(request, task_id):
                 else:
                     tasks_folder_id = tasks_folder['files'][0]['id']
 
-                # Upload file directly to Tasks folder
+                # Get or create directorate folder
+                directorate_name = request.user.department.name if request.user.department else 'Uncategorized'
+                # Remove special characters and replace spaces with underscores
+                directorate_name = ''.join(c if c.isalnum() or c.isspace() else '_' for c in directorate_name)
+                directorate_name = directorate_name.replace(' ', '_')
+                directorate_folder = drive_manager.service.files().list(
+                    q=f"name='{directorate_name}' and mimeType='application/vnd.google-apps.folder' and '{tasks_folder_id}' in parents",
+                    fields='files(id, name)',
+                    supportsAllDrives=True,
+                    includeItemsFromAllDrives=True
+                ).execute()
+
+                directorate_files = directorate_folder.get('files', [])
+                if not directorate_files:
+                    directorate_folder_id = drive_manager.create_folder(directorate_name, tasks_folder_id)
+                else:
+                    directorate_folder_id = directorate_files[0]['id']
+
+                # Upload file to directorate folder
                 filename = f"Task_{task.id}_{task.title[:20]}_{uploaded_file.name}"
                 file_id, web_link = drive_manager.upload_file(
                     file_obj=uploaded_file,
                     filename=filename,
-                    folder_id=tasks_folder_id
+                    folder_id=directorate_folder_id  # Upload to directorate folder
                 )
                 
                 if file_id and web_link:
@@ -122,6 +140,10 @@ def add_task(request, project_id):
                 return HttpResponseForbidden("Project mismatch.")
             task.creator = request.user
             task.save()
+            
+            # Handle self-assignment
+            if form.cleaned_data.get('assign_to_self'):
+                task.assignees.add(request.user)
             return redirect('tasks:task_detail', task_id=task.id)
     else:
         form = TaskForm(initial={'project': project})

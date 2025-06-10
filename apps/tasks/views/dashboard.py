@@ -181,7 +181,7 @@ def tasks_created_by_me(request):
 
 @login_required
 def assign_task(request):
-    """Handle assigning a new task to someone"""
+    """Handle assigning a new task"""
     if request.method == 'POST':
         title = request.POST.get('title')
         description = request.POST.get('description')
@@ -190,7 +190,8 @@ def assign_task(request):
         project_id = request.POST.get('project')
         files = request.FILES.getlist('attachments[]')
 
-        if not all([title, description, assignee_ids, due_date, project_id]):
+        # Check required fields, but allow empty assignees if self-assigning
+        if not all([title, description, due_date, project_id]):
             messages.error(request, 'Please fill in all required fields.')
             return redirect('tasks:tasks_assigned_by_me')
 
@@ -206,8 +207,10 @@ def assign_task(request):
                 due_date=due_date
             )
 
-            # Handle multiple assignees
+            # Handle assignees
             assigned_users = []
+
+            # Add other assignees
             for assignee_id in assignee_ids:
                 try:
                     assignee = CustomUser.objects.get(id=assignee_id)
@@ -215,6 +218,11 @@ def assign_task(request):
                     assigned_users.append(assignee.get_full_name() or assignee.username)
                 except CustomUser.DoesNotExist:
                     messages.warning(request, f'User with ID {assignee_id} not found.')
+
+            # Always add current user if they're not already in the assignees
+            if request.user not in task.assignees.all():
+                task.assignees.add(request.user)
+                assigned_users.append(request.user.get_full_name() or request.user.username)
 
             # Handle file attachments using Google Drive
             from apps.document_management.utils.google_drive_manager import GoogleDriveManager

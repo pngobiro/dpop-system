@@ -36,13 +36,9 @@ class MeetingForm(forms.ModelForm):
             'required': False
         })
         
-        # Department field handling
-        if user and user.department:
-            self.fields['department'].initial = user.department
-            self.fields['department'].widget.attrs['readonly'] = True
-            self.fields['department'].widget.attrs['class'] += ' bg-light'
-            # Hide department field since it's automatically set
-            self.fields['department'].widget = forms.HiddenInput()
+        # Remove department field since it's set automatically
+        if 'department' in self.fields:
+            del self.fields['department']
         
         # Handle virtual meeting fields
         for field in ['virtual_meeting_id', 'virtual_meeting_password', 'physical_location']:
@@ -92,7 +88,7 @@ class MeetingForm(forms.ModelForm):
     class Meta:
         model = Meeting
         fields = [
-            'title', 'department', 'meeting_type', 'meeting_mode',
+            'title', 'meeting_type', 'meeting_mode',  # Removed department from fields
             'date', 'start_time', 'end_time',
             'physical_location', 'virtual_platform',
             'virtual_meeting_url', 'virtual_meeting_id',
@@ -100,7 +96,6 @@ class MeetingForm(forms.ModelForm):
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'department': forms.Select(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'meeting_type': forms.Select(attrs={'class': 'form-control'}),
             'meeting_mode': forms.Select(attrs={'class': 'form-control'}),
             'physical_location': forms.TextInput(attrs={'class': 'form-control'}),

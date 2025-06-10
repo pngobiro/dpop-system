@@ -1,8 +1,33 @@
 # apps/meetings/models.py
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from apps.organization.models import Department
 from apps.document_management.models import Document
+
+class SoftDeletableManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+class SoftDeletableModel(models.Model):
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeletableManager()
+    all_objects = models.Manager()
+
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save()
+
+    def restore(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save()
+
+    class Meta:
+        abstract = True
 
 class MeetingParticipant(models.Model):
     PARTICIPANT_ROLE = [
@@ -97,7 +122,7 @@ class MeetingType(models.Model):
     class Meta:
         ordering = ['name']
 
-class Meeting(models.Model):
+class Meeting(SoftDeletableModel):
     MEETING_STATUS = [
         ('scheduled', 'Scheduled'),
         ('in_progress', 'In Progress'),
@@ -160,6 +185,7 @@ class Meeting(models.Model):
             ("view_all_meetings", "Can view all meetings across departments"),
             ("manage_department_meetings", "Can manage department meetings"),
         ]
+        unique_together = ['date', 'title', 'organizer']
 
     def __str__(self):
         return f"{self.title} - {self.department.name} ({self.date})"

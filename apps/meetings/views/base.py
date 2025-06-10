@@ -13,24 +13,44 @@ from datetime import datetime, timedelta
 def dashboard(request):
     user = request.user
     today = timezone.now().date()
+    tomorrow = today + timezone.timedelta(days=1)
+    week_end = today + timezone.timedelta(days=7)
+    next_week_start = week_end + timezone.timedelta(days=1)
+    next_week_end = next_week_start + timezone.timedelta(days=6)
     thirty_days_ago = today - timezone.timedelta(days=30)
-    thirty_days_ahead = today + timezone.timedelta(days=30)
 
     # Base query for user's meetings
-    base_query = Q(department=user.department) | Q(participants=user)
+    base_query = Q(department=user.department) | Q(participants=user) | Q(organizer=user)
 
     # Get today's meetings
     todays_meetings = Meeting.objects.filter(
-        date=today,
-        status='scheduled'
+        date=today
+    ).filter(
+        Q(status='scheduled') | Q(status='in_progress')
     ).filter(base_query).distinct().order_by('start_time')
 
-    # Get upcoming meetings (excluding today)
-    upcoming_meetings = Meeting.objects.filter(
-        date__gt=today,
-        date__lte=thirty_days_ahead,
-        status='scheduled'
-    ).filter(base_query).distinct().order_by('date', 'start_time')[:5]
+    # Get tomorrow's meetings
+    tomorrows_meetings = Meeting.objects.filter(
+        date=tomorrow
+    ).filter(
+        Q(status='scheduled') | Q(status='in_progress')
+    ).filter(base_query).distinct().order_by('start_time')
+
+    # Get this week's meetings (excluding today and tomorrow)
+    this_week_meetings = Meeting.objects.filter(
+        date__gt=tomorrow,
+        date__lte=week_end
+    ).filter(
+        Q(status='scheduled') | Q(status='in_progress')
+    ).filter(base_query).distinct().order_by('date', 'start_time')
+
+    # Get next week's meetings
+    next_week_meetings = Meeting.objects.filter(
+        date__gte=next_week_start,
+        date__lte=next_week_end
+    ).filter(
+        Q(status='scheduled') | Q(status='in_progress')
+    ).filter(base_query).distinct().order_by('date', 'start_time')
 
     # Calculate statistics
     stats = {
@@ -58,7 +78,9 @@ def dashboard(request):
     context = {
         'stats': stats,
         'todays_meetings': todays_meetings,
-        'upcoming_meetings': upcoming_meetings,
+        'tomorrows_meetings': tomorrows_meetings,
+        'this_week_meetings': this_week_meetings,
+        'next_week_meetings': next_week_meetings,
         'meeting_types': meeting_types,
         'department_users': department_users,
         'current_date': current_date

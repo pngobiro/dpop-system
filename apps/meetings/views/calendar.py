@@ -23,23 +23,39 @@ class Calendar:
         
     def formatday(self, day, meetings):
         """Format a day with its meetings."""
-        meetings_per_day = meetings.filter(date__day=day)
+        if day == 0:
+            return '<td class="noday bg-light"> </td>'
+            
+        current_date = date(self.year, self.month, day)
+        meetings_per_day = meetings.filter(date=current_date)
         d = ''
         for meeting in meetings_per_day:
             # Map meeting types to badge classes
-            badge_class = ''
+            # Get badge classes for meeting type and status
+            type_badge = ''
             type_name = meeting.meeting_type.name.lower()
             if 'director' in type_name:
-                badge_class = 'text-danger'
+                type_badge = 'text-danger'
             elif 'department' in type_name:
-                badge_class = 'text-primary'
+                type_badge = 'text-primary'
             elif 'committee' in type_name:
-                badge_class = 'text-success'
+                type_badge = 'text-success'
                 
-            d += f'<div class="mb-1">' # Reduced margin for more items
-            # Ensure this URL is appropriate for the quick view modal (might need an AJAX endpoint)
-            d += f'<a href="/meetings/{meeting.pk}/" class="text-decoration-none {badge_class} meeting-link" title="{meeting.title}">'
-            d += f'<small class="fw-bold">{meeting.start_time.strftime("%H:%M") if meeting.start_time else ""}</small> - {meeting.title[:25]}{"..." if len(meeting.title) > 25 else ""}'
+            # Status badge colors
+            status_badges = {
+                'scheduled': 'bg-primary',
+                'in_progress': 'bg-warning',
+                'completed': 'bg-success',
+                'cancelled': 'bg-danger'
+            }
+            status_badge = status_badges.get(meeting.status, 'bg-secondary')
+                
+            d += '<div class="mb-1">' # Reduced margin for more items
+            d += f'<a href="/meetings/{meeting.pk}/" class="text-decoration-none meeting-link" title="{meeting.title}">'
+            d += f'<div class="d-flex align-items-center gap-1">'
+            d += f'<span class="badge rounded-pill {status_badge}" style="font-size: 0.6em;">{meeting.status.replace("_", " ").title()}</span>'
+            d += f'<span class="{type_badge}"><small class="fw-bold">{meeting.start_time.strftime("%H:%M") if meeting.start_time else ""}</small> - {meeting.title[:25]}{"..." if len(meeting.title) > 25 else ""}</span>'
+            d += '</div>'
             d += '</a>'
             d += '</div>'
             
@@ -154,20 +170,34 @@ def calendar_view(request):
         ]
 
     # --- Initialize and Filter Meetings Queryset ---
-    meetings = Meeting.objects.select_related('department').prefetch_related('participants').all() # Optimization
-    
-    user = request.user
-    can_view_all = user.has_perm('meetings.view_all_meetings')
-    if not can_view_all:
-        meetings = meetings.filter(
-            Q(department=user.department) | Q(participants=user)
-        ).distinct()
+    # Debug logging for meetings on June 10th
+    debug_date = date(2025, 6, 10)
+    debug_meetings = Meeting.objects.filter(date=debug_date)
+    logger.info(f"All meetings on June 10th 2025:")
+    for m in debug_meetings:
+        logger.info(f"ID: {m.id}, Title: {m.title}, Department: {m.department}, Organizer: {m.organizer}")
 
-    department_id = request.GET.get('department')
-    if department_id: # Apply department filter if selected
-        if can_view_all or (user.department and str(user.department.id) == department_id):
-            meetings = meetings.filter(department_id=department_id)
-        # else: user trying to filter by department they don't have access to (if not can_view_all) - implicitly handled by prior permission filter.
+    # First get distinct meeting IDs to prevent duplicates from joins
+    meeting_ids = Meeting.objects.filter(
+        Q(date__year=year_to_display, date__month=month_to_display)
+    )
+    
+    # Only show meetings where user is organizer
+    meeting_ids = meeting_ids.filter(organizer=request.user)
+    
+    # Get distinct IDs first
+    meeting_ids = meeting_ids.values_list('id', flat=True).distinct()
+    
+    # Then get the full meeting objects for these IDs
+    meetings = Meeting.objects.filter(id__in=meeting_ids)\
+        .select_related('department', 'organizer', 'meeting_type')\
+        .prefetch_related('participants')
+    
+    # Debug logging for filtered meetings
+    june_tenth_meetings = meetings.filter(date=debug_date)
+    logger.info(f"Filtered meetings on June 10th 2025:")
+    for m in june_tenth_meetings:
+        logger.info(f"ID: {m.id}, Title: {m.title}, Department: {m.department}, Organizer: {m.organizer}, Participants: {[p.id for p in m.participants.all()]}")
 
     # Apply Quarter Filter (if a quarter is selected and its FY context is known)
     if selected_quarter_value and active_fy_for_dropdown: # Use the same FY as the dropdown list
@@ -184,8 +214,12 @@ def calendar_view(request):
         except (FinancialQuarter.DoesNotExist, ValueError) as e:
             logger.warning(f"Could not apply quarter filter for Q{selected_quarter_value}, FY {active_fy_for_dropdown.name if active_fy_for_dropdown else 'Unknown'}: {e}")
     
-    # Final filter for the specific month being displayed
-    meetings = meetings.filter(date__year=year_to_display, date__month=month_to_display)
+    # Final filter for the specific month being displayed and active meetings
+    meetings = meetings.filter(
+        date__year=year_to_display,
+        date__month=month_to_display,
+        # Show all meetings including cancelled ones
+    ).order_by('date', 'start_time')
     logger.info(f"Found {meetings.count()} meetings for {calendar.month_name[month_to_display]} {year_to_display} (after all filters)")
     
     # --- Navigation links ---
@@ -199,7 +233,6 @@ def calendar_view(request):
     calendar_html = cal_instance.formatmonth(meetings)
     
     # --- Prepare Context Data ---
-    departments_for_filter = Department.objects.all() if can_view_all else None
     
     # Meeting types for the "Add Meeting" modal form
     # This matches your original template loop: {% for type in meeting_types %} ... {{ type.value }} ... {{ type.display }}
@@ -218,8 +251,6 @@ def calendar_view(request):
         'next_year': next_year_nav,
         'current_month_name': calendar.month_name[month_to_display],
         'current_year_value': year_to_display,
-        'departments': departments_for_filter,
-        'selected_department': department_id, # This is the string from GET or None
         'quarters': quarters_list_for_dropdown,
         'selected_quarter': selected_quarter_value, # This is the string from GET/default or None
         'current_fy': fy_for_header, # For the "Financial Year: X" display

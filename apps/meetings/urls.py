@@ -7,10 +7,12 @@ from apps.meetings.views import (
     add_meeting_attachment_comment, add_meeting_participant,
     meeting_action
 )
+from apps.meetings.api import api_meeting_create
 
 app_name = 'meetings'
 
 urlpatterns = [
+    path('create/', meeting_create, name='meeting_create'),
     path('calendar/', calendar_view, name='calendar'),
     path('', dashboard, name='dashboard'),
     path('director/', director_dashboard, name='director_dashboard'),
