@@ -203,15 +203,38 @@ After migration:
    git commit -m "Remove Excel files from tracking"
    ```
 
-3. For team members after migration:
+3. GitHub Authentication Setup:
+   ```bash
+   # 1. Generate Personal Access Token
+   - Go to GitHub -> Settings -> Developer settings -> Personal access tokens
+   - Click "Generate new token (classic)"
+   - Select 'repo' scope
+   - Generate and copy the token
+   
+   # 2. Configure Git credentials
+   git config --global credential.helper store
+   git config --global user.name "Your GitHub Username"
+   git config --global user.email "your.email@example.com"
+   
+   # 3. Test authentication (use token as password)
+   git push
+   ```
+
+4. For team members after migration:
    ```bash
    # Clone from new GitHub repository
-   git clone https://github.com/username/repository.git
+   git clone https://github.com/pngobiro/dpop-system.git
    
    # Update local repository if already cloned
-   git remote set-url origin https://github.com/username/repository.git
+   git remote set-url origin https://github.com/pngobiro/dpop-system.git
    git fetch
    ```
+
+### Token Security
+- Store your GitHub token securely
+- Never commit tokens to the repository
+- Revoke and regenerate tokens if accidentally exposed
+- Use environment variables when possible
 
 ## What's Next
 
