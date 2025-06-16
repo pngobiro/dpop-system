@@ -2,14 +2,13 @@
 FROM python:3.9
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV OPENAI_API_KEY=your_openai_api_key_here
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # Set work directory
 WORKDIR /code
 
-# Install system dependencies
+# Install system dependencies (this layer will be cached)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     apt-utils \
@@ -17,29 +16,31 @@ RUN apt-get update && \
     postgresql-client \
     netcat-openbsd \
     poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Copy requirements and install dependencies
+# Copy and install Python dependencies first (separate layer for better caching)
 COPY requirements.txt /code/
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy static files first
+# Create necessary directories for static files
+RUN mkdir -p /code/staticfiles \
+    /code/static/assets/img/brand \
+    /code/DCRT
+
+# Copy entrypoint script and make it executable
+COPY entrypoint.sh /code/
+RUN chmod +x /code/entrypoint.sh
+
+# Copy static files (if they don't change often)
 COPY static/ /code/static/
 
-# Copy the rest of the project files
+# Copy the rest of the application code (this should be last)
 COPY . /code/
 
-# Create necessary directories and collect static files
-RUN mkdir -p /code/data/db && \
-    mkdir -p /code/staticfiles && \
-    mkdir -p /code/static/assets/img/brand
-
-# Set permissions as root
-RUN chmod +x /code/entrypoint.sh && \
-    chmod -R 755 /code && \
-    chmod -R 777 /code/data && \
-    chmod -R 755 /code/staticfiles && \
+# Set final permissions (simplified)
+RUN chmod -R 755 /code/staticfiles && \
     chmod -R 755 /code/static
 
 # Command to run

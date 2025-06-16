@@ -1,7 +1,7 @@
 import pandas as pd
-import os # Import os module
-import openpyxl # Import openpyxl
-from django.conf import settings # Import settings
+import os
+import openpyxl
+from django.conf import settings
 from django.shortcuts import render
 from django_pandas.io import read_frame
 from django.db.models import Count, Q
@@ -9,7 +9,7 @@ from apps.statistics.models import (
     UnitRank, FinancialYear, FinancialQuarter,
     Unit, Division, DcrtData, Months
 )
-from ..utils import get_dcrt_filepath # Import the helper function
+from apps.statistics.utils import get_dcrt_filepath  # Updated import path
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,22 +35,19 @@ def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, 
     if filepath and os.path.exists(filepath):
         logger.info(f"Found existing Excel file for case summary: {filepath}")
         try:
-            # Read data directly from the Excel file using pandas
-            # Adjust sheet_name and header row if needed based on template
-            df = pd.read_excel(filepath, sheet_name=0, header=4) # Assumes data starts on row 6 (header=4 means 5th row is header)
-            df = df.where(pd.notnull(df), None) # Replace NaN with None
+            df = pd.read_excel(filepath, sheet_name=0, header=4)
+            df = df.where(pd.notnull(df), None)
             data_source = "Excel File"
             logger.info(f"Successfully loaded {len(df)} rows from Excel file.")
         except Exception as e:
             logger.error(f"Error reading Excel file {filepath}: {e}. Falling back to database.")
-            df = pd.DataFrame() # Ensure df is empty on read error
+            df = pd.DataFrame()
 
     # If file doesn't exist or failed to read, query the database
     if df.empty:
         logger.info("Excel file not found or failed to read. Querying database.")
         queryset = DcrtData.objects.filter(
             financial_year=financial_year_id,
-            # financial_quarter=financial_quarter_id, # Quarter info is in Month object
             unit=unit_id,
             division=division_id,
             month=month_id
@@ -61,7 +58,6 @@ def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, 
             logger.info(f"Successfully loaded {len(df)} rows from database.")
         else:
             logger.info("No data found in database for this context.")
-            # df remains an empty DataFrame
 
     context = {
         'unit_rank': unit_rank,
@@ -69,13 +65,13 @@ def case_summary(request, id, financial_year_id, financial_quarter_id, unit_id, 
         'financial_quarter': fq,
         'unit': unit,
         'division': division,
-        'data_source': data_source, # Add data source info to context
+        'data_source': data_source,
         'month': month,
         
         # Basic statistics
         'total_cases': len(df),
         'resolved_cases': len(df[df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]) if not df.empty and 'case_outcome' in df.columns else 0,
-        'pending_cases': len(df[~df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]) if not df.empty and 'case_outcome' in df.columns else len(df), # Assume all are pending if outcome column missing
+        'pending_cases': len(df[~df['case_outcome'].str.contains('Resolved|Concluded|Completed', na=False, case=False, regex=True)]) if not df.empty and 'case_outcome' in df.columns else len(df),
         'legal_rep_cases': len(df[df['parties_have_legal_representation'].str.contains('Yes', na=False, case=False)]) if not df.empty and 'parties_have_legal_representation' in df.columns else 0,
         
         # Case types analysis
@@ -143,7 +139,6 @@ def monthly_unit_registered_cases(request, id, financial_year_id, financial_quar
     
     return render(request, 'statistics/monthly_unit_registered_cases.html', context)
 
-
 def monthly_unit_resolved_cases(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
     """
     View for analyzing resolved cases in a given month.
@@ -173,7 +168,6 @@ def monthly_unit_resolved_cases(request, id, financial_year_id, financial_quarte
     }
     
     return render(request, 'statistics/monthly_unit_resolved_cases.html', context)
-
 
 def rank_unit_division_month_cases_summary(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
     """
@@ -266,7 +260,6 @@ def rank_unit_division_month_cases_summary(request, id, financial_year_id, finan
     }
 
     return render(request, 'statistics/rank_unit_division_month_cases_summary.html', context)
-
 
 def monthly_unit_matters_handled(request, id, financial_year_id, financial_quarter_id, unit_id, division_id, month_id):
     """
@@ -392,4 +385,3 @@ def monthly_unit_matters_handled(request, id, financial_year_id, financial_quart
     }
 
     return render(request, 'statistics/monthly_unit_matters_handled.html', context)
-
