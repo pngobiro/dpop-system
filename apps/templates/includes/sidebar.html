@@ -158,8 +158,14 @@
         </span>
         <span class="link-arrow"><i class="fas fa-chevron-right"></i></span>
       </span>
-      <div class="multi-level collapse {% if 'permissions' in request.resolver_match.app_names %} show {% endif %}" role="list" id="submenu-settings" aria-expanded="false">
+      <div class="multi-level collapse {% if 'permissions' in request.resolver_match.app_names or 'authentication' in request.resolver_match.app_names and request.resolver_match.url_name in 'user_list,user_create,user_update,user_delete' %} show {% endif %}" role="list" id="submenu-settings" aria-expanded="false">
         <ul class="flex-column nav">
+          <li class="nav-item {% if 'user_list' in request.resolver_match.url_name or 'user_create' in request.resolver_match.url_name or 'user_update' in request.resolver_match.url_name or 'user_delete' in request.resolver_match.url_name %} active {% endif %}">
+             <a class="nav-link" href="{% url 'authentication:user_list' %}">
+             <span class="sidebar-icon"><i class="fas fa-users"></i></span>
+             <span class="sidebar-text">Manage Users</span>
+            </a>
+          </li>
           <li class="nav-item {% if 'manage_permissions' in request.resolver_match.url_name %} active {% endif %}">
              <a class="nav-link" href="{% url 'permissions:manage_permissions' %}">
              <span class="sidebar-icon"><i class="fas fa-user-shield"></i></span>

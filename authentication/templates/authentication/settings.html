@@ -1,12 +1,40 @@
-{% extends 'base.html' %}
+{% extends 'layouts/base.html' %}
 
 {% block title %}User Settings{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>User Settings</h1>
-    {# Add settings forms or options here #}
-    <p>This is the user settings page for {{ user.username }}.</p>
-    <a href="{% url 'authentication:profile' %}" class="btn btn-secondary">Back to Profile</a>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <h3 class="mb-0">User Settings</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4 text-center">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" class="rounded-circle mb-2" width="100" height="100" alt="Profile Picture">
+                        {% else %}
+                            <img src="/static/assets/img/team/profile-picture-3.jpg" class="rounded-circle mb-2" width="100" height="100" alt="Profile Picture">
+                        {% endif %}
+                        <h5 class="mt-2">{{ user.get_full_name|default:user.username }}</h5>
+                        <p class="text-muted mb-0">{{ user.email }}</p>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <strong>Username:</strong> {{ user.username }}<br>
+                        <strong>Email:</strong> {{ user.email }}<br>
+                        <strong>Phone:</strong> {{ user.phone|default:'-' }}<br>
+                        <strong>Mobile:</strong> {{ user.mobile|default:'-' }}<br>
+                        <strong>Departments:</strong> {% for dept in user.departments.all %}{{ dept.name }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <a href="{% url 'authentication:change_password' %}" class="btn btn-warning">Change Password</a>
+                        <a href="{% url 'authentication:profile' %}" class="btn btn-secondary">Back to Profile</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

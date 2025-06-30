@@ -246,3 +246,11 @@ WEBPACK_LOADER = {
     }
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'pngobiro@gmail.com'
+EMAIL_HOST_PASSWORD = 'woww sfla ibib gsjh'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'DSPOP System <pngobiro@gmail.com>'
+

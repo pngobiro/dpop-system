@@ -1,0 +1,25 @@
+Subject: Welcome to the Platform
+
+Dear {{ user.first_name }},
+
+Welcome to our DSPOP platform! Your account has been created successfully.
+
+Here are your login details:
+
+Username: {{ user.username }}
+Password: {{ password }}
+
+You can log in at: https://www.dspop.info/
+
+System Features:
+- Document and file management
+- Task and project tracking
+- Department and group collaboration
+- Data analytics and reporting
+
+For security, please change your password after your first login. To do so, go to your profile settings and select 'Change Password.'
+
+If you have any questions or need assistance, feel free to contact support.
+
+Best regards,
+The Team

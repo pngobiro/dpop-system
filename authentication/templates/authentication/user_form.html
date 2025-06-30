@@ -1,0 +1,100 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}User Form{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">{% if user_obj %}Edit{% else %}Create{% endif %} User</h3>
+                    {% if user_obj %}
+                    <form method="post" action="{% url 'authentication:user_regenerate_password' user_obj.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning btn-sm">Regenerate Password</button>
+                    </form>
+                    <form method="post" action="{% url 'authentication:user_send_welcome_email' user_obj.pk %}" style="display:inline; margin-left: 8px;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-info btn-sm">Send Welcome Email</button>
+                    </form>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-info">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="id_username" class="form-label">Username</label>
+                                {{ form.username }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_email" class="form-label">Email</label>
+                                {{ form.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_first_name" class="form-label">First Name</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_last_name" class="form-label">Last Name</label>
+                                {{ form.last_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_pj_number" class="form-label">PJ Number</label>
+                                {{ form.pj_number }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_phone" class="form-label">Phone</label>
+                                {{ form.phone }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_mobile" class="form-label">Mobile</label>
+                                {{ form.mobile }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_departments" class="form-label">Departments</label>
+                                {{ form.departments }}
+                            </div>
+                        </div>
+                        <hr class="my-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="id_is_active" class="form-label">Active</label>
+                                {{ form.is_active }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_is_staff" class="form-label">Staff</label>
+                                {{ form.is_staff }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_is_superuser" class="form-label">Superuser</label>
+                                {{ form.is_superuser }}
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label for="id_groups" class="form-label">Groups</label>
+                                {{ form.groups }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_user_permissions" class="form-label">Permissions</label>
+                                {{ form.user_permissions }}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-success px-4">Save</button>
+                            <a href="{% url 'authentication:user_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

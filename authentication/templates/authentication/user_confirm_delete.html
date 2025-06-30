@@ -1,0 +1,15 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Delete User{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Delete User</h1>
+    <p>Are you sure you want to delete user <strong>{{ user_obj.username }}</strong>?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, delete</button>
+        <a href="{% url 'authentication:user_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock content %}
