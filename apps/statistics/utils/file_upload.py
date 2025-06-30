@@ -2,7 +2,7 @@ import os
 import logging
 from django.conf import settings
 from .dcrt_file_checker import DCRTFileChecker
-from apps.organization.models import Unit  # Import Unit model
+from apps.statistics.models import Unit  # Import Unit model
 
 logger = logging.getLogger(__name__)
 
