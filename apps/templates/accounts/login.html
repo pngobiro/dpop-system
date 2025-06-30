@@ -1,92 +1,111 @@
 {% extends "layouts/base-fullscreen.html" %}
 
-{% block title %} Sign IN {% endblock %} 
+{% block title %}Sign In{% endblock %}
 
-<!-- Specific Page CSS goes HERE  -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<style>
+    body, html {
+        height: 100%;
+        margin: 0;
+    }
+    .form-bg-image {
+        min-height: 100vh;
+        width: 100vw;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: url('https://judiciary.go.ke/wp-content/uploads/2023/05/Judiciary-2.png') no-repeat center center fixed;
+        background-size: cover;
+        z-index: 0;
+    }
+    .overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.85);
+        z-index: 1;
+    }
+    .login-container {
+        position: relative;
+        z-index: 2;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-card {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+        padding: 2.5rem 2rem;
+        max-width: 420px;
+        width: 100%;
+        margin: 2rem 0;
+        animation: fadeIn 0.7s;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .login-logo {
+        height: 70px;
+        margin-bottom: 1.5rem;
+    }
+    .system-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1a237e;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+    }
+    .login-title {
+        font-weight: 700;
+        font-size: 2rem;
+        color: #1a237e;
+        margin-bottom: 0.5rem;
+    }
+    .login-subtitle {
+        color: #555;
+        margin-bottom: 1.5rem;
+    }
+    .btn-primary {
+        background: #1a237e;
+        border: none;
+    }
+    .btn-primary:hover {
+        background: #3949ab;
+    }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
-
-    <main>
-        <section class="vh-lg-100 mt-5 mt-lg-0 bg-soft d-flex align-items-center">
-            <div class="container">
-                <p class="text-center">
-                    <a href="#" class="d-flex align-items-center justify-content-center">
-                        <img src="{{ ASSETS_ROOT }}/img/brand/logo/logo.svg" class="me-2" height="50" alt="Volt Logo">
-                    </a>
-
-                </p>
-                <div class="row justify-content-center form-bg-image" data-background-lg="{{ ASSETS_ROOT }}/img/illustrations/signin.svg">
-                    <div class="col-12 d-flex align-items-center justify-content-center">
-                        <div class="bg-white shadow border-0 rounded border-light p-4 p-lg-5 w-100 fmxw-500">
-                            <div class="text-center text-md-center mb-4 mt-md-0">
-                                <h1 class="mb-0 h3">
-                                    Sign IN
-                                </h1>
-                                <br />
-                                <p>
-                                    {% if msg %}
-                                        <span class="text-danger">
-                                            {{ msg | safe }}
-                                        </span>                                        
-                                    {% else %}
-                                        Add your credentials
-                                    {% endif %}                                     
-                                </p> 
-                            </div>
-
-                            <form method="post" action="" class="mt-4">
-                                
-                                {% csrf_token %}
-
-                                <!-- Form -->
-                                <div class="form-group mb-4">
-                                    <label for="email">Username</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="basic-addon1">
-                                            <span class="fas fa-user-circle"></span>
-                                        </span>
-                                        {{ form.username }}
-                                    </div>  
-                                </div>
-                                <!-- End of Form -->
-                                <div class="form-group">
-                                    <!-- Form -->
-                                    <div class="form-group mb-4">
-                                        <label for="password">Your Password</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text" id="basic-addon2">
-                                                <span class="fas fa-unlock-alt"></span>
-                                            </span>
-                                            {{ form.password }}
-                                        </div>  
-                                    </div>
-                                    <!-- End of Form -->
-                                    <div class="d-flex justify-content-between align-items-top mb-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="" id="remember">
-                                            <label class="form-check-label mb-0" for="remember">
-                                              Remember me
-                                            </label>
-                                        </div>
-                                        <div><a href="{% url 'authentication:register' %}" class="text-right">Register</a></div>
-                                    </div>
-                                </div>
-                                <div class="d-grid">
-                                    <button type="submit" name="login" class="btn btn-gray-800">Sign IN</button>
-                                </div>
-                            </form>
-
-                    
-
-                        </div>
-                    </div>
-                </div>
+<div class="form-bg-image"></div>
+<div class="overlay"></div>
+<div class="login-container">
+    <div class="login-card">
+        <div class="text-center">
+            <img src="/static/assets/img/brand/logo1-Copy-2.png" class="login-logo" alt="Judiciary Logo">
+            <div class="system-name">DSPOP System</div>
+            <div class="login-title">Sign In</div>
+            <div class="login-subtitle">Access your Judiciary account</div>
+        </div>
+        <form method="post" action="" class="mt-4">
+            {% csrf_token %}
+            {% if msg %}
+                <div class="alert alert-danger">{{ msg|safe }}</div>
+            {% endif %}
+            <div class="mb-3">
+                <input type="text" name="username" class="form-control form-control-lg" placeholder="Username" required autofocus>
             </div>
-        </section>
-    </main>
-
-{% endblock content %}
+            <div class="mb-3">
+                <input type="password" name="password" class="form-control form-control-lg" placeholder="Password" required>
+            </div>
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-primary btn-lg">Sign In</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
 
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}{% endblock javascripts %}
