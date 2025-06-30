@@ -35,9 +35,7 @@ def dashboard(request):
 
 @login_required(login_url="/login/")
 def index(request):
-    context = {'segment': 'index'}
-    html_template = loader.get_template('home/index.html')
-    return HttpResponse(html_template.render(context, request))
+    return redirect('/tasks/my_dashboard/')
 
 @login_required(login_url="/login/")
 def pages(request):
