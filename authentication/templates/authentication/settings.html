@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}User Settings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>User Settings</h1>
+    {# Add settings forms or options here #}
+    <p>This is the user settings page for {{ user.username }}.</p>
+    <a href="{% url 'authentication:profile' %}" class="btn btn-secondary">Back to Profile</a>
+</div>
+{% endblock %}

@@ -80,7 +80,8 @@ def my_dashboard(request):
         'my_tasks_stats': my_tasks_stats,
         'assigned_tasks_stats': assigned_tasks_stats,
         'meetings_stats': meetings_stats,
-        'document_count': 0 #Document.objects.count()
+        'document_count': 0, #Document.objects.count()
+        'segment': 'my_dashboard' # Add segment for active navigation
     }
     return render(request, 'tasks/my_dashboard.html', context)
 

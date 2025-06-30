@@ -8,6 +8,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from .forms import LoginForm, SignUpForm
 from django.contrib.auth.views import LogoutView
+from django.contrib.auth.decorators import login_required
 
 
 
@@ -73,7 +74,21 @@ def register_user(request):
 
 class CustomLogoutView(LogoutView):
     next_page = '/login/'
-    
-    
-    
-    
+
+@login_required
+def profile_view(request):
+    """
+    View for displaying the current user's profile.
+    """
+    return render(request, 'authentication/profile.html', {'user': request.user})
+
+@login_required
+def settings_view(request):
+    """
+    View for displaying and potentially updating user settings.
+    """
+    return render(request, 'authentication/settings.html', {'user': request.user})
+
+
+
+
