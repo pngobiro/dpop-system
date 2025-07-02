@@ -53,6 +53,8 @@ def memo_create(request):
             memo = form.save(commit=False)
             memo.created_by = request.user
             memo.department = request.user.department
+            if not memo.sender_user: # If sender_user is not explicitly set in the form, default to the creator
+                memo.sender_user = request.user
             memo.save()
             form.save_m2m()  # Save ManyToMany fields
 
@@ -110,7 +112,9 @@ def memo_detail(request, pk):
             memo=memo, 
             approver=user, 
             status='pending'
-        ).exists()
+        ).exists(),
+        'memo_status_choices': Memo.MEMO_STATUS,
+        'memo_priority_choices': Memo.PRIORITY_CHOICES,
     }
     return render(request, 'memos/memo_detail.html', context)
 
@@ -270,7 +274,7 @@ def memo_edit(request, pk):
         return redirect('memos:memo_detail', pk=pk)
 
     if request.method == 'POST':
-        form = MemoForm(request.POST, request.FILES, instance=memo)
+        form = MemoForm(request.POST, request.FILES, instance=memo, user=request.user)
         if form.is_valid():
             memo = form.save()
             form.save_m2m()
@@ -448,7 +452,7 @@ def memo_status_update(request, pk):
     memo = get_object_or_404(Memo, pk=pk)
     status = request.POST.get('status')
 
-    if status not in ['draft', 'pending_approval', 'approved', 'published']:
+    if status not in [choice[0] for choice in Memo.MEMO_STATUS]:
         messages.error(request, 'Invalid status.')
         return redirect('memos:memo_detail', pk=pk)
 

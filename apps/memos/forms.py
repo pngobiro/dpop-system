@@ -14,9 +14,10 @@ class MemoForm(forms.ModelForm):
     class Meta:
         model = Memo
         fields = [
-            'title', 'memo_type', 'content', 'recipient_departments',
-            'recipient_users', 'is_confidential', 'external_recipient',
-            'external_organization', 'tags', 'file_number'
+            'title', 'memo_type', 'content', 'priority', 'due_date',
+            'sender_user', 'sender_external_name', 'sender_external_organization',
+            'recipient_departments', 'recipient_users', 'recipient_external_name',
+            'recipient_external_organization', 'is_confidential', 'tags', 'file_number'
         ]
         widgets = {
             'content': forms.Textarea(attrs={'rows': 10, 'class': 'rich-text-editor'}),
@@ -30,24 +31,59 @@ class MemoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Get the user from kwargs
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
+        # Set initial sender_user if creating a new memo
+        if not self.instance.pk and user:
+            self.initial['sender_user'] = user
+
         if user:
-            # Filter templates based on user's department (or global templates)
             self.fields['template'].queryset = MemoTemplate.objects.filter(
                 Q(department=user.department) | Q(department__isnull=True)
             )
 
+        # Update widgets for new fields
+        self.fields['priority'].widget = forms.Select(choices=Memo.PRIORITY_CHOICES)
+        self.fields['due_date'].widget = forms.DateInput(attrs={'type': 'date'})
+        self.fields['sender_user'].widget = forms.Select(attrs={'class': 'select2', 'data-placeholder': 'Select internal sender'})
+        self.fields['sender_external_name'].widget = forms.TextInput(attrs={'placeholder': 'External Sender Name'})
+        self.fields['sender_external_organization'].widget = forms.TextInput(attrs={'placeholder': 'External Sender Organization'})
+        self.fields['recipient_external_name'].widget = forms.TextInput(attrs={'placeholder': 'External Recipient Name'})
+        self.fields['recipient_external_organization'].widget = forms.TextInput(attrs={'placeholder': 'External Recipient Organization'})
 
     def clean(self):
         cleaned_data = super().clean()
         memo_type = cleaned_data.get('memo_type')
-        external_recipient = cleaned_data.get('external_recipient')
+        sender_user = cleaned_data.get('sender_user')
+        sender_external_name = cleaned_data.get('sender_external_name')
+        sender_external_organization = cleaned_data.get('sender_external_organization')
+        recipient_departments = cleaned_data.get('recipient_departments')
+        recipient_users = cleaned_data.get('recipient_users')
+        recipient_external_name = cleaned_data.get('recipient_external_name')
+        recipient_external_organization = cleaned_data.get('recipient_external_organization')
 
-        # Add validation logic here if needed, based on memo_type and external_recipient
+        if memo_type == 'internal':
+            if not sender_user:
+                self.add_error('sender_user', 'Internal memos must have an internal sender.')
+            if sender_external_name or sender_external_organization:
+                self.add_error('sender_external_name', 'External sender fields should be empty for internal memos.')
+            if not (recipient_departments or recipient_users):
+                self.add_error('recipient_departments', 'Internal memos must have at least one internal recipient (department or user).')
+            if recipient_external_name or recipient_external_organization:
+                self.add_error('recipient_external_name', 'External recipient fields should be empty for internal memos.')
 
-        return cleaned_data # important
+        elif memo_type == 'external':
+            if not (sender_external_name or sender_external_organization):
+                self.add_error('sender_external_name', 'External memos must have an external sender name or organization.')
+            if sender_user:
+                self.add_error('sender_user', 'Internal sender should be empty for external memos.')
+            if not (recipient_external_name or recipient_external_organization):
+                self.add_error('recipient_external_name', 'External memos must have an external recipient name or organization.')
+            if recipient_departments or recipient_users:
+                self.add_error('recipient_departments', 'Internal recipient fields should be empty for external memos.')
+
+        return cleaned_data
 
 
 class MemoTemplateForm(forms.ModelForm):

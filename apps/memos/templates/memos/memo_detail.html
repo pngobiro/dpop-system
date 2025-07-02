@@ -1,0 +1,244 @@
+{% extends "layouts/base.html" %}
+{% load crispy_forms_tags %}
+{% load custom_filters %}
+
+{% block title %}Memo: {{ memo.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="row">
+                        <div class="col-lg-6 col-7">
+                            <h6>Memo: {{ memo.title }}</h6>
+                            <p class="text-sm mb-0">
+                                <i class="fa fa-clock-o text-info" aria-hidden="true"></i>
+                                <span class="font-weight-bold ms-1">{{ memo.status|lower|underscore_to_dash|capfirst }}</span>
+                            </p>
+                        </div>
+                        <div class="col-lg-6 col-5 my-auto text-end">
+                            <div class="dropdown float-lg-end pe-4">
+                                <a class="cursor-pointer" id="dropdownTable" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa fa-ellipsis-v text-secondary"></i>
+                                </a>
+                                <ul class="dropdown-menu px-2 py-3 ms-sm-n4 ms-n5" aria-labelledby="dropdownTable">
+                                    <li><a class="dropdown-item border-radius-md" href="{% url 'memos:memo_edit' memo.pk %}">Edit</a></li>
+                                    <li><a class="dropdown-item border-radius-md" href="#">Delete</a></li>
+                                    <li><a class="dropdown-item border-radius-md" href="#">Print</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-2">
+                    <div class="row px-4">
+                        <div class="col-md-12">
+                            <p><strong>Reference Number:</strong> {{ memo.reference_number }}</p>
+                            <p><strong>Memo Type:</strong> {{ memo.get_memo_type_display }}</p>
+                            <p><strong>Priority:</strong> {{ memo.get_priority_display }}</p>
+                            <p><strong>Due Date:</strong> {{ memo.due_date|default:"N/A" }}</p>
+                            <p><strong>Department:</strong> {{ memo.department.name }}</p>
+                            <p><strong>Created By:</strong> {{ memo.created_by.get_full_name|default:memo.created_by.username }}</p>
+                            <p><strong>Created At:</strong> {{ memo.created_at }}</p>
+                            <p><strong>Last Updated:</strong> {{ memo.updated_at }}</p>
+                            {% if memo.published_at %}
+                                <p><strong>Published At:</strong> {{ memo.published_at }}</p>
+                            {% endif %}
+                            <p><strong>Confidential:</strong> {{ memo.is_confidential|yesno:"Yes,No" }}</p>
+                            <p><strong>Tags:</strong> {{ memo.tags|default:"N/A" }}</p>
+                            <p><strong>File Number:</strong> {{ memo.file_number|default:"N/A" }}</p>
+
+                            {% if memo.memo_type == 'internal' %}
+                                <p><strong>Sender (Internal):</strong> {{ memo.sender_user.get_full_name|default:memo.sender_user.username }}</p>
+                                <p><strong>Recipient Departments:</strong>
+                                    {% for dept in memo.recipient_departments.all %}
+                                        {{ dept.name }}{% if not forloop.last %}, {% endif %}
+                                    {% empty %}
+                                        N/A
+                                    {% endfor %}
+                                </p>
+                                <p><strong>Recipient Users:</strong>
+                                    {% for user in memo.recipient_users.all %}
+                                        {{ user.get_full_name|default:user.username }}{% if not forloop.last %}, {% endif %}
+                                    {% empty %}
+                                        N/A
+                                    {% endfor %}
+                                </p>
+                            {% elif memo.memo_type == 'external' %}
+                                <p><strong>Sender (External):</strong> {{ memo.sender_external_name|default:"N/A" }} ({{ memo.sender_external_organization|default:"N/A" }})</p>
+                                <p><strong>Recipient (External):</strong> {{ memo.recipient_external_name|default:"N/A" }} ({{ memo.recipient_external_organization|default:"N/A" }})</p>
+                            {% endif %}
+
+                            <hr>
+                            <h5>Content:</h5>
+                            <div class="memo-content">
+                                {{ memo.content|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Attachments</h6>
+                </div>
+                <div class="card-body px-0 pb-2">
+                    {% if memo.document %}
+                        <p><a href="{{ memo.document.get_absolute_url }}" target="_blank">{{ memo.document.title }}</a></p>
+                    {% else %}
+                        <p>No main document attached.</p>
+                    {% endif %}
+                    {% if memo.attachments.all %}
+                        <h6>Other Attachments:</h6>
+                        <ul>
+                            {% for attachment in memo.attachments.all %}
+                                <li><a href="{{ attachment.get_absolute_url }}" target="_blank">{{ attachment.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No other attachments.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Comments</h6>
+                </div>
+                <div class="card-body px-0 pb-2">
+                    {% for comment in comments %}
+                        <div class="border-bottom pb-2 mb-2">
+                            <p class="text-sm mb-0"><strong>{{ comment.user.get_full_name|default:comment.user.username }}</strong> on {{ comment.created_at|date:"M d, Y H:i" }}</p>
+                            <p>{{ comment.content }}</p>
+                            {% if comment.attachments.all %}
+                                <p class="text-sm">Attachments:
+                                    {% for attachment in comment.attachments.all %}
+                                        <a href="{{ attachment.get_absolute_url }}" target="_blank">{{ attachment.title }}</a>{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <p>No comments yet.</p>
+                    {% endfor %}
+                    <form method="post" action="{% url 'memos:add_comment' memo.pk %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ comment_form|crispy }}
+                        <div class="mb-3">
+                            <label for="id_attachments" class="form-label">Attachments</label>
+                            <input type="file" name="attachments" id="id_attachments" multiple class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Add Comment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Memo Actions</h6>
+                </div>
+                <div class="card-body">
+                    {% if memo.status == 'draft' and memo.created_by == request.user %}
+                        <form method="post" action="{% url 'memos:memo_submit' memo.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-sm w-100 mb-2">Submit for Approval</button>
+                        </form>
+                    {% endif %}
+
+                    {% if can_approve %}
+                        <form method="post" action="{% url 'memos:memo_approve' memo.pk %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="id_approval_comments" class="form-label">Comments</label>
+                                <textarea name="comments" id="id_approval_comments" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_signature" class="form-label">Signature/Stamp (Optional)</label>
+                                <input type="file" name="signature" id="id_signature" class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm w-100 mb-2">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'memos:memo_reject' memo.pk %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="id_rejection_comments" class="form-label">Reason for Rejection</label>
+                                <textarea name="comments" id="id_rejection_comments" class="form-control" rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger btn-sm w-100 mb-2">Reject</button>
+                        </form>
+                    {% endif %}
+
+                    {% if memo.status == 'approved' and request.user.has_perm('memos.can_publish_memos') %}
+                        <form method="post" action="{% url 'memos:memo_publish' memo.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-info btn-sm w-100 mb-2">Publish Memo</button>
+                        </form>
+                    {% endif %}
+
+                    <h6 class="mt-4">Current Status: <span class="badge bg-gradient-{{ memo.status|lower|underscore_to_dash }}">{{ memo.get_status_display }}</span></h6>
+                    <form method="post" action="{% url 'memos:memo_status_update' memo.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_status" class="form-label">Update Status</label>
+                            <select name="status" id="id_status" class="form-control">
+                                {% for choice_value, choice_label in memo_status_choices %}
+                                    <option value="{{ choice_value }}" {% if memo.status == choice_value %}selected{% endif %}>{{ choice_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Update Status</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Approval History</h6>
+                </div>
+                <div class="card-body">
+                    {% for approval in approvals %}
+                        <div class="border-bottom pb-2 mb-2">
+                            <p class="text-sm mb-0"><strong>Level {{ approval.level }}: {{ approval.approver.get_full_name|default:approval.approver.username }}</strong></p>
+                            <p class="text-sm mb-0">Status: <span class="badge bg-gradient-{{ approval.status|lower|underscore_to_dash }}">{{ approval.get_status_display }}</span></p>
+                            {% if approval.approved_at %}
+                                <p class="text-sm mb-0">Approved At: {{ approval.approved_at|date:"M d, Y H:i" }}</p>
+                            {% endif %}
+                            {% if approval.comments %}
+                                <p class="text-sm mb-0">Comments: {{ approval.comments }}</p>
+                            {% endif %}
+                            {% if approval.signature_document %}
+                                <p class="text-sm mb-0">Signature: <a href="{{ approval.signature_document.get_absolute_url }}" target="_blank">View Signature</a></p>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <p>No approval history.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Recent Activities</h6>
+                </div>
+                <div class="card-body">
+                    {% for activity in activities %}
+                        <div class="border-bottom pb-2 mb-2">
+                            <p class="text-sm mb-0"><strong>{{ activity.user.get_full_name|default:activity.user.username }}</strong> {{ activity.get_action_display }} on {{ activity.timestamp|date:"M d, Y H:i" }}</p>
+                            {% if activity.action_details %}
+                                <p class="text-sm mb-0">Details: {{ activity.action_details }}</p>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <p>No recent activities.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
