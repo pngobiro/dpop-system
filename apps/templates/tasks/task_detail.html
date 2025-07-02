@@ -214,7 +214,7 @@
                     {% if task.source_object %}
                     <li class="list-group-item">
                         <strong>Related to:</strong>
-                        {% if task.source_object|instanceof:"Meeting" %}
+                        {% if task.content_type.model == "meeting" %}
                             <a href="{% url 'meetings:meeting_detail' pk=task.source_object.pk %}" class="text-primary text-decoration-none">
                                 <i class="fas fa-calendar-alt me-1"></i> Meeting: {{ task.source_object.title }}
                             </a>
