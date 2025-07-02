@@ -1,237 +1,107 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Memos Dashboard{% endblock %}
+{% block title %} Department Dashboard {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <h6>Memos Dashboard</h6>
-                    <button type="button" class="btn btn-primary btn-sm float-end" data-bs-toggle="modal" data-bs-target="#createMemoModal">
-                        <i class="fas fa-plus"></i> Create New Memo
-                    </button>
-                </div>
-                <div class="card-body px-0 pb-2">
-                    <div class="row px-4">
-                        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                            <div class="card card-stats">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-5 col-md-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="nc-icon nc-single-copy-04 text-warning"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-7 col-md-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Draft Memos</p>
-                                                <p class="card-title">{{ stats.draft }}<p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer ">
-                                    <hr>
-                                    <div class="stats">
-                                        <i class="fa fa-refresh"></i> Update Now
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                            <div class="card card-stats">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-5 col-md-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="nc-icon nc-paper text-info"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-7 col-md-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Pending Approval</p>
-                                                <p class="card-title">{{ stats.pending }}<p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer ">
-                                    <hr>
-                                    <div class="stats">
-                                        <i class="fa fa-calendar-o"></i> Last Day
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                            <div class="card card-stats">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-5 col-md-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="nc-icon nc-bullet-list-67 text-success"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-7 col-md-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Approved Memos</p>
-                                                <p class="card-title">{{ stats.approved }}<p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer ">
-                                    <hr>
-                                    <div class="stats">
-                                        <i class="fa fa-clock-o"></i> In the last hour
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                            <div class="card card-stats">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-5 col-md-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="nc-icon nc-single-02 text-primary"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-7 col-md-8">
-                                            <div class="numbers">
-                                                <p class="card-category">Published Memos</p>
-                                                <p class="card-title">{{ stats.published }}<p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer ">
-                                    <hr>
-                                    <div class="stats">
-                                        <i class="fa fa-refresh"></i> Update Now
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
-                            <div class="card card-stats">
-                                <div class="card-body ">
-                                    <div class="row">
-                                        <div class="col-5 col-md-4">
-                                            <div class="icon-big text-center icon-warning">
-                                                <i class="nc-icon nc-badge text-success"></i>
-                                            </div>
-                                        </div>
-                                        <div class="col-7 col-md-8">
-                                            <div class="numbers">
-                                                <p class="card-category">My Memos</p>
-                                                <p class="card-title">{{ stats.my_memos }}<p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer ">
-                                    <hr>
-                                    <div class="stats">
-                                        <a href="{% url 'memos:my_memos' %}" class="text-success">View My Memos <i class="fa fa-arrow-right"></i></a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row px-4">
-                        <div class="col-lg-6">
-                            <div class="card">
-                                <div class="card-header pb-0">
-                                    <h6>Recent Memos</h6>
-                                </div>
-                                <div class="card-body px-0 pb-2">
-                                    <div class="table-responsive">
-                                        <table class="table align-items-center mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Title</th>
-                                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
-                                                    <th class="text-secondary opacity-7"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for memo in recent_memos %}
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex px-2 py-1">
-                                                            <div class="d-flex flex-column justify-content-center">
-                                                                <h6 class="mb-0 text-sm">{{ memo.title }}</h6>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <p class="text-xs font-weight-bold mb-0">{{ memo.get_status_display }}</p>
-                                                    </td>
-                                                    <td class="align-middle">
-                                                        <a href="{% url 'memos:memo_detail' memo.pk %}" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="View memo">
-                                                            View
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="card">
-                                <div class="card-header pb-0">
-                                    <h6>Pending Approvals</h6>
-                                </div>
-                                <div class="card-body px-0 pb-2">
-                                    <div class="table-responsive">
-                                        <table class="table align-items-center mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Memo Title</th>
-                                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Created By</th>
-                                                    <th class="text-secondary opacity-7"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for approval in pending_approvals %}
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex px-2 py-1">
-                                                            <div class="d-flex flex-column justify-content-center">
-                                                                <h6 class="mb-0 text-sm">{{ approval.memo.title }}</h6>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <p class="text-xs font-weight-bold mb-0">{{ approval.memo.created_by.get_full_name|default:approval.memo.created_by.username }}</p>
-                                                    </td>
-                                                    <td class="align-middle">
-                                                        <a href="{% url 'memos:memo_detail' approval.memo.pk %}" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="View memo">
-                                                            Review
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Department Memo Dashboard</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createMemoModal">
+            <i class="fas fa-plus"></i> Create New Memo
+        </button>
+    </div>
+
+    <!-- Overall Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title text-white">Total Memos</h5>
+                    <h2 class="mb-0">{{ total_memos }}</h2>
+                    <small>Across all departments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title
+                    text-white">Pending Memos</h5>
+                    <h2 class="mb-0">{{ total_pending }}</h2>
+                    <small>Not yet approved</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title text-white">Approved Memos</h5>
+                    <h2 class="mb-0">{{ total_approved }}</h2>
+                    <small>Ready for distribution</small>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Department Memos -->
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Your Memos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Date Created</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for memo in memos %}
+                        <tr>
+                            <td>{{ memo.title }}</td>
+                            <td>{{ memo.created_at }}</td>
+                            <td>
+                                {% if memo.status == 'pending' %}
+                                <span class="badge badge-warning">Pending</span>
+                                {% else %}
+                                <span class="badge badge-success">Approved</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'memos:memo_detail' memo.id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye text-white"></i>
+                                </a>
+                                <a href="{% url 'memos:memo_edit' memo.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit text-white"></i>
+                                </a>
+                                <a href="{% url 'memos:memo_delete' memo.id %}" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash-alt text-white"></i>
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
-{% endblock content %}
 
 <!-- Create Memo Modal -->
 <div class="modal fade" id="createMemoModal" tabindex="-1" aria-labelledby="createMemoModalLabel" aria-hidden="true">
@@ -254,6 +124,8 @@
         </div>
     </div>
 </div>
+
+{% endblock content %}
 
 {% block javascripts %}
 <script>
@@ -288,25 +160,3 @@
     });
 </script>
 {% endblock javascripts %}
-
-<!-- Create Memo Modal -->
-<div class="modal fade" id="createMemoModal" tabindex="-1" aria-labelledby="createMemoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createMemoModalLabel">Create New Memo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form method="post" action="{% url 'memos:memo_create' %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Create Memo</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
