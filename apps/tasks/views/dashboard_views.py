@@ -74,6 +74,9 @@ def my_dashboard(request):
 
     # Get memos created by the user
     my_memos = Memo.objects.filter(created_by=request.user).order_by('-created_at')[:5]
+
+    # Get total memos for the user's department
+    department_memos_count = Memo.objects.filter(department=request.user.department).count()
     
     context = {
         'my_tasks_stats': my_tasks_stats,
@@ -81,6 +84,7 @@ def my_dashboard(request):
         'meetings_stats': meetings_stats,
         'document_count': document_count,
         'my_memos': my_memos,
+        'department_memos_count': department_memos_count,
         'segment': 'my_dashboard' # Add segment for active navigation
     }
     return render(request, 'tasks/my_dashboard.html', context)

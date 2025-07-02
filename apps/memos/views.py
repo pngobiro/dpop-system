@@ -22,7 +22,8 @@ def department_dashboard(request):
         'draft': Memo.objects.filter(department=department, status='draft').count(),
         'pending': Memo.objects.filter(department=department, status='pending_approval').count(),
         'approved': Memo.objects.filter(department=department, status='approved').count(),
-        'published': Memo.objects.filter(department=department, status='published').count()
+        'published': Memo.objects.filter(department=department, status='published').count(),
+        'my_memos': Memo.objects.filter(created_by=user).count()
     }
 
     # Recent memos
