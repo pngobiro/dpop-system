@@ -79,7 +79,8 @@ def meeting_detail(request, pk):
         'participants': MeetingParticipant.objects.filter(meeting=meeting),
         'can_edit': user == meeting.organizer,
         'available_users': available_users,
-        'current_date': timezone.now().date()
+        'current_date': timezone.now().date(),
+        'document_types': MeetingDocument.DOCUMENT_TYPES, # Pass document types to template
     }
     return render(request, 'meetings/meeting_detail.html', context)
 

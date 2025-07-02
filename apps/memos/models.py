@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from apps.organization.models import Department
 from apps.document_management.models import Document, DocumentCategory
+from django.contrib.contenttypes.fields import GenericForeignKey, ContentType # Import GenericForeignKey and ContentType
 
 class MemoTemplate(models.Model):
     """Templates for different types of memos"""
@@ -57,6 +58,22 @@ class Memo(models.Model):
         related_name='memo_main_document'
     )
     
+    # Generic Relation to a source object (e.g., Task, Meeting)
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.SET_NULL, # Or models.CASCADE, depending on desired behavior
+        null=True,
+        blank=True,
+        help_text="The content type of the object this memo is related to (e.g., Task, Meeting)."
+    )
+    object_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="The ID of the related object."
+    )
+    # This is the GenericForeignKey itself, providing easy access to the related object
+    source_object = GenericForeignKey('content_type', 'object_id')
+
     # Metadata
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)

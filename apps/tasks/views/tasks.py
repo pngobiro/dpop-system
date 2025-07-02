@@ -160,6 +160,14 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.creator = self.request.user
         response = super().form_valid(form)
+
+        # Handle related meeting
+        related_meeting = form.cleaned_data.get('related_meeting')
+        if related_meeting:
+            form.instance.content_type = ContentType.objects.get_for_model(related_meeting)
+            form.instance.object_id = related_meeting.pk
+            form.instance.save(update_fields=['content_type', 'object_id'])
+
         messages.success(self.request, "Task created successfully.")
         return response
 
@@ -178,6 +186,16 @@ class TaskUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return self.request.user == task.creator or task.assignees.filter(id=self.request.user.id).exists()
 
     def form_valid(self, form):
+        # Handle related meeting
+        related_meeting = form.cleaned_data.get('related_meeting')
+        if related_meeting:
+            self.object.content_type = ContentType.objects.get_for_model(related_meeting)
+            self.object.object_id = related_meeting.pk
+        else:
+            # If related meeting is cleared, clear generic relation fields
+            self.object.content_type = None
+            self.object.object_id = None
+
         messages.success(self.request, "Task updated successfully.")
         return super().form_valid(form)
 

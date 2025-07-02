@@ -102,6 +102,17 @@
                                 </div>
 
                                 <div class="mb-3">
+                                    <label for="relatedMeeting" class="form-label">Related Meeting (Optional)</label>
+                                    <select class="form-select" id="relatedMeeting" name="related_meeting">
+                                        <option value="">Select a meeting...</option>
+                                        {% for meeting in meetings %}
+                                        <option value="{{ meeting.id }}">{{ meeting.title }} ({{ meeting.date|date:"Y-m-d" }})</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Link this task to an existing meeting.</div>
+                                </div>
+
+                                <div class="mb-3">
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" id="assignToSelf" checked>
                                         <label class="form-check-label" for="assignToSelf">

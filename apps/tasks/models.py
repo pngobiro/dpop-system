@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone # Added for date comparison
-from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
 # Using the custom user model specified in settings
@@ -150,6 +150,22 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     parent_task = models.ForeignKey('self', null=True, blank=True, related_name='subtasks', on_delete=models.CASCADE)
+
+    # Fields for Generic Relation to a source object (e.g., Meeting, Memo)
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.SET_NULL, # Or models.CASCADE, depending on desired behavior
+        null=True,
+        blank=True,
+        help_text="The content type of the object this task is related to (e.g., Meeting, Memo)."
+    )
+    object_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="The ID of the related object."
+    )
+    # This is the GenericForeignKey itself, providing easy access to the related object
+    source_object = GenericForeignKey('content_type', 'object_id')
 
     # Generic relation to the Document model for task-level attachments
     if Document:

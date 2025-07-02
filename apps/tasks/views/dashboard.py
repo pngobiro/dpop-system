@@ -9,6 +9,7 @@ from apps.meetings.models import Meeting
 from apps.document_management.models import Document
 from django.views.generic import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
+import datetime # Import datetime module
 
 try:
     from apps.organization.models import Department
@@ -139,12 +140,14 @@ def tasks_assigned_by_me(request):
     # Retrieve all active users for the assign task modal (excluding current user)
     users = CustomUser.objects.filter(is_active=True).exclude(id=request.user.id)
     projects = Project.objects.all()
+    meetings = Meeting.objects.all() # Fetch all meetings
 
     context = {
         'tasks': tasks_assigned_to_me_queryset, # Pass tasks assigned to the user
         'title': 'Tasks Assigned to Me', # Page title
         'users': users,
         'projects': projects,
+        'meetings': meetings, # Pass meetings to the template
         'request': request,
         'assigned_tasks_stats': assigned_tasks_stats, # Pass the calculated stats
     }
@@ -192,17 +195,46 @@ def assign_task(request):
         title = request.POST.get('title')
         description = request.POST.get('description')
         assignee_ids = request.POST.getlist('assignees[]')
-        due_date = request.POST.get('due_date')
+        due_date_str = request.POST.get('due_date')
         project_id = request.POST.get('project')
+        related_meeting_id = request.POST.get('related_meeting')
         files = request.FILES.getlist('attachments[]')
 
-        # Check required fields, but allow empty assignees if self-assigning
-        if not all([title, description, due_date, project_id]):
+        # Validate required fields
+        if not all([title, description, due_date_str, project_id]):
             messages.error(request, 'Please fill in all required fields.')
             return redirect('tasks:tasks_assigned_by_me')
 
         try:
             project = Project.objects.get(id=project_id)
+            
+            # --- Permission Check for Task Assignment ---
+            can_assign = False
+            # 1. Global Administrator
+            if request.user.is_superuser or request.user.is_staff:
+                can_assign = True
+            # 2. Project Owner (can assign tasks within their project)
+            elif request.user == project.owner:
+                can_assign = True
+            # 3. Department Head/Manager (can assign tasks within their department)
+            elif request.user.department and project.department and \
+                 request.user.department == project.department and \
+                 (request.user.is_director or request.user.is_manager):
+                can_assign = True
+            # 4. Task Creator (implicitly allowed to assign the task they are creating)
+            # This is handled by the fact that request.user is the creator of the new task.
+            # No explicit check needed here as the task is not yet created.
+
+            if not can_assign:
+                messages.error(request, "You do not have permission to assign tasks in this project or department.")
+                return redirect('tasks:tasks_assigned_by_me')
+
+            # Convert due_date string to date object
+            try:
+                due_date = datetime.datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                messages.error(request, 'Invalid due date format.')
+                return redirect('tasks:tasks_assigned_by_me')
 
             # Create the base task
             task = Task.objects.create(
@@ -212,6 +244,18 @@ def assign_task(request):
                 creator=request.user,
                 due_date=due_date
             )
+
+            # Handle related meeting
+            if related_meeting_id:
+                try:
+                    related_meeting = Meeting.objects.get(id=related_meeting_id)
+                    task.content_type = ContentType.objects.get_for_model(related_meeting)
+                    task.object_id = related_meeting.pk
+                    task.save(update_fields=['content_type', 'object_id'])
+                except Meeting.DoesNotExist:
+                    messages.warning(request, "Related meeting not found.")
+                except Exception as e:
+                    messages.error(request, f"Error linking task to meeting: {e}")
 
             # Handle assignees
             assigned_users = []
@@ -226,9 +270,15 @@ def assign_task(request):
                     messages.warning(request, f'User with ID {assignee_id} not found.')
 
             # Always add current user if they're not already in the assignees
-            if request.user not in task.assignees.all():
-                task.assignees.add(request.user)
-                assigned_users.append(request.user.get_full_name() or request.user.username)
+            # This logic assumes the "Assign to myself" checkbox is handled client-side
+            # and its value is reflected in assignee_ids if checked.
+            # If not, you might need to explicitly add request.user here based on a separate form field.
+            # For now, assuming assignee_ids will contain request.user.id if "Assign to myself" is checked.
+            if request.POST.get('assign_to_self') == 'on': # Checkbox value is 'on' if checked
+                if str(request.user.id) not in assignee_ids: # Only add if not already selected in multi-select
+                    task.assignees.add(request.user)
+                    assigned_users.append(request.user.get_full_name() or request.user.username)
+
 
             # Handle file attachments using Google Drive
             from apps.document_management.utils.google_drive_manager import GoogleDriveManager

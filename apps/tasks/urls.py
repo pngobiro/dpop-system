@@ -1,5 +1,8 @@
 from django.urls import path
-from .views.dashboard import user_tasks_dashboard, my_dashboard, tasks_assigned_by_me, assign_task, tasks_created_by_me, DepartmentListView
+from .views.dashboard_views import user_tasks_dashboard, my_dashboard
+from .views.task_listing import tasks_assigned_by_me, tasks_created_by_me
+from .views.task_assignment import assign_task
+from .views.department_views import DepartmentListView
 from .views.projects import ProjectListView, ProjectDetailView, ProjectCreateView, ProjectUpdateView, ProjectDeleteView, DepartmentProjectListView
 from .views.tasks import TaskDetailView, TaskCreateView, TaskUpdateView, add_attachment_comment, update_task_status, revert_task_to_history, reassign_task
 

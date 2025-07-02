@@ -3,6 +3,7 @@ from .models import Task, Comment, Project
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 import datetime
+from apps.meetings.models import Meeting # Import Meeting model
 
 User = get_user_model()
 
@@ -64,6 +65,14 @@ class TaskForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control', 'disabled': 'disabled'})
     )
 
+    # New field for generic relation to Meeting
+    related_meeting = forms.ModelChoiceField(
+        queryset=Meeting.objects.all(),
+        required=False,
+        label="Related Meeting",
+        help_text="Link this task to an existing meeting."
+    )
+
     class Meta:
         model = Task
         fields = [
@@ -76,6 +85,7 @@ class TaskForm(forms.ModelForm):
             'start_date',
             'due_date',
             'due_in_days',
+            'related_meeting', # Add new field to Meta
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -92,6 +102,9 @@ class TaskForm(forms.ModelForm):
         # If this is an existing task, populate assignees field
         if self.instance.pk:
             self.fields['assignees'].initial = self.instance.assignees.all()
+            # If task is linked to a meeting, set initial value for related_meeting
+            if self.instance.source_object and isinstance(self.instance.source_object, Meeting):
+                self.fields['related_meeting'].initial = self.instance.source_object
 
     def clean(self):
         """

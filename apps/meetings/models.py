@@ -4,6 +4,7 @@ from django.conf import settings
 from django.utils import timezone
 from apps.organization.models import Department
 from apps.document_management.models import Document
+from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey, ContentType
 
 class SoftDeletableManager(models.Manager):
     def get_queryset(self):
@@ -178,6 +179,26 @@ class Meeting(SoftDeletableModel):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # Generic Relation to Tasks
+    # Generic Relation to Tasks
+    related_tasks = GenericRelation('tasks.Task', related_query_name='meetings')
+
+    # Fields for Generic Relation to a source object (e.g., Task, Memo)
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.SET_NULL, # Or models.CASCADE, depending on desired behavior
+        null=True,
+        blank=True,
+        help_text="The content type of the object this meeting is related to (e.g., Task, Memo)."
+    )
+    object_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="The ID of the related object."
+    )
+    # This is the GenericForeignKey itself, providing easy access to the related object
+    source_object = GenericForeignKey('content_type', 'object_id')
 
     class Meta:
         ordering = ['-date', '-start_time']

@@ -341,6 +341,16 @@
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label for="documentType" class="form-label">Document Type</label>
+                        <select class="form-select" id="documentType" name="document_type" required>
+                            <option value="">Select type...</option>
+                            {% for type_value, type_label in document_types %}
+                                <option value="{{ type_value }}">{{ type_label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Please select a document type.</div>
+                    </div>
+                    <div class="mb-3">
                         <label for="file" class="form-label">Select File</label>
                         <input type="file" class="form-control" id="file" name="file" required>
                         <small class="text-muted">Files will be stored in Google Drive</small>

@@ -211,6 +211,18 @@
                     <li class="list-group-item"><strong>Due Date:</strong> {{ task.due_date|date:"Y-m-d"|default:"N/A" }}</li>
                     <li class="list-group-item"><strong>Created:</strong> {{ task.created_at|date:"Y-m-d H:i" }}</li>
                     <li class="list-group-item"><strong>Updated:</strong> {{ task.updated_at|date:"Y-m-d H:i" }}</li>
+                    {% if task.source_object %}
+                    <li class="list-group-item">
+                        <strong>Related to:</strong>
+                        {% if task.source_object|instanceof:"Meeting" %}
+                            <a href="{% url 'meetings:meeting_detail' pk=task.source_object.pk %}" class="text-primary text-decoration-none">
+                                <i class="fas fa-calendar-alt me-1"></i> Meeting: {{ task.source_object.title }}
+                            </a>
+                        {% else %}
+                            {{ task.source_object }}
+                        {% endif %}
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
 
