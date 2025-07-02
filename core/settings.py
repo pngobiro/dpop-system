@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-x-7z@n$vgndj+lp*g98&*!#z2shsgah6jgt(%%k1f_%q4@nm9r'
+SECRET_KEY = 'your_hardcoded_secret_key_here' # IMPORTANT: Replace with a strong, unique key
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -115,11 +115,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'judiciary'),
-        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'NAME': 'dspop',
+        'USER': 'dspop_user',
+        'PASSWORD': 'dspop_password_2025',
+        'HOST': '172.27.0.2',
+        'PORT': '5432',
     }
 }
 
@@ -169,7 +169,7 @@ STATICFILES_DIRS = [
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-ASSETS_ROOT = STATIC_URL + 'assets'
+ASSETS_ROOT = '/static/assets'
 
 
 # FILE_UPLOAD_MAX_MEMORY_SIZE 8GB
@@ -184,7 +184,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_API_KEY = 'your_openai_api_key_here'
 
 
 # coomand tto create new migrations using docker-compose

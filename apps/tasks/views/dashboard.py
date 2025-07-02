@@ -7,6 +7,44 @@ from authentication.models import CustomUser
 from apps.tasks.models import Task, Project
 from apps.meetings.models import Meeting
 from apps.document_management.models import Document
+from django.views.generic import ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+try:
+    from apps.organization.models import Department
+except ImportError:
+    Department = None
+
+
+class DepartmentListView(LoginRequiredMixin, ListView):
+    model = Department
+    template_name = 'tasks/department_list.html'
+    context_object_name = 'departments'
+
+    def get_queryset(self):
+        if not Department:
+            # Handle case where Department model is not available
+            return Department.objects.none() # Return an empty queryset
+        return Department.objects.all().order_by('name')
+
+
+def _get_task_statistics(task_queryset):
+    """
+    Calculates and returns a dictionary of task statistics for a given queryset.
+    """
+    stats = {
+        'total': task_queryset.count(),
+        'TODO': task_queryset.filter(status=Task.StatusChoices.TODO).count(),
+        'IN_PROGRESS': task_queryset.filter(status=Task.StatusChoices.IN_PROGRESS).count(),
+        'DONE': task_queryset.filter(status=Task.StatusChoices.DONE).count(),
+        'BLOCKED': task_queryset.filter(status=Task.StatusChoices.BLOCKED).count(),
+        'APPROVED': task_queryset.filter(status=Task.StatusChoices.APPROVED).count(),
+        'REJECTED': task_queryset.filter(status=Task.StatusChoices.REJECTED).count(),
+        'IN_REVIEW': task_queryset.filter(status=Task.StatusChoices.IN_REVIEW).count(),
+        'ON_HOLD': task_queryset.filter(status=Task.StatusChoices.ON_HOLD).count(),
+    }
+    return stats
+
 
 @login_required
 def user_tasks_dashboard(request):
@@ -51,22 +89,12 @@ def my_dashboard(request):
     today = timezone.now().date()
     
     # Get tasks assigned to me with detailed stats
-    my_tasks = Task.objects.filter(assignees=request.user)
-    my_tasks_stats = {
-        'total': my_tasks.count(),
-        'pending': my_tasks.exclude(status=Task.StatusChoices.DONE).count(),
-        'completed': my_tasks.filter(status=Task.StatusChoices.DONE).count(),
-        'overdue': my_tasks.exclude(status=Task.StatusChoices.DONE).filter(due_date__lt=today).count(),
-        'due_today': my_tasks.exclude(status=Task.StatusChoices.DONE).filter(due_date=today).count()
-    }
+    my_tasks_queryset = Task.objects.filter(assignees=request.user)
+    my_tasks_stats = _get_task_statistics(my_tasks_queryset)
     
     # Get tasks I assigned to others
-    tasks_i_assigned = Task.objects.filter(creator=request.user)
-    assigned_tasks_stats = {
-        'total': tasks_i_assigned.count(),
-        'pending': tasks_i_assigned.exclude(status=Task.StatusChoices.DONE).count(),
-        'completed': tasks_i_assigned.filter(status=Task.StatusChoices.DONE).count()
-    }
+    tasks_i_assigned_queryset = Task.objects.filter(creator=request.user)
+    assigned_tasks_stats = _get_task_statistics(tasks_i_assigned_queryset)
     
     # Get meetings stats
     all_meetings = Meeting.objects.all()
@@ -76,11 +104,14 @@ def my_dashboard(request):
         'this_week': Meeting.objects.filter(date__gte=today, date__lte=today + timezone.timedelta(days=7)).count()
     }
     
+    # Get document count
+    document_count = Document.objects.count() if Document else 0
+    
     context = {
         'my_tasks_stats': my_tasks_stats,
         'assigned_tasks_stats': assigned_tasks_stats,
         'meetings_stats': meetings_stats,
-        'document_count': 0, #Document.objects.count()
+        'document_count': document_count,
         'segment': 'my_dashboard' # Add segment for active navigation
     }
     return render(request, 'tasks/my_dashboard.html', context)
@@ -89,8 +120,8 @@ def my_dashboard(request):
 @login_required
 def tasks_assigned_by_me(request):
     """View for tasks that are assigned to the current user"""
-    # Get tasks assigned to the user
-    tasks_assigned_to_me = Task.objects.filter(
+    # Retrieve tasks assigned to the current user
+    tasks_assigned_to_me_queryset = Task.objects.filter(
         assignees=request.user
     ).select_related(
         'project'
@@ -102,28 +133,16 @@ def tasks_assigned_by_me(request):
         '-created_at'  # Then by creation date
     )
 
-    # Calculate statistics for tasks assigned to the user
-    assigned_tasks_stats = {
-        'total': tasks_assigned_to_me.count(),
-        'TODO': tasks_assigned_to_me.filter(status=Task.StatusChoices.TODO).count(),
-        'IN_PROGRESS': tasks_assigned_to_me.filter(status=Task.StatusChoices.IN_PROGRESS).count(),
-        'DONE': tasks_assigned_to_me.filter(status=Task.StatusChoices.DONE).count(),
-        'BLOCKED': tasks_assigned_to_me.filter(status=Task.StatusChoices.BLOCKED).count(),
-        'APPROVED': tasks_assigned_to_me.filter(status=Task.StatusChoices.APPROVED).count(),
-        'REJECTED': tasks_assigned_to_me.filter(status=Task.StatusChoices.REJECTED).count(),
-        'REASSIGNED': tasks_assigned_to_me.filter(status=Task.StatusChoices.REASSIGNED).count(),
-        'IN_REVIEW': tasks_assigned_to_me.filter(status=Task.StatusChoices.IN_REVIEW).count(),
-        'ON_HOLD': tasks_assigned_to_me.filter(status=Task.StatusChoices.ON_HOLD).count(),
-    }
+    # Calculate statistics using the helper function
+    assigned_tasks_stats = _get_task_statistics(tasks_assigned_to_me_queryset)
 
-
-    # Get all users for the assign task modal (still needed for the modal)
+    # Retrieve all active users for the assign task modal (excluding current user)
     users = CustomUser.objects.filter(is_active=True).exclude(id=request.user.id)
     projects = Project.objects.all()
 
     context = {
-        'tasks': tasks_assigned_to_me, # Pass tasks assigned to the user
-        'title': 'Tasks Assigned to Me', # Revert title
+        'tasks': tasks_assigned_to_me_queryset, # Pass tasks assigned to the user
+        'title': 'Tasks Assigned to Me', # Page title
         'users': users,
         'projects': projects,
         'request': request,
@@ -132,14 +151,11 @@ def tasks_assigned_by_me(request):
     return render(request, 'tasks/tasks_assigned.html', context)
 
 
-    return render(request, 'tasks/tasks_assigned.html', context)
-
-
 @login_required
 def tasks_created_by_me(request):
     """View for tasks that the user has created"""
-    # Get tasks created by the user
-    tasks_created_by_me = Task.objects.filter(
+    # Retrieve tasks created by the current user
+    tasks_created_by_me_queryset = Task.objects.filter(
         creator=request.user
     ).select_related(
         'project'
@@ -151,27 +167,16 @@ def tasks_created_by_me(request):
         '-created_at'  # Then by creation date
     )
 
-    # Calculate statistics for tasks created by the user
-    created_tasks_stats = {
-        'total': tasks_created_by_me.count(),
-        'TODO': tasks_created_by_me.filter(status=Task.StatusChoices.TODO).count(),
-        'IN_PROGRESS': tasks_created_by_me.filter(status=Task.StatusChoices.IN_PROGRESS).count(),
-        'DONE': tasks_created_by_me.filter(status=Task.StatusChoices.DONE).count(),
-        'BLOCKED': tasks_created_by_me.filter(status=Task.StatusChoices.BLOCKED).count(),
-        'APPROVED': tasks_created_by_me.filter(status=Task.StatusChoices.APPROVED).count(),
-        'REJECTED': tasks_created_by_me.filter(status=Task.StatusChoices.REJECTED).count(),
-        'REASSIGNED': tasks_created_by_me.filter(status=Task.StatusChoices.REASSIGNED).count(),
-        'IN_REVIEW': tasks_created_by_me.filter(status=Task.StatusChoices.IN_REVIEW).count(),
-        'ON_HOLD': tasks_created_by_me.filter(status=Task.StatusChoices.ON_HOLD).count(),
-    }
+    # Calculate statistics using the helper function
+    created_tasks_stats = _get_task_statistics(tasks_created_by_me_queryset)
 
-    # Get all users for the assign task modal (still needed for the modal)
+    # Retrieve all active users for the assign task modal (excluding current user)
     users = CustomUser.objects.filter(is_active=True).exclude(id=request.user.id)
     projects = Project.objects.all()
 
     context = {
-        'tasks': tasks_created_by_me, # Pass tasks created by the user
-        'title': 'Tasks I Assigned', # Title for this page
+        'tasks': tasks_created_by_me_queryset, # Pass tasks created by the user
+        'title': 'Tasks I Assigned', # Page title
         'users': users,
         'projects': projects,
         'request': request,

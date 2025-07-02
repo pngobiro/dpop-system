@@ -18,10 +18,13 @@
         </div>
         <div class="mt-2 mt-sm-0">
              {% if request.user == task.creator or request.user == task.assignee %}
-                <a href="{% url 'tasks:edit_task' task.id %}" class="btn btn-sm btn-warning me-2"> {# Warning Button #}
+                <a href="{% url 'tasks:task_update' pk=task.pk %}" class="btn btn-sm btn-warning me-2"> {# Warning Button #}
                     <i class="fas fa-edit me-1"></i> Edit Task
                 </a>
             {% endif %}
+             <button type="button" class="btn btn-sm btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#reassignTaskModal"> {# Secondary Button #}
+                <i class="fas fa-user-plus me-1"></i> Reassign Task
+            </button>
              <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#addTaskAttachmentModal"> {# Secondary Button #}
                 <i class="fas fa-paperclip me-1"></i> Add Attachment
             </button>
@@ -266,6 +269,7 @@
                                     {% else %}
                                         System
                                     {% endif %}
+                                    - {{ history_item.change_description }}
                                     {% if history_item.comment %}
                                         - Comment: {{ history_item.comment }}
                                     {% endif %}
@@ -286,6 +290,28 @@
         </div>
     </div>
 
+</div>
+
+{# Reassign Task Modal #}
+<div class="modal fade" id="reassignTaskModal" tabindex="-1" aria-labelledby="reassignTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="reassignTaskModalLabel">Reassign Task: {{ task.title|truncatechars:30 }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'tasks:reassign_task' pk=task.pk %}">
+          {% csrf_token %}
+          <div class="modal-body">
+              {{ reassign_form|crispy }}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Reassign Task</button>
+          </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 {# Add Task Attachment Modal #}

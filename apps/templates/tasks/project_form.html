@@ -1,0 +1,35 @@
+{% extends "layouts/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if project %}Edit Project: {{ project.name }}{% else %}Create New Project{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 style="color: #006633; border-bottom: 1px solid #DAA520; padding-bottom: 5px;"> {# Primary Green, Gold Accent #}
+        {% if project %}
+            <i class="fas fa-edit me-2"></i> Edit Project: {{ project.name }}
+        {% else %}
+            <i class="fas fa-folder-plus me-2"></i> Create New Project
+        {% endif %}
+    </h3>
+    <hr class="mt-0">
+
+    <div class="card shadow-sm border-light">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+
+                <div class="mt-4 text-end">
+                    <a href="{% if project %}{% url 'tasks:project_detail' pk=project.pk %}{% else %}{% url 'tasks:project_list' %}{% endif %}" class="btn btn-sm" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;">Cancel</a>
+                    <button type="submit" class="btn btn-sm" style="background-color: #006633; color: #FFFFFF; border-color: #006633;">
+                        <i class="fas fa-save me-1"></i> {% if project %}Save Changes{% else %}Create Project{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

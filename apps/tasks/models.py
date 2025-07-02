@@ -114,7 +114,7 @@ class Task(models.Model):
         BLOCKED = 'BLOCKED', _('Blocked')
         APPROVED = 'APPROVED', _('Approved')
         REJECTED = 'REJECTED', _('Rejected')
-        REASSIGNED = 'REASSIGNED', _('Reassigned')
+        
         IN_REVIEW = 'IN_REVIEW', _('In Review')
         ON_HOLD = 'ON_HOLD', _('On Hold')
 
@@ -195,6 +195,7 @@ class TaskHistory(models.Model):
     task = models.ForeignKey('Task', related_name='history', on_delete=models.CASCADE, help_text=_("The task this history entry belongs to"))
     user = models.ForeignKey(User, related_name='task_history', on_delete=models.SET_NULL, null=True, blank=True, help_text=_("User who made the change"))
     timestamp = models.DateTimeField(auto_now_add=True, help_text=_("Timestamp of the change"))
+    change_description = models.CharField(max_length=255, help_text=_("A human-readable description of the change."), default='')
     # Store the complete task state as a JSON
     task_state = models.JSONField(help_text=_("The complete state of the task at this point in time"))
     comment = models.TextField(blank=True, null=True, help_text=_("Optional comment describing the change"))

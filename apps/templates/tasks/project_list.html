@@ -1,0 +1,106 @@
+{% extends "layouts/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %} All Projects {% endblock %}
+
+{% block stylesheets %}
+{{ block.super }}
+{# Add DataTables Bootstrap 5 CSS #}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0" style="color: #006633;">
+            <i class="fas fa-project-diagram me-2 judiciary-text-gold"></i> All Projects
+        </h1>
+        <a href="{% url 'tasks:project_create' %}" class="btn btn-sm shadow-sm judiciary-bg-green text-white">
+            <i class="fas fa-plus fa-sm me-1"></i> Create New Project
+        </a>
+    </div>
+    <hr class="judiciary-border-gold">
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold" style="color: #006633;">Project List</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="projectsTable" class="table table-bordered table-striped table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Owner</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr>
+                            <td>{{ project.name }}</td>
+                            <td>{{ project.department.name|default:"N/A" }}</td>
+                            <td>{{ project.owner.username|default:'N/A' }}</td>
+                            <td>
+                                {% with status=project.get_status %}
+                                    <span class="badge
+                                        {% if status == 'Completed' %}bg-success
+                                        {% elif status == 'Overdue' %}bg-danger
+                                        {% elif status == 'In Progress' %}bg-warning text-dark
+                                        {% else %}bg-secondary
+                                        {% endif %}">
+                                        {{ status }}
+                                    </span>
+                                    {% if status == 'Overdue' %}
+                                        {% with overdue_days=project.get_overdue_days %}
+                                            {% if overdue_days is not None %}
+                                                <small class="text-danger ms-1">({{ overdue_days }} day{{ overdue_days|pluralize }} overdue)</small>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <a href="{% url 'tasks:project_detail' pk=project.pk %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'tasks:project_update' pk=project.pk %}" class="btn btn-sm btn-outline-warning" title="Edit Project">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'tasks:project_delete' pk=project.pk %}" class="btn btn-sm btn-outline-danger" title="Delete Project">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No projects found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+{{ block.super }}
+{# Add jQuery (required by DataTables) and DataTables JS #}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#projectsTable').DataTable({
+        "order": [[ 0, "asc" ]] // Default order by first column (Name)
+    });
+});
+</script>
+{% endblock javascripts %}

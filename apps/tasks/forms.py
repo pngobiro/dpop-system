@@ -29,13 +29,14 @@ class TaskForm(forms.ModelForm):
     Form for creating and editing tasks.
     Allows setting due date by specific date OR number of days from today.
     """
-    # Add self-assignment field
-    assign_to_self = forms.BooleanField(
+    assignees = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(),
         required=False,
-        initial=True,
-        label="Assign to myself",
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        label="Assign To",
+        help_text="Select one or more users to assign this task to."
     )
+
     # Allow setting due date relative to today
     due_in_days = forms.IntegerField(
         required=False,
@@ -45,7 +46,6 @@ class TaskForm(forms.ModelForm):
         help_text="Set a due date relative to today. Overrides specific date if both are entered."
     )
 
-    # Assignee field removed as per request for this specific form usage
     due_date = forms.DateField(
         required=False,
         label="Due Date (Specific)",
@@ -72,7 +72,7 @@ class TaskForm(forms.ModelForm):
             'description',
             'status',
             'priority',
-            'assign_to_self',  # Add self-assignment field
+            'assignees',
             'start_date',
             'due_date',
             'due_in_days',
@@ -85,9 +85,13 @@ class TaskForm(forms.ModelForm):
         }
         help_texts = {
             'project': 'The project this task belongs to (read-only).',
-            # 'assignee': 'Select the user responsible for this task (optional).', # Removed help text
-            # Removed help_text for due_date as it's now part of the field definition
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If this is an existing task, populate assignees field
+        if self.instance.pk:
+            self.fields['assignees'].initial = self.instance.assignees.all()
 
     def clean(self):
         """
@@ -96,7 +100,6 @@ class TaskForm(forms.ModelForm):
         """
         cleaned_data = super().clean()
         due_in_days = cleaned_data.get('due_in_days')
-        due_date = cleaned_data.get('due_date') # Original due_date
 
         if due_in_days is not None: # Check if None, not just falsy (0 is valid)
             try:
@@ -105,17 +108,32 @@ class TaskForm(forms.ModelForm):
                     calculated_date = timezone.now().date() + datetime.timedelta(days=days)
                     # Set the actual due_date field based on calculation
                     cleaned_data['due_date'] = calculated_date
-                    # Optionally clear due_in_days after calculation if desired,
-                    # but keeping it might be useful for display logic later.
-                    # cleaned_data['due_in_days'] = None
                 else:
-                    # Should be caught by min_value, but double-check
                     self.add_error('due_in_days', 'Please enter a non-negative number of days.')
             except (ValueError, TypeError):
                  self.add_error('due_in_days', 'Please enter a valid number of days.')
-        # No need for explicit check if both are entered, as due_in_days calculation overwrites due_date
 
         return cleaned_data
+
+
+class ReassignTaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['assignees']
+        widgets = {
+            'assignees': forms.SelectMultiple(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'assignees': "Assign To",
+        }
+        help_texts = {
+            'assignees': "Select one or more users to assign this task to.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ensure the queryset for assignees is correct
+        self.fields['assignees'].queryset = User.objects.all()
 
 
 class CommentForm(forms.ModelForm):

@@ -155,7 +155,13 @@
                                     <a href="{% url 'tasks:task_detail' task.id %}" class="text-decoration-none">{{ task.title }}</a><br>
                                     <small>
                                         Project: {{ task.project.name }} |
-                                        Assignee: {{ task.assignee.get_full_name|default:task.assignee.username|default:"Unassigned" }} |
+                                        Assignees: {% if task.assignees.all %}
+                                            {% for assignee in task.assignees.all %}
+                                                {{ assignee.get_full_name|default:assignee.username }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            Unassigned
+                                        {% endif %} |
                                         Due: <strong>{{ task.due_date|date:"Y-m-d" }}</strong>
                                     </small>
                                 </div>
@@ -186,8 +192,8 @@
                             <li class="list-group-item d-flex justify-content-between align-items-center px-2 py-2">
                                 <span>
                                     <i class="fas fa-user me-2 text-muted"></i>
-                                    {{ user_load.assignee__first_name|default:'' }} {{ user_load.assignee__last_name|default:'' }}
-                                    ({{ user_load.assignee__username }})
+                                    {{ user_load.assignees__first_name|default:'' }} {{ user_load.assignees__last_name|default:'' }}
+                                    ({{ user_load.assignees__username }})
                                 </span>
                                 <span class="badge bg-primary rounded-pill">{{ user_load.task_count }} task{{ user_load.task_count|pluralize }}</span>
                             </li>
@@ -349,7 +355,7 @@
                                         {% endwith %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'tasks:project_detail' project.id %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <a href="{% url 'tasks:project_detail' pk=project.pk %}" class="btn btn-sm btn-outline-primary" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         {# Add other actions like edit/delete if needed #}
@@ -442,7 +448,7 @@
         <h5 class="modal-title fw-bold text-white" id="createProjectModalLabel"><i class="fas fa-folder-plus me-2 judiciary-text-gold"></i> Create New Project for {{ department.name }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form method="post" action="{% url 'tasks:department_task_project_list' department.id %}">
+      <form method="post" action="{% url 'tasks:department_project_list' department.id %}">
           {% csrf_token %}
           <div class="modal-body">
               {{ project_form|crispy }}

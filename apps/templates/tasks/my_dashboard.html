@@ -1,141 +1,180 @@
 {% extends 'layouts/base.html' %}
 
 {% block content %}
-<div class="container-fluid bg-gradient p-4">
+<div class="container-fluid py-4">
+
+  {# Welcome Header #}
   <div class="row mb-4">
-    <div class="col">
-      <h1 class="display-4 text-light mb-0">Welcome Back, {{ request.user.username }}</h1>
-      <p class="text-light-50">Here's an overview of your workspace</p>
+    <div class="col-lg-12 col-md-12 mb-md-0 mb-4">
+      <h1 class="display-5 text-dark mb-0">Welcome Back, {{ request.user.username }}!</h1>
+      <p class="lead text-muted">Here's a quick overview of your workspace and key metrics.</p>
     </div>
   </div>
 
-  <div class="row g-4 mb-4">
-    <!-- Tasks Assigned to Me -->
-    <div class="col-md-6">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-           <h5 class="card-title mb-0">
-             <i class="fas fa-tasks text-primary"></i> Tasks Assigned to Me
-           </h5>
-           <span class="badge bg-primary rounded-pill">{{ my_tasks_stats.total|default:"0" }}</span>
-         </div>
-         <div class="mb-3">
-           <p class="mb-1"><i class="fas fa-clock text-warning"></i> Pending: {{ my_tasks_stats.pending|default:"0" }}</p>
-           <p class="mb-1"><i class="fas fa-check text-success"></i> Completed: {{ my_tasks_stats.completed|default:"0" }}</p>
-           <p class="mb-1"><i class="fas fa-exclamation-triangle text-danger"></i> Overdue: {{ my_tasks_stats.overdue|default:"0" }}</p>
-           <p class="mb-1"><i class="fas fa-calendar-day text-info"></i> Due Today: {{ my_tasks_stats.due_today|default:"0" }}</p>
-         </div>
-         <a href="/tasks/assigned/" class="btn btn-primary w-100">
-           <i class="fas fa-arrow-right"></i> My Tasks
-          </a>
+  {# Row 1: Task Statistics #}
+  <div class="row">
+    {# My Tasks Card #}
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-capitalize font-weight-bold">My Tasks</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{ my_tasks_stats.total|default:"0" }}
+                  <span class="text-success text-sm font-weight-bolder">Total</span>
+                </h5>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
+                <i class="fas fa-tasks text-lg opacity-10" aria-hidden="true"></i>
+              </div>
+            </div>
+          </div>
+          <hr class="horizontal dark my-3">
+          <h6 class="mb-0 text-sm">Details:</h6>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-clock text-warning me-2"></i>Pending:</span>
+              <span class="badge bg-warning">{{ my_tasks_stats.pending|default:"0" }}</span>
+            </li>
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-check text-success me-2"></i>Completed:</span>
+              <span class="badge bg-success">{{ my_tasks_stats.completed|default:"0" }}</span>
+            </li>
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Overdue:</span>
+              <span class="badge bg-danger">{{ my_tasks_stats.overdue|default:"0" }}</span>
+            </li>
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-calendar-day text-info me-2"></i>Due Today:</span>
+              <span class="badge bg-info">{{ my_tasks_stats.due_today|default:"0" }}</span>
+            </li>
+          </ul>
+          <div class="text-end mt-3">
+            <a href="{% url 'tasks:tasks_assigned_by_me' %}" class="btn btn-sm bg-gradient-primary">
+              View My Tasks <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Tasks I Assigned -->
-    <div class="col-md-6">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">
-              <i class="fas fa-user-check text-warning"></i> Tasks I Assigned to Others
-            </h5>
-            <span class="badge bg-warning rounded-pill">{{ assigned_tasks_stats.total }}</span>
+    {# Tasks I Assigned Card #}
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-capitalize font-weight-bold">Tasks I Assigned</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{ assigned_tasks_stats.total|default:"0" }}
+                  <span class="text-info text-sm font-weight-bolder">Total</span>
+                </h5>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
+                <i class="fas fa-user-check text-lg opacity-10" aria-hidden="true"></i>
+              </div>
+            </div>
           </div>
-          <div class="mb-3">
-            <p class="mb-1"><i class="fas fa-clock text-muted"></i> Pending: {{ assigned_tasks_stats.pending }}</p>
-            <p class="mb-1"><i class="fas fa-check text-success"></i> Completed: {{ assigned_tasks_stats.completed }}</p>
+          <hr class="horizontal dark my-3">
+          <h6 class="mb-0 text-sm">Details:</h6>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-clock text-muted me-2"></i>Pending:</span>
+              <span class="badge bg-secondary">{{ assigned_tasks_stats.pending|default:"0" }}</span>
+            </li>
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-check text-success me-2"></i>Completed:</span>
+              <span class="badge bg-success">{{ assigned_tasks_stats.completed|default:"0" }}</span>
+            </li>
+          </ul>
+          <div class="text-end mt-3">
+            <a href="{% url 'tasks:tasks_created_by_me' %}" class="btn btn-sm bg-gradient-info">
+              View Assigned Tasks <i class="fas fa-arrow-right ms-1"></i>
+            </a>
           </div>
-          <a href="{% url 'tasks:tasks_created_by_me' %}" class="btn btn-warning w-100">
-            <i class="fas fa-arrow-right"></i> View Tasks I Assigned
-           </a>
         </div>
       </div>
     </div>
 
+    {# Meetings Card #}
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-capitalize font-weight-bold">Meetings</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{ meetings_stats.upcoming|default:"0" }}
+                  <span class="text-success text-sm font-weight-bolder">Upcoming</span>
+                </h5>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
+                <i class="fas fa-calendar-alt text-lg opacity-10" aria-hidden="true"></i>
+              </div>
+            </div>
+          </div>
+          <hr class="horizontal dark my-3">
+          <h6 class="mb-0 text-sm">Details:</h6>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-calendar-day text-primary me-2"></i>Today:</span>
+              <span class="badge bg-primary">{{ meetings_stats.today|default:"0" }}</span>
+            </li>
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-calendar-week text-info me-2"></i>This Week:</span>
+              <span class="badge bg-info">{{ meetings_stats.this_week|default:"0" }}</span>
+            </li>
+          </ul>
+          <div class="text-end mt-3">
+            <a href="{% url 'meetings:dashboard' %}" class="btn btn-sm bg-gradient-success">
+              View All Meetings <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Documents Card #}
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-capitalize font-weight-bold">Documents</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{ document_count|default:"0" }}
+                  <span class="text-primary text-sm font-weight-bolder">Total</span>
+                </h5>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                <i class="fas fa-file-alt text-lg opacity-10" aria-hidden="true"></i>
+              </div>
+            </div>
+          </div>
+          <hr class="horizontal dark my-3">
+          <p class="card-text text-muted text-sm">Access and manage your documents.</p>
+          <div class="text-end mt-3">
+            <a href="/documents/library/" class="btn btn-sm bg-gradient-warning">
+              View Documents <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="row g-4">
-    <!-- Meetings Card -->
-    <div class="col-md-6">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="card-title mb-0">
-              <i class="fas fa-calendar-alt text-success"></i> Meetings
-            </h5>
-            <span class="badge bg-success rounded-pill">{{ meetings_stats.upcoming|default:"0" }}</span>
-          </div>
-          <div class="mb-3">
-            <p class="mb-1"><i class="fas fa-calendar-day text-primary"></i> Today: {{ meetings_stats.today|default:"0" }}</p>
-            <p class="mb-1"><i class="fas fa-calendar-week text-info"></i> This Week: {{ meetings_stats.this_week|default:"0" }}</p>
-          </div>
-          <a href="/meetings/" class="btn btn-success w-100">
-            <i class="fas fa-arrow-right"></i> View All Meetings
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Documents Card -->
-    <div class="col-md-6">
-      <div class="card h-100 border-0 shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title mb-0">
-              <i class="fas fa-file-alt text-info"></i> Documents
-            </h5>
-            <span class="badge bg-info rounded-pill">{{ document_count|default:"0" }}</span>
-          </div>
-          <p class="card-text text-muted">Access and manage your documents</p>
-          <a href="/documents/library/?from_dept=1" class="btn btn-info w-100">
-            <i class="fas fa-arrow-right"></i> View Documents
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
-
-<!-- Add Font Awesome for icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
-<!-- Custom CSS -->
-<style>
-/* Card variations */
-.card {
-  transition: transform 0.2s;
-  border-left: 5px solid transparent;
-}
-.card:hover {
-  transform: translateY(-5px);
-}
-/* Task cards */
-.col-md-6:nth-child(1) .card {
-  border-left-color: var(--bs-primary);
-}
-.col-md-6:nth-child(2) .card {
-  border-left-color: var(--bs-warning);
-}
-/* Bottom row cards */
-.col-md-6:nth-child(3) .card {
-  border-left-color: var(--bs-success);
-}
-.col-md-6:nth-child(4) .card {
-  border-left-color: var(--bs-info);
-}
-.bg-gradient {
-  background: linear-gradient(120deg, #2c3e50, #3498db);
-}
-.card {
-  transition: transform 0.2s;
-}
-.card:hover {
-  transform: translateY(-5px);
-}
-.text-light-50 {
-  opacity: 0.5;
-}
-</style>
 {% endblock %}

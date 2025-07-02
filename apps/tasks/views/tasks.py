@@ -3,9 +3,14 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.contrib.contenttypes.models import ContentType
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.generic import DetailView, CreateView, UpdateView
+from django.urls import reverse_lazy
+
 from ..models import Task, Project
-from ..forms import TaskForm, CommentForm
+from ..forms import TaskForm, CommentForm, ReassignTaskForm # Import ReassignTaskForm
 from apps.document_management.utils.google_drive_manager import GoogleDriveManager
+
 try:
     from apps.document_management.forms import DocumentForm
 except ImportError:
@@ -17,16 +22,42 @@ except ImportError:
     Document = None
     DocumentForm = None
 
-@login_required
-def task_detail(request, task_id):
-    task = get_object_or_404(Task.objects.select_related('project', 'creator').prefetch_related('assignees'), pk=task_id)
-    content_type = ContentType.objects.get_for_model(Task)
-    task_attachments = Document.objects.filter(
-        content_type=content_type,
-        object_id=task.id
-    ).prefetch_related('comments').order_by('-created_at')
 
-    if request.method == 'POST' and 'file' in request.FILES:
+class TaskDetailView(LoginRequiredMixin, DetailView):
+    model = Task
+    template_name = 'tasks/task_detail.html'
+    context_object_name = 'task'
+    pk_url_kwarg = 'pk' # Changed from task_id to pk for consistency with CBVs
+
+    def get_queryset(self):
+        return Task.objects.select_related('project', 'creator').prefetch_related('assignees')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        task = self.get_object()
+        content_type = ContentType.objects.get_for_model(Task)
+        context['attachments'] = Document.objects.filter(
+            content_type=content_type,
+            object_id=task.id
+        ).prefetch_related('comments').order_by('-created_at')
+        context['reassign_form'] = ReassignTaskForm(initial={'assignees': task.assignees.all()}) # Pass form to context
+
+        referring_url = self.request.META.get('HTTP_REFERER')
+        back_button_text = "Back to Dashboard" # Default text
+
+        if referring_url:
+            if '/tasks/assigned/' in referring_url:
+                back_button_text = "Back to Tasks Assigned to Me"
+            elif '/tasks/created_by_me/' in referring_url:
+                back_button_text = "Back to Tasks I Assigned"
+
+        context['referring_url'] = referring_url
+        context['back_button_text'] = back_button_text
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if 'file' in request.FILES:
             uploaded_file = request.FILES['file']
             drive_manager = GoogleDriveManager()
             
@@ -64,7 +95,7 @@ def task_detail(request, task_id):
                     directorate_folder_id = directorate_files[0]['id']
 
                 # Upload file to directorate folder
-                filename = f"Task_{task.id}_{task.title[:20]}_{uploaded_file.name}"
+                filename = f"Task_{self.object.id}_{self.object.title[:20]}_{uploaded_file.name}"
                 file_id, web_link = drive_manager.upload_file(
                     file_obj=uploaded_file,
                     filename=filename,
@@ -86,8 +117,8 @@ def task_detail(request, task_id):
                             uploaded_by=request.user,
                             source_module='tasks',
                             content_type=content_type,
-                            object_id=task.id,
-                            description=f"Attachment for Task: {task.title}"
+                            object_id=self.object.id,
+                            description=f"Attachment for Task: {self.object.title}"
                         )
 
                         # Create initial comment if provided
@@ -101,7 +132,7 @@ def task_detail(request, task_id):
                             )
                     except Exception as e:
                         messages.error(request, f'Error uploading file: {str(e)}')
-                        return redirect('tasks:task_detail', task_id=task.id)
+                        return redirect(self.object.get_absolute_url())
 
                     messages.success(request, 'File uploaded successfully to Google Drive')
 
@@ -110,70 +141,49 @@ def task_detail(request, task_id):
             except Exception as e:
                 messages.error(request, f'Error uploading file: {str(e)}')
 
-            return redirect('tasks:task_detail', task_id=task.id)
+            return redirect(self.object.get_absolute_url())
+        return self.get(request, *args, **kwargs) # Re-render with form errors if not file upload
 
-    referring_url = request.META.get('HTTP_REFERER')
-    back_button_text = "Back to Dashboard" # Default text
 
-    if referring_url:
-        if '/tasks/assigned/' in referring_url:
-            back_button_text = "Back to Tasks Assigned to Me"
-        elif '/tasks/created_by_me/' in referring_url:
-            back_button_text = "Back to Tasks I Assigned"
+class TaskCreateView(LoginRequiredMixin, CreateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'tasks/add_task.html'
 
-    context = {
-        'task': task,
-        'attachments': task_attachments,
-        'referring_url': referring_url,
-        'back_button_text': back_button_text,
-    }
-    return render(request, 'tasks/task_detail.html', context)
+    def get_initial(self):
+        initial = super().get_initial()
+        project_id = self.kwargs.get('project_pk') # Changed from project_id to project_pk
+        if project_id:
+            initial['project'] = get_object_or_404(Project, pk=project_id)
+        return initial
 
-@login_required
-def add_task(request, project_id):
-    project = get_object_or_404(Project, pk=project_id)
-    if request.method == 'POST':
-        form = TaskForm(request.POST)
-        if form.is_valid():
-            task = form.save(commit=False)
-            if task.project != project:
-                return HttpResponseForbidden("Project mismatch.")
-            task.creator = request.user
-            task.save()
-            
-            # Handle self-assignment
-            if form.cleaned_data.get('assign_to_self'):
-                task.assignees.add(request.user)
-            return redirect('tasks:task_detail', task_id=task.id)
-    else:
-        form = TaskForm(initial={'project': project})
-    
-    context = {
-        'form': form,
-        'project': project
-    }
-    return render(request, 'tasks/add_task.html', context)
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        response = super().form_valid(form)
+        messages.success(self.request, "Task created successfully.")
+        return response
 
-@login_required
-def edit_task(request, task_id):
-    task = get_object_or_404(Task, pk=task_id)
-    can_edit = (request.user == task.creator or task.assignees.filter(id=request.user.id).exists())
-    if not can_edit:
-        return HttpResponseForbidden("You do not have permission to edit this task.")
+    def get_success_url(self):
+        return reverse_lazy('tasks:task_detail', kwargs={'pk': self.object.pk})
 
-    if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task)
-        if form.is_valid():
-            form.save()
-            return redirect('tasks:task_detail', task_id=task.id)
-    else:
-        form = TaskForm(instance=task)
-    
-    context = {
-        'form': form,
-        'task': task
-    }
-    return render(request, 'tasks/edit_task.html', context)
+
+class TaskUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Task
+    form_class = TaskForm
+    template_name = 'tasks/edit_task.html'
+    pk_url_kwarg = 'pk' # Changed from task_id to pk
+
+    def test_func(self):
+        task = self.get_object()
+        return self.request.user == task.creator or task.assignees.filter(id=self.request.user.id).exists()
+
+    def form_valid(self, form):
+        messages.success(self.request, "Task updated successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('tasks:task_detail', kwargs={'pk': self.object.pk})
+
 
 @login_required
 def add_attachment_comment(request, attachment_id):
@@ -195,17 +205,18 @@ def add_attachment_comment(request, attachment_id):
             
         # Redirect back to task detail
         task_id = attachment.object_id  # Get the task ID from the attachment's generic relation
-        return redirect('tasks:task_detail', task_id=task_id)
+        return redirect('tasks:task_detail', pk=task_id) # Changed task_id to pk
     
     return HttpResponseForbidden("Method not allowed")
 
+
 @login_required
-def revert_task_to_history(request, task_id, history_id):
+def revert_task_to_history(request, pk, history_id):
     """Revert a task to a specific historical state"""
     from ..models import TaskHistory
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    task = get_object_or_404(Task, pk=task_id)
+    task = get_object_or_404(Task, pk=pk) # Changed task_id to pk
     history_item = get_object_or_404(TaskHistory, pk=history_id, task=task)
 
     if request.method == 'POST':
@@ -225,44 +236,66 @@ def revert_task_to_history(request, task_id, history_id):
                 messages.error(request, f'Assignee with ID {assignee_id} not found.')
 
         task.due_date = task_state['due_date']
+        # Temporarily disable signals to prevent history loop
+        from django.db.models import signals
+        from apps.tasks.signals import task_post_save # Import the signal handler
+        signals.post_save.disconnect(sender=Task, receiver=task_post_save)
         task.save()
+        signals.post_save.connect(sender=Task, receiver=task_post_save)
 
         messages.success(request, f'Task reverted to state from {history_item.timestamp}.')
-        return redirect('tasks:task_detail', task_id=task_id)
+        return redirect('tasks:task_detail', pk=task.pk) # Changed task_id to pk
 
     return HttpResponseForbidden("Method not allowed")
 
+
 @login_required
-def update_task_status(request, task_id):
-    """Update the status of a task and log the change in history"""
-    task = get_object_or_404(Task, pk=task_id)
-    old_status = task.get_status_display()  # Get display value before change
+def update_task_status(request, pk):
+    """Update the status of a task"""
+    task = get_object_or_404(Task, pk=pk) # Changed task_id to pk
 
     if request.method == 'POST':
         new_status = request.POST.get('status')
         if new_status in Task.StatusChoices:
             task.status = new_status
+            # The history logging is now handled by the signal
             task.save()
-
-            # Log the status change in TaskHistory
-            from ..models import TaskHistory
-            TaskHistory.objects.create(
-                task=task,
-                user=request.user,
-                task_state={
-                    'title': task.title,
-                    'description': task.description,
-                    'status': task.status,
-                    'priority': task.priority,
-                    'assignees': [assignee.id for assignee in task.assignees.all()],
-                    'due_date': task.due_date.isoformat() if task.due_date else None,
-                },
-                comment=f'Status changed from {old_status} to {task.get_status_display()}'
-            )
             messages.success(request, f'Task status updated to {task.get_status_display()}.')
         else:
             messages.error(request, 'Invalid status selected.')
 
-        return redirect('tasks:task_detail', task_id=task_id)
+        return redirect('tasks:task_detail', pk=task.pk) # Changed task_id to pk
 
     return HttpResponseForbidden("Method not allowed")
+
+
+@login_required
+def reassign_task(request, pk):
+    task = get_object_or_404(Task, pk=pk)
+
+    # Check permissions: Only creator or project owner can reassign
+    # You might want to expand this logic based on your permission system
+    if not (request.user == task.creator or request.user == task.project.owner):
+        messages.error(request, "You do not have permission to reassign this task.")
+        return redirect('tasks:task_detail', pk=task.pk)
+
+    if request.method == 'POST':
+        form = ReassignTaskForm(request.POST, instance=task) # Pass instance to form
+        if form.is_valid():
+            # Manually update the many-to-many field
+            new_assignees = form.cleaned_data['assignees']
+            task.assignees.set(new_assignees) # .set() handles adding/removing
+            
+            # The signals will handle history and notifications
+            # No need to call task.save() here if only M2M is changed, but if other fields were in form, you would.
+            # For M2M, .set() triggers post_save for the relationship.
+
+            messages.success(request, "Task assignees updated successfully.")
+            return redirect('tasks:task_detail', pk=task.pk)
+        else:
+            messages.error(request, "Error reassigning task.")
+            # If form is invalid, re-render the task detail page with errors
+            # This requires passing the form back to the template
+            return redirect('tasks:task_detail', pk=task.pk) # Simplified for now
+    
+    return HttpResponseForbidden("Method not allowed") # Should only be accessed via POST

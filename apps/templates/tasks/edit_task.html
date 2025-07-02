@@ -17,7 +17,7 @@
 
     <div class="card shadow-sm border-light">
         <div class="card-body">
-            <form method="post" action="{% url 'tasks:edit_task' task.id %}">
+            <form method="post" action="{% url 'tasks:task_update' pk=task.pk %}">
                 {% csrf_token %}
                 {{ form|crispy }} {# Render the TaskForm #}
 

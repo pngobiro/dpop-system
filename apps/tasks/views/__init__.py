@@ -1,21 +1,40 @@
-from .dashboard import user_tasks_dashboard
+from .dashboard import user_tasks_dashboard, my_dashboard, tasks_assigned_by_me, assign_task, tasks_created_by_me, DepartmentListView
 from .projects import (
-    project_list,
-    department_task_project_list,
-    project_detail
+    ProjectListView,
+    DepartmentProjectListView,
+    ProjectDetailView,
+    ProjectCreateView,
+    ProjectUpdateView,
+    ProjectDeleteView
 )
 from .tasks import (
-    task_detail,
-    add_task,
-    edit_task
+    TaskDetailView,
+    TaskCreateView,
+    TaskUpdateView,
+    add_attachment_comment,
+    update_task_status,
+    revert_task_to_history,
+    reassign_task
 )
 
 __all__ = [
     'user_tasks_dashboard',
-    'project_list',
-    'department_task_project_list',
-    'project_detail',
-    'task_detail',
-    'add_task',
-    'edit_task'
+    'my_dashboard',
+    'tasks_assigned_by_me',
+    'assign_task',
+    'tasks_created_by_me',
+    'ProjectListView',
+    'DepartmentProjectListView',
+    'ProjectDetailView',
+    'ProjectCreateView',
+    'ProjectUpdateView',
+    'ProjectDeleteView',
+    'TaskDetailView',
+    'TaskCreateView',
+    'TaskUpdateView',
+    'add_attachment_comment',
+    'update_task_status',
+    'revert_task_to_history',
+    'reassign_task',
+    'DepartmentListView'
 ]

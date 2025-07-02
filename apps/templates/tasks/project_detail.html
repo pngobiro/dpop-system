@@ -80,7 +80,7 @@
             {% endwith %}
         </div>
         <div class="mt-2 mt-sm-0">
-             <a href="{% url 'tasks:add_task' project.id %}" class="btn btn-sm me-2" style="background-color: #006633; color: #FFFFFF; border-color: #006633;"> {# Primary Green Button #}
+             <a href="{% url 'tasks:task_create' project_pk=project.pk %}" class="btn btn-sm me-2" style="background-color: #006633; color: #FFFFFF; border-color: #006633;"> {# Primary Green Button #}
                  <i class="fas fa-plus me-1"></i> Add New Task
              </a>
              <button type="button" class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#addProjectAttachmentModal" style="background-color: #6c757d; color: #FFFFFF; border-color: #6c757d;"> {# Secondary Button #}
@@ -125,6 +125,31 @@
                     </ul>
 
                     <div class="tab-content" id="projectDetailTabContent">
+                        {# Filtering, Sorting, and Search Controls #}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <form method="get" class="d-flex align-items-center w-100">
+                                <input type="search" class="form-control form-control-sm me-2" placeholder="Search tasks..." name="q" value="{{ search_query|default:'' }}">
+                                <label for="statusFilter" class="me-2 mb-0">Filter by Status:</label>
+                                <select class="form-select form-select-sm me-2" id="statusFilter" name="status_filter" onchange="this.form.submit()">
+                                    <option value="">All Statuses</option>
+                                    {% for choice_value, choice_label in task_status_choices %}
+                                        <option value="{{ choice_value }}" {% if status_filter == choice_value %}selected{% endif %}>{{ choice_label }}</option>
+                                    {% endfor %}
+                                </select>
+
+                                <label for="sortBy" class="me-2 mb-0">Sort by:</label>
+                                <select class="form-select form-select-sm me-2" id="sortBy" name="sort_by" onchange="this.form.submit()">
+                                    <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>Priority (Asc)</option>
+                                    <option value="-priority" {% if sort_by == '-priority' %}selected{% endif %}>Priority (Desc)</option>
+                                    <option value="due_date" {% if sort_by == 'due_date' %}selected{% endif %}>Due Date (Asc)</option>
+                                    <option value="-due_date" {% if sort_by == '-due_date' %}selected{% endif %}>Due Date (Desc)</option>
+                                    <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title (Asc)</option>
+                                    <option value="-title" {% if sort_by == '-title' %}selected{% endif %}>Title (Desc)</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                            </form>
+                        </div>
+
                         {# Tab 1: Tasks Table #}
                         <div class="tab-pane fade show active" id="tasks-table-pane" role="tabpanel" aria-labelledby="tasks-table-tab">
                     {% if tasks %}
@@ -159,17 +184,19 @@
                                             </td>
                                             <td>{{ task.get_priority_display }}</td>
                                             <td>
-                                                {% if task.assignee %}
-                                                    {{ task.assignee.get_full_name|default:task.assignee.username }}
+                                                {% if task.assignees.all %}
+                                                    {% for assignee in task.assignees.all %}
+                                                        {{ assignee.get_full_name|default:assignee.username }}{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
                                                 {% else %}
                                                     <span class="text-muted">Unassigned</span>
                                                 {% endif %}
                                             </td>
                                             <td>{{ task.due_date|date:"Y-m-d"|default:"-" }}</td>
                                             <td class="text-end">
-                                                <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-sm py-0 px-1 me-1" style="background-color: #0dcaf0; color: #000000; border-color: #0dcaf0" title="View Task"><i class="fas fa-eye"></i></a> {# Info Button #}
-                                                {% if request.user == task.creator or request.user == task.assignee %}
-                                                    <a href="{% url 'tasks:edit_task' task.id %}" class="btn btn-sm py-0 px-1" style="background-color: #ffc107; color: #000000; border-color: #ffc107" title="Edit Task"><i class="fas fa-edit"></i></a> {# Warning Button #}
+                                                <a href="{% url 'tasks:task_detail' pk=task.pk %}" class="btn btn-sm py-0 px-1 me-1" style="background-color: #0dcaf0; color: #000000; border-color: #0dcaf0" title="View Task"><i class="fas fa-eye"></i></a> {# Info Button #}
+                                                {% if request.user == task.creator or request.user in task.assignees.all %}
+                                                    <a href="{% url 'tasks:task_update' pk=task.pk %}" class="btn btn-sm py-0 px-1" style="background-color: #ffc107; color: #000000; border-color: #ffc107" title="Edit Task"><i class="fas fa-edit"></i></a> {# Warning Button #}
                                                 {% endif %}
                                             </td>
                                         </tr>

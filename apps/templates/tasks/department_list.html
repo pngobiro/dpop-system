@@ -1,0 +1,51 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Browse Projects by Department {% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0" style="color: #006633;">
+            <i class="fas fa-building me-2 judiciary-text-gold"></i> Browse Projects by Department
+        </h1>
+    </div>
+    <hr class="judiciary-border-gold">
+
+    <div class="row">
+        {% if departments %}
+            {% for department in departments %}
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Department
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ department.name }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-folder fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-end">
+                                <a href="{% url 'tasks:department_project_list' department.id %}" class="btn btn-sm btn-outline-primary">
+                                    View Projects <i class="fas fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info" role="alert">
+                    No departments found. Please ensure departments are configured in the Organization app.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock content %}

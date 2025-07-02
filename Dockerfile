@@ -9,15 +9,10 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /code
 
 # Install system dependencies (this layer will be cached)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    apt-utils \
-    ffmpeg \
-    postgresql-client \
-    netcat-openbsd \
-    poppler-utils \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+RUN apt-get update
+
+# Step 2: Install packages and clean up. This layer will be rebuilt only if packages change.
+RUN apt-get install -y --no-install-recommends     apt-utils     ffmpeg     postgresql-client     netcat-openbsd     poppler-utils     && rm -rf /var/lib/apt/lists/*     && apt-get clean
 
 # Copy and install Python dependencies first (separate layer for better caching)
 COPY requirements.txt /code/
