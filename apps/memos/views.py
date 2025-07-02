@@ -64,6 +64,8 @@ def memo_create(request):
                 memo.create_document(request.FILES['document'])
 
             messages.success(request, 'Memo created successfully.')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'status': 'success', 'message': 'Memo created successfully.'})
             return redirect('memos:memo_detail', pk=memo.pk)
     else:
         form = MemoForm(user=request.user) # Pass the user to the form!

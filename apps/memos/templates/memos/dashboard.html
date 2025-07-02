@@ -9,6 +9,9 @@
             <div class="card mb-4">
                 <div class="card-header pb-0">
                     <h6>Memos Dashboard</h6>
+                    <button type="button" class="btn btn-primary btn-sm float-end" data-bs-toggle="modal" data-bs-target="#createMemoModal">
+                        <i class="fas fa-plus"></i> Create New Memo
+                    </button>
                 </div>
                 <div class="card-body px-0 pb-2">
                     <div class="row px-4">
@@ -228,4 +231,82 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}
+
+<!-- Create Memo Modal -->
+<div class="modal fade" id="createMemoModal" tabindex="-1" aria-labelledby="createMemoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createMemoModalLabel">Create New Memo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'memos:memo_create' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Create Memo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block javascripts %}
+<script>
+    $(document).ready(function() {
+        $('#createMemoModal form').on('submit', function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: $(this).attr('method'),
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert(response.message);
+                        $('#createMemoModal').modal('hide');
+                        location.reload(); // Reload the page to show the new memo
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('An error occurred: ' + xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+{% endblock javascripts %}
+
+<!-- Create Memo Modal -->
+<div class="modal fade" id="createMemoModal" tabindex="-1" aria-labelledby="createMemoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createMemoModalLabel">Create New Memo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'memos:memo_create' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Create Memo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
