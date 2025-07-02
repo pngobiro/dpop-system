@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize', # Added for template filters like intcomma
     'authentication', # added the authentication apps
+    'apps.common_tags',
     'apps.permissions',
     'apps.home',
     # 'django_unicorn', # Removed as Unicorn is no longer used

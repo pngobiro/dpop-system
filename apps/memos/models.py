@@ -28,17 +28,30 @@ class Memo(models.Model):
     """Main memo model"""
     MEMO_STATUS = [
         ('draft', 'Draft'),
+        ('pending_review', 'Pending Review'),
         ('pending_approval', 'Pending Approval'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('published', 'Published'),
-        ('archived', 'Archived')
+        ('archived', 'Archived'),
+        ('assigned', 'Assigned'),
+        ('in_progress', 'In Progress'),
+        ('blocked', 'Blocked'),
+        ('needs_clarification', 'Needs Clarification'),
+        ('completed', 'Completed'),
     ]
     
     MEMO_TYPE = [
         ('internal', 'Internal Memo'),
         ('external', 'External Letter'),
         ('circular', 'Circular')
+    ]
+
+    PRIORITY_CHOICES = [
+        ('urgent', 'Urgent'),
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
     ]
 
     title = models.CharField(max_length=255)
@@ -48,6 +61,19 @@ class Memo(models.Model):
     content = models.TextField()
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     status = models.CharField(max_length=50, choices=MEMO_STATUS, default='draft')
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
+
+    # Sender Information
+    sender_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_memos', help_text="Internal user who sent the memo.")
+    sender_external_name = models.CharField(max_length=255, blank=True, null=True, help_text="Name of external sender, if applicable.")
+    sender_external_organization = models.CharField(max_length=255, blank=True, null=True, help_text="Organization of external sender, if applicable.")
+
+    # Recipient Information (Internal and External)
+    recipient_external_name = models.CharField(max_length=255, blank=True, null=True, help_text="Name of external recipient, if applicable.")
+    recipient_external_organization = models.CharField(max_length=255, blank=True, null=True, help_text="Organization of external recipient, if applicable.")
+
+    # Due Date for action/response
+    due_date = models.DateField(null=True, blank=True, help_text="Date by which action or response is required.")
     
     # Main document - stores the final version
     document = models.ForeignKey(

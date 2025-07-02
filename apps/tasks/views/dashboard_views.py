@@ -7,6 +7,7 @@ from django.utils import timezone
 from apps.tasks.models import Task, Project
 from apps.meetings.models import Meeting
 from apps.document_management.models import Document
+from apps.memos.models import Memo
 from apps.tasks.utils.statistics import get_task_statistics
 
 
@@ -70,12 +71,16 @@ def my_dashboard(request):
     
     # Get document count
     document_count = Document.objects.count() if Document else 0
+
+    # Get memos created by the user
+    my_memos = Memo.objects.filter(created_by=request.user).order_by('-created_at')[:5]
     
     context = {
         'my_tasks_stats': my_tasks_stats,
         'assigned_tasks_stats': assigned_tasks_stats,
         'meetings_stats': meetings_stats,
         'document_count': document_count,
+        'my_memos': my_memos,
         'segment': 'my_dashboard' # Add segment for active navigation
     }
     return render(request, 'tasks/my_dashboard.html', context)

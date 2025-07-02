@@ -1,4 +1,5 @@
 {% extends 'layouts/base.html' %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -170,6 +171,63 @@
             <a href="/documents/library/" class="btn btn-sm bg-gradient-warning">
               View Documents <i class="fas fa-arrow-right ms-1"></i>
             </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Row 2: My Memos #}
+  <div class="row mt-4">
+    <div class="col-lg-12 mb-md-0 mb-4">
+      <div class="card">
+        <div class="card-header pb-0">
+          <h6>My Memos</h6>
+        </div>
+        <div class="card-body px-0 pb-2">
+          <div class="table-responsive">
+            {% if my_memos %}
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Title</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Reference Number</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Created At</th>
+                  <th class="text-secondary opacity-7"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for memo in my_memos %}
+                <tr>
+                  <td>
+                    <div class="d-flex px-2 py-1">
+                      <div class="d-flex flex-column justify-content-center">
+                        <h6 class="mb-0 text-sm">{{ memo.title }}</h6>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <p class="text-xs font-weight-bold mb-0">{{ memo.reference_number }}</p>
+                  </td>
+                  <td class="align-middle text-center text-sm">
+                    <span class="badge badge-sm bg-gradient-{{ memo.status|lower|underscore_to_dash }}">{{ memo.status }}</span>
+                  </td>
+                  <td class="align-middle text-center">
+                    <span class="text-secondary text-xs font-weight-bold">{{ memo.created_at|date:"M d, Y" }}</span>
+                  </td>
+                  <td class="align-middle">
+                    <a href="{% url 'apps.memos:memo_detail' memo.id %}" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="View memo">
+                      View
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <p class="text-center">No memos found.</p>
+            {% endif %}
           </div>
         </div>
       </div>
