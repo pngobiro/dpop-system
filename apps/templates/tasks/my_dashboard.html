@@ -6,9 +6,58 @@
 
   {# Welcome Header #}
   <div class="row mb-4">
-    <div class="col-lg-12 col-md-12 mb-md-0 mb-4">
+    <div class="col-lg-8 col-md-8 mb-md-0 mb-4">
       <h1 class="display-5 text-dark mb-0">Welcome Back, {{ request.user.username }}!</h1>
       <p class="lead text-muted">Here's a quick overview of your workspace and key metrics.</p>
+    </div>
+    <div class="col-lg-4 col-md-4 text-end">
+      <div class="d-flex justify-content-end align-items-center h-100">
+        <a href="{% url 'memos:my_memos' %}" class="btn bg-gradient-primary me-2">
+          <i class="fas fa-envelope me-2"></i>My Memos
+        </a>
+        <a href="{% url 'memos:memo_create' %}" class="btn btn-outline-primary">
+          <i class="fas fa-plus me-2"></i>New Memo
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {# Quick Actions Section #}
+  <div class="row mb-4">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-header pb-0">
+          <h6 class="mb-0">Quick Actions</h6>
+        </div>
+        <div class="card-body pt-3">
+          <div class="row">
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-2">
+              <a href="{% url 'tasks:project_create' %}" class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-plus me-2"></i>
+                <span>Create Project</span>
+              </a>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-2">
+              <a href="{% url 'memos:my_memos' %}" class="btn btn-outline-info w-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-envelope me-2"></i>
+                <span>My Memos</span>
+              </a>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-2">
+              <a href="{% url 'meetings:dashboard' %}" class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-calendar-alt me-2"></i>
+                <span>Meetings</span>
+              </a>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 mb-2">
+              <a href="/documents/library/" class="btn btn-outline-warning w-100 d-flex align-items-center justify-content-center">
+                <i class="fas fa-file-alt me-2"></i>
+                <span>Documents</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -176,17 +225,17 @@
       </div>
     </div>
 
-    {# Memos Card #}
+    {# My Memos Card #}
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
       <div class="card">
         <div class="card-body p-3">
           <div class="row">
             <div class="col-8">
               <div class="numbers">
-                <p class="text-sm mb-0 text-capitalize font-weight-bold">Memos</p>
+                <p class="text-sm mb-0 text-capitalize font-weight-bold">My Memos</p>
                 <h5 class="font-weight-bolder mb-0">
-                  {{ department_memos_count|default:"0" }}
-                  <span class="text-primary text-sm font-weight-bolder">Total</span>
+                  {{ my_memos_count|default:"0" }}
+                  <span class="text-info text-sm font-weight-bolder">Total</span>
                 </h5>
               </div>
             </div>
@@ -197,10 +246,20 @@
             </div>
           </div>
           <hr class="horizontal dark my-3">
-          <p class="card-text text-muted text-sm">Access and manage department memos.</p>
+          <h6 class="mb-0 text-sm">Details:</h6>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-edit text-primary me-2"></i>Draft:</span>
+              <span class="badge bg-primary">{{ my_memos_stats.draft|default:"0" }}</span>
+            </li>
+            <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center border-0">
+              <span class="text-sm"><i class="fas fa-paper-plane text-success me-2"></i>Sent:</span>
+              <span class="badge bg-success">{{ my_memos_stats.sent|default:"0" }}</span>
+            </li>
+          </ul>
           <div class="text-end mt-3">
-            <a href="{% url 'memos:department_dashboard' %}" class="btn btn-sm bg-gradient-info">
-              View Memos <i class="fas fa-arrow-right ms-1"></i>
+            <a href="{% url 'memos:my_memos' %}" class="btn btn-sm bg-gradient-info">
+              View My Memos <i class="fas fa-arrow-right ms-1"></i>
             </a>
           </div>
         </div>
@@ -208,12 +267,54 @@
     </div>
   </div>
 
+  {# Row 1.5: Additional Statistics #}
+  <div class="row mt-4">
+    {# Department Memos Card #}
+    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+      <div class="card">
+        <div class="card-body p-3">
+          <div class="row">
+            <div class="col-8">
+              <div class="numbers">
+                <p class="text-sm mb-0 text-capitalize font-weight-bold">Department Memos</p>
+                <h5 class="font-weight-bolder mb-0">
+                  {{ department_memos_count|default:"0" }}
+                  <span class="text-warning text-sm font-weight-bolder">Total</span>
+                </h5>
+              </div>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                <i class="fas fa-building text-lg opacity-10" aria-hidden="true"></i>
+              </div>
+            </div>
+          </div>
+          <hr class="horizontal dark my-3">
+          <p class="card-text text-muted text-sm">Access and manage department memos.</p>
+          <div class="text-end mt-3">
+            <a href="{% url 'memos:department_dashboard' %}" class="btn btn-sm bg-gradient-warning">
+              View Department Memos <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {# Additional stats cards can be added here #}
+    <div class="col-xl-9 col-sm-6">
+      {# This space can be used for additional statistics or left for future expansion #}
+    </div>
+  </div>
+
   {# Row 2: My Memos #}
   <div class="row mt-4">
     <div class="col-lg-12 mb-md-0 mb-4">
       <div class="card">
-        <div class="card-header pb-0">
-          <h6>My Memos</h6>
+        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">My Recent Memos</h6>
+          <a href="{% url 'memos:my_memos' %}" class="btn btn-sm bg-gradient-info">
+            View All My Memos <i class="fas fa-arrow-right ms-1"></i>
+          </a>
         </div>
         <div class="card-body px-0 pb-2">
           <div class="table-responsive">
@@ -248,7 +349,7 @@
                     <span class="text-secondary text-xs font-weight-bold">{{ memo.created_at|date:"M d, Y" }}</span>
                   </td>
                   <td class="align-middle">
-                    <a href="{% url 'apps.memos:memo_detail' memo.id %}" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="View memo">
+                    <a href="{% url 'memos:memo_detail' memo.id %}" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="View memo">
                       View
                     </a>
                   </td>

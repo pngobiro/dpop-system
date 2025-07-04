@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize', # Added for template filters like intcomma
     'authentication', # added the authentication apps
-    'apps.common_tags',
     'apps.permissions',
     'apps.home',
     # 'django_unicorn', # Removed as Unicorn is no longer used
@@ -50,6 +49,7 @@ INSTALLED_APPS = [
     'apps.mail',
     'apps.pmmu',
     'apps.tasks', # Added the tasks app
+    'apps.common_tags',
 
     # Third-party apps
     'debug_toolbar',
