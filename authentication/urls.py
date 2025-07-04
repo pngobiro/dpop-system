@@ -14,6 +14,10 @@ from .views import (
     regenerate_password,
     send_welcome_email_view,
     change_password,
+    # Password reset views
+    password_reset_request,
+    password_reset_confirm,
+    password_reset_complete,
 )
 
 app_name = 'authentication'
@@ -22,6 +26,12 @@ urlpatterns = [
     path('login/', login_view, name="login"),
     path('register/', register_user, name="register"),
     path("logout/", CustomLogoutView.as_view(), name="logout"),
+    
+    # Password Reset URLs
+    path('password-reset/', password_reset_request, name='password_reset'),
+    path('password-reset-confirm/<uidb64>/<token>/', password_reset_confirm, name='password_reset_confirm'),
+    path('password-reset-complete/', password_reset_complete, name='password_reset_complete'),
+    
     path('profile/', profile_view, name='profile'),
     path('profile/edit/', edit_profile, name='edit_profile'),
     path('settings/', settings_view, name='settings'),
