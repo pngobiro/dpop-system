@@ -101,7 +101,7 @@
          <img class="sidebar-brand-logo" src="/static/assets/img/brand/logo1-Copy-2.png" alt="Judiciary Logo">
       </a>
     </li>
-    <li class="nav-item {% if segment == 'dashboard' %} active {% endif %}">
+    <li class="nav-item {% if segment == 'my_dashboard' or request.resolver_match.url_name == 'my_dashboard' %} active {% endif %}">
       <a href="{% url 'tasks:my_dashboard' %}" class="nav-link">
         <span class="sidebar-icon">
           <i class="fas fa-tachometer-alt me-2"></i>
@@ -137,7 +137,38 @@
       </a>
     </li>
 
-
+    {# Memos Section #}
+    <li class="nav-item">
+      <span class="nav-link collapsed d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#submenu-memos">
+        <span>
+          <span class="sidebar-icon"><i class="fas fa-envelope me-2"></i></span>
+          <span class="sidebar-text">Memos</span>
+        </span>
+        <span class="link-arrow"><i class="fas fa-chevron-right"></i></span>
+      </span>
+      <div class="multi-level collapse {% if 'memos' in request.resolver_match.app_names %} show {% endif %}" role="list" id="submenu-memos" aria-expanded="false">
+        <ul class="flex-column nav">
+          <li class="nav-item {% if request.resolver_match.url_name == 'my_memos' %} active {% endif %}">
+            <a class="nav-link" href="{% url 'memos:my_memos' %}">
+              <span class="sidebar-icon"><i class="fas fa-file-alt"></i></span>
+              <span class="sidebar-text">My Memos</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.resolver_match.url_name == 'memo_create' %} active {% endif %}">
+            <a class="nav-link" href="{% url 'memos:memo_create' %}">
+              <span class="sidebar-icon"><i class="fas fa-plus-circle"></i></span>
+              <span class="sidebar-text">Create Memo</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.resolver_match.url_name == 'department_dashboard' and 'memos' in request.resolver_match.app_names %} active {% endif %}">
+            <a class="nav-link" href="{% url 'memos:department_dashboard' %}">
+              <span class="sidebar-icon"><i class="fas fa-tachometer-alt"></i></span>
+              <span class="sidebar-text">Memo Dashboard</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </li>
 
     <li class="nav-item {% if 'library' in request.resolver_match.url_name %} active {% endif %}">
       <a href="{% url 'document_management:library' %}" class="nav-link">
