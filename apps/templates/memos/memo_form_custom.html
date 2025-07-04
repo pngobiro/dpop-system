@@ -1,0 +1,642 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Memo{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .memo-hero {
+        background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-dark) 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: var(--bs-border-radius-lg);
+    }
+    
+    .form-section-card {
+        background: white;
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--bs-border-radius);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--bs-box-shadow-sm);
+        overflow: hidden;
+    }
+    
+    .form-section-header {
+        background: var(--bs-light);
+        border-bottom: 1px solid var(--bs-border-color);
+        padding: 1rem 1.5rem;
+    }
+    
+    .form-section-header h5 {
+        margin: 0;
+        color: var(--bs-dark);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-section-body {
+        padding: 1.5rem;
+    }
+    
+    .badge-required {
+        background-color: var(--bs-danger);
+        color: white;
+        font-size: 0.65rem;
+        padding: 0.25rem 0.4rem;
+        border-radius: var(--bs-border-radius-sm);
+        margin-left: 0.25rem;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection {
+        border-color: var(--bs-border-color);
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="memo-hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-file-alt me-2"></i>
+                        {{ action }} Memo
+                    </h1>
+                    <p class="mb-0 text-white-50">Create and manage official memorandums</p>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'memos:my_memos' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Back to Memos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-10 col-lg-12">
+            <form method="post" enctype="multipart/form-data" id="memoForm">
+                {% csrf_token %}
+                
+                <!-- Basic Information Section -->
+                <div class="form-section-card">
+                    <div class="form-section-header">
+                        <h5>
+                            <i class="fas fa-info-circle text-primary"></i>
+                            Basic Information
+                        </h5>
+                    </div>
+                    <div class="form-section-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">
+                                    {{ form.title.label }}
+                                    <span class="badge-required">Required</span>
+                                </label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger">{{ form.title.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.memo_type.id_for_label }}" class="form-label">
+                                    {{ form.memo_type.label }}
+                                    <span class="badge-required">Required</span>
+                                </label>
+                                {{ form.memo_type }}
+                                {% if form.memo_type.errors %}
+                                    <div class="text-danger">{{ form.memo_type.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    {{ form.category.label }}
+                                </label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                    {{ form.priority.label }}
+                                    <span class="badge-required">Required</span>
+                                </label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="text-danger">{{ form.priority.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.subject.id_for_label }}" class="form-label">
+                                {{ form.subject.label }}
+                                <span class="badge-required">Required</span>
+                            </label>
+                            {{ form.subject }}
+                            <div class="form-text">Provide a brief summary of the memo's purpose</div>
+                            {% if form.subject.errors %}
+                                <div class="text-danger">{{ form.subject.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.content.id_for_label }}" class="form-label">
+                                {{ form.content.label }}
+                            </label>
+                            {{ form.content }}
+                            <div class="form-text">Enter the detailed content of the memo</div>
+                            {% if form.content.errors %}
+                                <div class="text-danger">{{ form.content.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Memo Properties Section -->
+                <div class="form-section-card">
+                    <div class="form-section-header">
+                        <h5>
+                            <i class="fas fa-cogs text-warning"></i>
+                            Memo Properties
+                        </h5>
+                    </div>
+                    <div class="form-section-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.due_date.id_for_label }}" class="form-label">
+                                    {{ form.due_date.label }}
+                                </label>
+                                {{ form.due_date }}
+                                <div class="form-text">Set a deadline for response or action</div>
+                                {% if form.due_date.errors %}
+                                    <div class="text-danger">{{ form.due_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.file_number.id_for_label }}" class="form-label">
+                                    {{ form.file_number.label }}
+                                </label>
+                                {{ form.file_number }}
+                                <div class="form-text">Physical filing reference number</div>
+                                {% if form.file_number.errors %}
+                                    <div class="text-danger">{{ form.file_number.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_physical }}
+                                    <label class="form-check-label" for="{{ form.is_physical.id_for_label }}">
+                                        {{ form.is_physical.label }}
+                                    </label>
+                                </div>
+                                <div class="form-text">Check if this is a physical memo document</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_confidential }}
+                                    <label class="form-check-label" for="{{ form.is_confidential.id_for_label }}">
+                                        {{ form.is_confidential.label }}
+                                    </label>
+                                </div>
+                                <div class="form-text">Mark as confidential to restrict access</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.tags.id_for_label }}" class="form-label">
+                                {{ form.tags.label }}
+                            </label>
+                            {{ form.tags }}
+                            <div class="form-text">Enter comma-separated tags for better organization</div>
+                            {% if form.tags.errors %}
+                                <div class="text-danger">{{ form.tags.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-row.single {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #5a67d8;
+    }
+    
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .checkbox-wrapper input[type="checkbox"] {
+        width: auto;
+    }
+    
+    .form-errors {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .memo-container {
+            padding: 1rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="memo-container">
+    <div class="memo-card">
+        <div class="memo-header">
+            <h1>
+                <i class="fas fa-file-alt"></i>
+                {{ action }} Memo
+            </h1>
+        </div>
+        
+        <div class="memo-body">
+            <form method="post" enctype="multipart/form-data" id="memoForm">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Basic Information
+                    </h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.title.id_for_label }}">{{ form.title.label }} *</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="form-errors">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.memo_type.id_for_label }}">{{ form.memo_type.label }} *</label>
+                            {{ form.memo_type }}
+                            {% if form.memo_type.errors %}
+                                <div class="form-errors">{{ form.memo_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="form-errors">{{ form.category.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.priority.id_for_label }}">{{ form.priority.label }} *</label>
+                            {{ form.priority }}
+                            {% if form.priority.errors %}
+                                <div class="form-errors">{{ form.priority.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label for="{{ form.subject.id_for_label }}">{{ form.subject.label }} *</label>
+                            {{ form.subject }}
+                            {% if form.subject.errors %}
+                                <div class="form-errors">{{ form.subject.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                                <div class="form-errors">{{ form.content.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Memo Properties -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-cogs"></i>
+                        Memo Properties
+                    </h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.due_date.id_for_label }}">{{ form.due_date.label }}</label>
+                            {{ form.due_date }}
+                            {% if form.due_date.errors %}
+                                <div class="form-errors">{{ form.due_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.file_number.id_for_label }}">{{ form.file_number.label }}</label>
+                            {{ form.file_number }}
+                            {% if form.file_number.errors %}
+                                <div class="form-errors">{{ form.file_number.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="checkbox-wrapper">
+                            {{ form.is_physical }}
+                            <label for="{{ form.is_physical.id_for_label }}">{{ form.is_physical.label }}</label>
+                        </div>
+                        
+                        <div class="checkbox-wrapper">
+                            {{ form.is_confidential }}
+                            <label for="{{ form.is_confidential.id_for_label }}">{{ form.is_confidential.label }}</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
+                            {{ form.tags }}
+                            {% if form.tags.errors %}
+                                <div class="form-errors">{{ form.tags.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sender Information -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-user-edit"></i>
+                        Sender Information
+                    </h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.sender_internal.id_for_label }}">{{ form.sender_internal.label }}</label>
+                            {{ form.sender_internal }}
+                            {% if form.sender_internal.errors %}
+                                <div class="form-errors">{{ form.sender_internal.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.sender_external_name.id_for_label }}">{{ form.sender_external_name.label }}</label>
+                            {{ form.sender_external_name }}
+                            {% if form.sender_external_name.errors %}
+                                <div class="form-errors">{{ form.sender_external_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.sender_external_organization.id_for_label }}">{{ form.sender_external_organization.label }}</label>
+                            {{ form.sender_external_organization }}
+                            {% if form.sender_external_organization.errors %}
+                                <div class="form-errors">{{ form.sender_external_organization.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.sender_external_address.id_for_label }}">{{ form.sender_external_address.label }}</label>
+                            {{ form.sender_external_address }}
+                            {% if form.sender_external_address.errors %}
+                                <div class="form-errors">{{ form.sender_external_address.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recipient Information -->
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-users"></i>
+                        Recipient Information
+                    </h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.recipient_departments.id_for_label }}">{{ form.recipient_departments.label }}</label>
+                            {{ form.recipient_departments }}
+                            {% if form.recipient_departments.errors %}
+                                <div class="form-errors">{{ form.recipient_departments.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.recipient_users.id_for_label }}">{{ form.recipient_users.label }}</label>
+                            {{ form.recipient_users }}
+                            {% if form.recipient_users.errors %}
+                                <div class="form-errors">{{ form.recipient_users.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="{{ form.recipient_external_name.id_for_label }}">{{ form.recipient_external_name.label }}</label>
+                            {{ form.recipient_external_name }}
+                            {% if form.recipient_external_name.errors %}
+                                <div class="form-errors">{{ form.recipient_external_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.recipient_external_organization.id_for_label }}">{{ form.recipient_external_organization.label }}</label>
+                            {{ form.recipient_external_organization }}
+                            {% if form.recipient_external_organization.errors %}
+                                <div class="form-errors">{{ form.recipient_external_organization.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label for="{{ form.recipient_external_address.id_for_label }}">{{ form.recipient_external_address.label }}</label>
+                            {{ form.recipient_external_address }}
+                            {% if form.recipient_external_address.errors %}
+                                <div class="form-errors">{{ form.recipient_external_address.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'memos:my_memos' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        {{ action }} Memo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Select2 for multi-select fields
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: function(){
+                return $(this).data('placeholder');
+            }
+        });
+        
+        // Form validation
+        document.getElementById('memoForm').addEventListener('submit', function(e) {
+            const title = document.getElementById('{{ form.title.id_for_label }}').value;
+            const subject = document.getElementById('{{ form.subject.id_for_label }}').value;
+            
+            if (!title.trim() || !subject.trim()) {
+                e.preventDefault();
+                alert('Please fill in all required fields (Title and Subject).');
+                return false;
+            }
+        });
+        
+        // Auto-expand textarea
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        });
+    });
+</script>
+{% endblock %}

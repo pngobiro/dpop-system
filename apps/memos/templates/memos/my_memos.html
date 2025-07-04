@@ -9,7 +9,12 @@
         <div class="col-lg-12">
             <div class="card mb-4">
                 <div class="card-header pb-0">
-                    <h6>Memos Created by Me</h6>
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-0">Memos Created by Me</h6>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createMemoModal">
+                            Create New Memo
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body px-0 pb-2">
                     <div class="table-responsive p-0">
@@ -57,4 +62,6 @@
         </div>
     </div>
 </div>
+
+{% include 'memos/create_memo_modal.html' %}
 {% endblock %}

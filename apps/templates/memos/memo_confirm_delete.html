@@ -1,0 +1,61 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Delete Memo - {{ memo.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Delete Memo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>Warning:</strong> This action cannot be undone!
+                    </div>
+                    
+                    <h6>Are you sure you want to delete this memo?</h6>
+                    
+                    <div class="memo-info mt-3 p-3 bg-light rounded">
+                        <strong>Reference:</strong> {{ memo.reference_number }}<br>
+                        <strong>Title:</strong> {{ memo.title }}<br>
+                        <strong>Type:</strong> {{ memo.memo_type.name }}<br>
+                        <strong>Created:</strong> {{ memo.created_at|date:"M d, Y H:i" }}<br>
+                        <strong>Status:</strong> {{ memo.status.name }}
+                    </div>
+                    
+                    {% if memo.action_items.exists or memo.comment_threads.exists or memo.documents.exists %}
+                    <div class="alert alert-info mt-3">
+                        <strong>Note:</strong> This memo has:
+                        <ul class="mb-0 mt-2">
+                            {% if memo.action_items.exists %}
+                            <li>{{ memo.action_items.count }} action item(s)</li>
+                            {% endif %}
+                            {% if memo.comment_threads.exists %}
+                            <li>{{ memo.comment_threads.count }} comment thread(s)</li>
+                            {% endif %}
+                            {% if memo.documents.exists %}
+                            <li>{{ memo.documents.count }} document(s)</li>
+                            {% endif %}
+                        </ul>
+                        <small class="text-muted">These will also be deleted.</small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <form method="post" class="d-flex justify-content-between">
+                        {% csrf_token %}
+                        <a href="{% url 'memos:memo_detail' memo.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Yes, Delete Memo
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

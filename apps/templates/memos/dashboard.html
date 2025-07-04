@@ -8,14 +8,9 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Department Memo Dashboard</h2>
-        <div class="btn-group">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createMemoModal">
-                <i class="fas fa-plus"></i> Create New Memo
-            </button>
-            <a href="{% url 'memos:memo_create' %}" class="btn btn-outline-primary">
-                <i class="fas fa-external-link-alt"></i> Full Form
-            </a>
-        </div>
+        <a href="{% url 'memos:memo_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create New Memo
+        </a>
     </div>
 
     <!-- Overall Stats -->
@@ -24,33 +19,60 @@
             <div class="card bg-primary text-white">
                 <div class="card-body">
                     <h5 class="card-title text-white">Total Memos</h5>
-                    <h2 class="mb-0">{{ total_memos }}</h2>
-                    <small>Across all departments</small>
+                    <h2 class="mb-0">{{ stats.total|default:0 }}</h2>
+                    <small>All department memos</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card bg-success text-white">
                 <div class="card-body">
-                    <h5 class="card-title
-                    text-white">Pending Memos</h5>
-                    <h2 class="mb-0">{{ total_pending }}</h2>
-                    <small>Not yet approved</small>
+                    <h5 class="card-title text-white">Physical Memos</h5>
+                    <h2 class="mb-0">{{ stats.physical|default:0 }}</h2>
+                    <small>Physical documents</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card bg-info text-white">
                 <div class="card-body">
-                    <h5 class="card-title text-white">Approved Memos</h5>
-                    <h2 class="mb-0">{{ total_approved }}</h2>
-                    <small>Ready for distribution</small>
+                    <h5 class="card-title text-white">Digital Memos</h5>
+                    <h2 class="mb-0">{{ stats.digital|default:0 }}</h2>
+                    <small>Electronic documents</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title text-white">Confidential</h5>
+                    <h2 class="mb-0">{{ stats.confidential|default:0 }}</h2>
+                    <small>Restricted access</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Department Memos -->
+    <!-- Memo Types Stats -->
+    {% if memo_types %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Memo Types Distribution</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for memo_type in memo_types %}
+                <div class="col-md-3 mb-3">
+                    <div class="text-center">
+                        <h6>{{ memo_type.name }}</h6>
+                        <span class="badge bg-primary">{{ memo_type.count|default:0 }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="card mb-4">
         <div class="card-header">
@@ -74,16 +96,16 @@
                             <td>{{ memo.created_at }}</td>
                             <td>
                                 {% if memo.status == 'pending' %}
-                                <span class="badge bg-warning text-dark">Pending</span>
+                                <span class="badge badge-warning">Pending</span>
                                 {% else %}
-                                <span class="badge bg-success">Approved</span>
+                                <span class="badge badge-success">Approved</span>
                                 {% endif %}
                             </td>
                             <td>
                                 <a href="{% url 'memos:memo_detail' memo.id %}" class="btn btn-sm btn-info">
                                     <i class="fas fa-eye text-white"></i>
                                 </a>
-                                <a href="{% url 'memos:memo_update' memo.id %}" class="btn btn-sm btn-primary">
+                                <a href="{% url 'memos:memo_edit' memo.id %}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-edit text-white"></i>
                                 </a>
                                 <a href="{% url 'memos:memo_delete' memo.id %}" class="btn btn-sm btn-danger">
@@ -107,192 +129,6 @@
     </div>
 
 </div>
-
-<!-- Create Memo Modal -->
-<div class="modal fade" id="createMemoModal" tabindex="-1" aria-labelledby="createMemoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createMemoModalLabel">
-                    <i class="fas fa-file-alt me-2"></i>Create New Memo
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="post" action="{% url 'memos:memo_create' %}" enctype="multipart/form-data" id="createMemoForm">
-                <div class="modal-body">
-                    {% csrf_token %}
-                    
-                    <div class="row">
-                        <div class="col-md-8 mb-3">
-                            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="title" name="title" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="memo_type" class="form-label">Memo Type <span class="text-danger">*</span></label>
-                            <select class="form-select" id="memo_type" name="memo_type" required>
-                                <option value="">Select Type</option>
-                                <option value="internal">Internal Memo</option>
-                                <option value="external">External Letter</option>
-                                <option value="circular">Circular</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="priority" class="form-label">Priority</label>
-                            <select class="form-select" id="priority" name="priority">
-                                <option value="medium" selected>Medium</option>
-                                <option value="low">Low</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="due_date" class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="due_date" name="due_date">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="content" name="content" rows="6" 
-                                  placeholder="Enter memo content..." required></textarea>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="recipient_external_name" class="form-label">External Recipient Name</label>
-                            <input type="text" class="form-control" id="recipient_external_name" 
-                                   name="recipient_external_name" placeholder="If applicable">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="recipient_external_organization" class="form-label">External Recipient Organization</label>
-                            <input type="text" class="form-control" id="recipient_external_organization" 
-                                   name="recipient_external_organization" placeholder="If applicable">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="file_number" class="form-label">File Number</label>
-                        <input type="text" class="form-control" id="file_number" name="file_number" 
-                               placeholder="File reference number">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="tags" class="form-label">Tags</label>
-                        <input type="text" class="form-control" id="tags" name="tags" 
-                               placeholder="Enter tags separated by commas">
-                    </div>
-
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="is_confidential" name="is_confidential">
-                        <label class="form-check-label" for="is_confidential">
-                            <i class="fas fa-lock me-1"></i>Mark as Confidential
-                        </label>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="document" class="form-label">Attach Document</label>
-                        <input type="file" class="form-control" id="document" name="document" 
-                               accept=".pdf,.doc,.docx,.txt">
-                        <small class="form-text text-muted">Optional: Upload a supporting document</small>
-                    </div>
-
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Note:</strong> This form includes the basic fields. For advanced options like 
-                        recipient selection and templates, use the 
-                        <a href="{% url 'memos:memo_create' %}" class="alert-link">full form</a>.
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>Create Memo
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- JavaScript for Modal Enhancement -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-generate reference number based on memo type and date
-    function generateReferenceNumber() {
-        const memoType = document.getElementById('memo_type').value;
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        
-        let prefix = '';
-        switch(memoType) {
-            case 'internal':
-                prefix = 'INT';
-                break;
-            case 'external':
-                prefix = 'EXT';
-                break;
-            case 'circular':
-                prefix = 'CIR';
-                break;
-            default:
-                prefix = 'MEM';
-        }
-        
-        return `${prefix}/${year}/${month}${day}`;
-    }
-
-    // Update reference number when memo type changes
-    document.getElementById('memo_type').addEventListener('change', function() {
-        // You can use this to show a preview of the reference number
-        console.log('Reference will be:', generateReferenceNumber());
-    });
-
-    // Form validation
-    document.getElementById('createMemoForm').addEventListener('submit', function(e) {
-        const title = document.getElementById('title').value.trim();
-        const content = document.getElementById('content').value.trim();
-        const memoType = document.getElementById('memo_type').value;
-        
-        if (!title || !content || !memoType) {
-            e.preventDefault();
-            alert('Please fill in all required fields (Title, Memo Type, and Content).');
-            return false;
-        }
-        
-        // Show loading state
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creating...';
-        submitBtn.disabled = true;
-        
-        // Re-enable button after 5 seconds in case of error
-        setTimeout(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        }, 5000);
-    });
-
-    // Clear form when modal is hidden
-    document.getElementById('createMemoModal').addEventListener('hidden.bs.modal', function() {
-        document.getElementById('createMemoForm').reset();
-    });
-
-    // Auto-resize textarea
-    const textarea = document.getElementById('content');
-    textarea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
-});
-</script>
 
 {% endblock %}
 

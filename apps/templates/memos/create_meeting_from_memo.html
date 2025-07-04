@@ -1,0 +1,99 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Schedule Meeting from Memo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar me-2"></i>Schedule Meeting from Memo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="memo-reference mb-4 p-3 bg-light rounded">
+                        <h6>Source Memo:</h6>
+                        <strong>{{ memo.reference_number }}</strong> - {{ memo.title }}<br>
+                        <small class="text-muted">{{ memo.subject }}</small>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Meeting Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="Meeting regarding {{ memo.reference_number }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="agenda" class="form-label">Agenda/Purpose</label>
+                            <textarea class="form-control" id="agenda" name="agenda" rows="4"
+                                      placeholder="Meeting agenda and purpose...">Discuss memo: {{ memo.title }}
+
+Subject: {{ memo.subject }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="meeting_date" class="form-label">Meeting Date</label>
+                                    <input type="date" class="form-control" id="meeting_date" name="meeting_date" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="meeting_time" class="form-label">Meeting Time</label>
+                                    <input type="time" class="form-control" id="meeting_time" name="meeting_time" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location/Platform</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   placeholder="Conference room, Zoom link, etc.">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="attendees" class="form-label">Suggested Attendees</label>
+                            <textarea class="form-control" id="attendees" name="attendees" rows="3"
+                                      placeholder="List of people who should attend this meeting...">{{ memo.created_by.get_full_name }}
+{% if memo.sender_internal and memo.sender_internal != memo.created_by %}{{ memo.sender_internal.get_full_name }}
+{% endif %}{% for user in memo.recipient_users.all %}{{ user.get_full_name }}
+{% endfor %}</textarea>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> This will create a meeting request. You'll be able to send invitations and manage the meeting details after creation.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'memos:memo_detail' memo.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Memo
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calendar-plus"></i> Schedule Meeting
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    $('#meeting_date').val(tomorrow.toISOString().split('T')[0]);
+    
+    // Set default time to 10:00 AM
+    $('#meeting_time').val('10:00');
+});
+</script>
+{% endblock %}

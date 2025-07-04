@@ -1,0 +1,526 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% load memo_filters %}
+
+{% block title %}{{ memo.reference_number }} - {{ memo.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center py-4">
+                <div class="d-flex align-items-center">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-file-alt text-primary me-2"></i>
+                        {{ memo.reference_number }}
+                    </h1>
+                </div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'memos:department_dashboard' %}">Memos</a></li>
+                        <li class="breadcrumb-item active">{{ memo.title|truncatechars:50 }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-12">
+            <!-- Memo Header Card -->
+            <div class="card border-light shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="card-title mb-1">{{ memo.title }}</h4>
+                            <p class="mb-0 opacity-75">{{ memo.reference_number }}</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group">
+                                {% if can_edit %}
+                                <a href="{% url 'memos:memo_edit' memo.pk %}" class="btn btn-outline-light btn-sm">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </a>
+                                {% endif %}
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="fas fa-cog me-1"></i> Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#statusModal">
+                                            <i class="fas fa-sync me-2"></i> Update Status
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#commentModal">
+                                            <i class="fas fa-comment me-2"></i> Add Comment
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'memos:create_task_from_memo' memo.pk %}">
+                                            <i class="fas fa-tasks me-2"></i> Create Task
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'memos:create_meeting_from_memo' memo.pk %}">
+                                            <i class="fas fa-calendar me-2"></i> Schedule Meeting
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        {% if can_delete %}
+                                        <li><a class="dropdown-item text-danger" href="{% url 'memos:memo_delete' memo.pk %}">
+                                            <i class="fas fa-trash me-2"></i> Delete
+                                        </a></li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center flex-wrap">
+                                <span class="badge me-2 mb-2" style="background-color: {{ memo.status.color }}; color: white;">
+                                    <i class="fas fa-circle me-1"></i>{{ memo.status.name }}
+                                </span>
+                                <span class="badge me-2 mb-2" style="background-color: {{ memo.priority.color }}; color: white;">
+                                    <i class="fas fa-flag me-1"></i>{{ memo.priority.name }}
+                                </span>
+                                {% if memo.is_physical %}
+                                    <span class="badge bg-info me-2 mb-2"><i class="fas fa-file-alt me-1"></i>Physical</span>
+                                {% endif %}
+                                {% if memo.is_confidential %}
+                                    <span class="badge bg-danger me-2 mb-2"><i class="fas fa-lock me-1"></i>Confidential</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-end">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>Created {{ memo.created_at|date:"M d, Y H:i" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-md-8">
+                    <!-- Basic Information -->
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-info-circle text-primary me-2"></i>
+                                Basic Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong class="text-muted">Type:</strong>
+                                    <p class="mb-0">{{ memo.memo_type.name }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong class="text-muted">Category:</strong>
+                                    <p class="mb-0">{{ memo.category.name|default:"N/A" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong class="text-muted">Department:</strong>
+                                    <p class="mb-0">{{ memo.department.name }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong class="text-muted">Created By:</strong>
+                                    <p class="mb-0">{{ memo.created_by.get_full_name }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong class="text-muted">Due Date:</strong>
+                                    <p class="mb-0">{{ memo.due_date|date:"M d, Y"|default:"N/A" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong class="text-muted">File Number:</strong>
+                                    <p class="mb-0">{{ memo.file_number|default:"N/A" }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong class="text-muted">Version:</strong>
+                                    <p class="mb-0">{{ memo.version }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if memo.tags %}
+                            <div class="mt-2">
+                                <strong class="text-muted">Tags:</strong>
+                                <div class="mt-1">
+                                    {% for tag in memo.tags|split:"," %}
+                                        <span class="badge bg-secondary me-1">{{ tag.strip }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Subject & Content -->
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-file-text text-primary me-2"></i>
+                                Subject & Content
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong class="text-muted">Subject:</strong>
+                                <p class="mt-2">{{ memo.subject }}</p>
+                            </div>
+                            {% if memo.content %}
+                            <div>
+                                <strong class="text-muted">Content:</strong>
+                                <div class="mt-2 p-3 bg-light rounded" style="white-space: pre-wrap;">{{ memo.content }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Sender Information -->
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-user-edit text-primary me-2"></i>
+                                Sender Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if memo.sender_internal %}
+                                <div class="mb-3">
+                                    <strong class="text-muted">Internal Sender:</strong>
+                                    <p class="mb-0">{{ memo.sender_internal.get_full_name }} ({{ memo.sender_internal.department.name }})</p>
+                                </div>
+                            {% else %}
+                                <div class="mb-3">
+                                    <strong class="text-muted">External Sender:</strong>
+                                    <p class="mb-0">{{ memo.sender_external_name }}</p>
+                                </div>
+                                {% if memo.sender_external_organization %}
+                                    <div class="mb-3">
+                                        <strong class="text-muted">Organization:</strong>
+                                        <p class="mb-0">{{ memo.sender_external_organization }}</p>
+                                    </div>
+                                {% endif %}
+                                {% if memo.sender_external_address %}
+                                    <div class="mb-3">
+                                        <strong class="text-muted">Address:</strong>
+                                        <div class="mt-1">{{ memo.sender_external_address|linebreaks }}</div>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Recipients -->
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-users text-primary me-2"></i>
+                                Recipients
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if memo.recipient_departments.exists %}
+                                <div class="mb-3">
+                                    <strong class="text-muted">Departments:</strong>
+                                    <div class="mt-1">
+                                        {% for dept in memo.recipient_departments.all %}
+                                            <span class="badge bg-primary me-1">{{ dept.name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if memo.recipient_users.exists %}
+                                <div class="mb-3">
+                                    <strong class="text-muted">Users:</strong>
+                                    <div class="mt-1">
+                                        {% for user in memo.recipient_users.all %}
+                                            <span class="badge bg-info me-1">{{ user.get_full_name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if memo.recipient_external_name %}
+                                <div class="mb-3">
+                                    <strong class="text-muted">External Recipient:</strong>
+                                    <p class="mb-0">{{ memo.recipient_external_name }}
+                                    {% if memo.recipient_external_organization %}
+                                        ({{ memo.recipient_external_organization }})
+                                    {% endif %}
+                                    </p>
+                                </div>
+                            {% endif %}
+                            
+                            {% if memo.recipient_external_address %}
+                                <div class="mb-3">
+                                    <strong class="text-muted">External Address:</strong>
+                                    <div class="mt-1">{{ memo.recipient_external_address|linebreaks }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    {% if documents %}
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-paperclip text-primary me-2"></i>
+                                Attachments
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% for doc in documents %}
+                            <div class="card border-light mb-3">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ doc.document.title }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-file me-1"></i>{{ doc.document_type|title }} • 
+                                                <i class="fas fa-calendar me-1"></i>{{ doc.uploaded_at|date:"M d, Y" }} • 
+                                                <i class="fas fa-user me-1"></i>{{ doc.uploaded_by.get_full_name }}
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download me-1"></i> Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Items -->
+                    {% if action_items %}
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-tasks text-primary me-2"></i>
+                                Action Items
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% for item in action_items %}
+                            <div class="card border-left-warning mb-3">
+                                <div class="card-body p-3 bg-light">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ item.title }}</h6>
+                                            <p class="mb-2 text-muted">{{ item.description }}</p>
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i>{{ item.assigned_to.get_full_name }} •
+                                                <i class="fas fa-calendar me-1"></i>{{ item.due_date|date:"M d, Y"|default:"No deadline" }}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-{{ item.status }}">{{ item.status|title }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Comments -->
+                    {% if comment_threads %}
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-comments text-primary me-2"></i>
+                                Comments
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% for thread in comment_threads %}
+                            <div class="card border-left-success mb-3">
+                                <div class="card-body p-3 bg-light">
+                                    {% if thread.title %}
+                                        <h6 class="mb-2">{{ thread.title }}</h6>
+                                    {% endif %}
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-user me-1"></i>{{ thread.created_by.get_full_name }} • 
+                                            <i class="fas fa-clock me-1"></i>{{ thread.created_at|date:"M d, Y H:i" }}
+                                        </small>
+                                        {% if thread.is_internal %}
+                                            <span class="badge bg-warning">Internal</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% for comment in thread.comments.all %}
+                                    <div class="card border-0 bg-white mt-2">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <strong class="small">{{ comment.author.get_full_name }}</strong>
+                                                <small class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+                                            </div>
+                                            <p class="mb-0 small">{{ comment.content }}</p>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-md-4">
+                    <!-- Quick Stats -->
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-chart-line text-primary me-2"></i>
+                                Quick Stats
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="h4 mb-0 text-primary">{{ memo.documents.count }}</div>
+                                    <small class="text-muted">Documents</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 mb-0 text-info">{{ memo.action_items.count }}</div>
+                                    <small class="text-muted">Actions</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="h4 mb-0 text-success">{{ memo.comment_threads.count }}</div>
+                                    <small class="text-muted">Comments</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="card border-light shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-history text-primary me-2"></i>
+                                Timeline
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% for event in timeline_events %}
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; min-width: 30px;">
+                                    <i class="fas fa-circle text-white" style="font-size: 8px;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 small">{{ event.event_type|title }}</h6>
+                                    <p class="mb-1 text-muted small">{{ event.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            {% if event.user %}{{ event.user.get_full_name }}{% endif %}
+                                        </small>
+                                        <small class="text-muted">{{ event.timestamp|date:"M d, H:i" }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-3">
+                                <i class="fas fa-history text-muted mb-2" style="font-size: 2rem;"></i>
+                                <p class="text-muted mb-0">No timeline events yet.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="statusModalLabel">
+                    <i class="fas fa-sync me-2"></i>Update Status
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'memos:memo_status_update' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="status_id" class="form-label">New Status</label>
+                        <select name="status_id" id="status_id" class="form-select" required>
+                            <option value="">Select status...</option>
+                            <!-- Status options would be populated here -->
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Update Status
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="commentModalLabel">
+                    <i class="fas fa-comment me-2"></i>Add Comment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'memos:add_comment' memo.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {{ comment_form.as_p }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Add Comment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add any JavaScript for enhanced functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh timeline every 30 seconds
+    setInterval(function() {
+        // You could add AJAX to refresh timeline here
+    }, 30000);
+    
+    // Initialize tooltips if any
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

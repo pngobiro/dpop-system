@@ -1,0 +1,47 @@
+<div class="modal fade" id="createMemoModal" tabindex="-1" aria-labelledby="createMemoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createMemoModalLabel">Create New Memo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createMemoForm" action="{% url 'memos:memo_create' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveMemoBtn">Save Memo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('saveMemoBtn').addEventListener('click', function() {
+    var form = document.getElementById('createMemoForm');
+    var formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            var modal = bootstrap.Modal.getInstance(document.getElementById('createMemoModal'));
+            modal.hide();
+            location.reload();
+        } else {
+            // Handle errors
+            console.error(data);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
+</script>

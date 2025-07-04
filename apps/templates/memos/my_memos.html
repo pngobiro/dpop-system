@@ -7,9 +7,14 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">My Memos</h2>
-        <a href="{% url 'memos:memo_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Create New Memo
-        </a>
+        <div>
+            <a href="{% url 'memos:memo_create' %}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-plus"></i> Create New Memo
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createMemoModal">
+                <i class="fas fa-plus"></i> Quick Create
+            </button>
+        </div>
     </div>
 
     <!-- Overall Stats -->
@@ -17,27 +22,35 @@
         <div class="col-md-3">
             <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <h5 class="card-title text-white">Total Memos</h5>
+                    <h5 class="card-title text-white">Total My Memos</h5>
                     <h2 class="mb-0">{{ total_memos }}</h2>
-                    <small>Across all departments</small>
+                    <small>All memos created by you</small>
                 </div>
-
             </div>
+        </div>
 
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h5 class="card-title text-white">Draft Memos</h5>
+                    <h2 class="mb-0">{{ total_draft }}</h2>
+                    <small>Saved as drafts</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Memos</h5>
+                    <h2 class="mb-0">{{ total_pending }}</h2>
+                    <small>Awaiting approval</small>
+                </div>
+            </div>
         </div>
 
         <div class="col-md-3">
             <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title text-white">Pending Memos</h5>
-                    <h2 class="mb-0">{{ total_pending }}</h2>
-                    <small>Not yet approved</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
                 <div class="card-body">
                     <h5 class="card-title text-white">Approved Memos</h5>
                     <h2 class="mb-0">{{ total_approved }}</h2>
@@ -51,45 +64,816 @@
 
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0">Your Memos</h5>
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Your Memos</h5>
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterSection">
+                    <i class="fas fa-filter"></i> Filters
+                </button>
+            </div>
         </div>
+        
+        <!-- Search and Filter Section -->
+        <div class="collapse" id="filterSection">
+            <div class="card-body border-bottom">
+                <form method="GET" class="row g-3">
+                    <!-- Search -->
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="Search title, reference, content..." 
+                                   value="{{ request.GET.search }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="col-md-2">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Statuses</option>
+                            {% for status in memo_statuses %}
+                                <option value="{{ status.id }}" {% if request.GET.status == status.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ status.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Type Filter -->
+                    <div class="col-md-2">
+                        <label for="memo_type" class="form-label">Type</label>
+                        <select class="form-select" id="memo_type" name="memo_type">
+                            <option value="">All Types</option>
+                            {% for type in memo_types %}
+                                <option value="{{ type.id }}" {% if request.GET.memo_type == type.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ type.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <div class="col-md-2">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">All Categories</option>
+                            {% for category in memo_categories %}
+                                <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Date Range -->
+                    <div class="col-md-2">
+                        <label for="date_range" class="form-label">Date Range</label>
+                        <select class="form-select" id="date_range" name="date_range">
+                            <option value="">All Dates</option>
+                            <option value="today" {% if request.GET.date_range == 'today' %}selected{% endif %}>Today</option>
+                            <option value="week" {% if request.GET.date_range == 'week' %}selected{% endif %}>This Week</option>
+                            <option value="month" {% if request.GET.date_range == 'month' %}selected{% endif %}>This Month</option>
+                            <option value="quarter" {% if request.GET.date_range == 'quarter' %}selected{% endif %}>This Quarter</option>
+                            <option value="year" {% if request.GET.date_range == 'year' %}selected{% endif %}>This Year</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Due Date Filter -->
+                    <div class="col-md-2">
+                        <label for="due_status" class="form-label">Due Status</label>
+                        <select class="form-select" id="due_status" name="due_status">
+                            <option value="">All Due Dates</option>
+                            <option value="overdue" {% if request.GET.due_status == 'overdue' %}selected{% endif %}>Overdue</option>
+                            <option value="due_today" {% if request.GET.due_status == 'due_today' %}selected{% endif %}>Due Today</option>
+                            <option value="due_week" {% if request.GET.due_status == 'due_week' %}selected{% endif %}>Due This Week</option>
+                            <option value="no_due_date" {% if request.GET.due_status == 'no_due_date' %}selected{% endif %}>No Due Date</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Priority Filter -->
+                    <div class="col-md-2">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="">All Priorities</option>
+                            {% for priority in priority_levels %}
+                                <option value="{{ priority.id }}" {% if request.GET.priority == priority.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ priority.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Physical/Digital Filter -->
+                    <div class="col-md-2">
+                        <label for="format" class="form-label">Format</label>
+                        <select class="form-select" id="format" name="format">
+                            <option value="">All Formats</option>
+                            <option value="digital" {% if request.GET.format == 'digital' %}selected{% endif %}>Digital</option>
+                            <option value="physical" {% if request.GET.format == 'physical' %}selected{% endif %}>Physical</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Attachments Filter -->
+                    <div class="col-md-2">
+                        <label for="attachments" class="form-label">Attachments</label>
+                        <select class="form-select" id="attachments" name="attachments">
+                            <option value="">All</option>
+                            <option value="with" {% if request.GET.attachments == 'with' %}selected{% endif %}>With Attachments</option>
+                            <option value="without" {% if request.GET.attachments == 'without' %}selected{% endif %}>Without Attachments</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Apply Filters
+                            </button>
+                            <a href="{% url 'memos:my_memos' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
+                            <button type="button" class="btn btn-outline-info" onclick="toggleAdvancedSearch()">
+                                <i class="fas fa-cog"></i> Advanced Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Results Summary -->
+        {% if request.GET %}
+        <div class="card-body border-bottom bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted">
+                    <i class="fas fa-info-circle"></i>
+                    {% if memos.paginator.count != total_memos %}
+                        Showing {{ memos.paginator.count }} of {{ total_memos }} memos
+                    {% else %}
+                        Showing all {{ total_memos }} memos
+                    {% endif %}
+                    {% if request.GET.search %}
+                        matching "<strong>{{ request.GET.search }}</strong>"
+                    {% endif %}
+                </span>
+                <div class="d-flex gap-2">
+                    <small class="text-muted">
+                        <i class="fas fa-clock"></i> 
+                        {% if memos %}Last updated: {{ memos.0.updated_at|timesince }} ago{% endif %}
+                    </small>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="exportToCSV()">
+                                <i class="fas fa-file-csv"></i> Export as CSV
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportToPDF()">
+                                <i class="fas fa-file-pdf"></i> Export as PDF
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="printTable()">
+                                <i class="fas fa-print"></i> Print
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Title</th>
-                            <th>Date Created</th>
-                            <th>Status</th>
+                            <th onclick="sortTable(0)">
+                                <i class="fas fa-sort me-1"></i>Title
+                            </th>
+                            <th onclick="sortTable(1)">
+                                <i class="fas fa-sort me-1"></i>From
+                            </th>
+                            <th onclick="sortTable(2)">
+                                <i class="fas fa-sort me-1"></i>Due Date
+                            </th>
+                            <th onclick="sortTable(3)">
+                                <i class="fas fa-sort me-1"></i>Date Created
+                            </th>
+                            <th onclick="sortTable(4)">
+                                <i class="fas fa-sort me-1"></i>Status
+                            </th>
+                            <th>Attachments</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for memo in memos %}
                         <tr>
-                            <td>{{ memo.title }}</td>
-                            <td>{{ memo.created_at }}</td>
                             <td>
-                                {% if memo.status == 'pending' %}
-                                <span class="badge badge-warning">Pending</span>
+                                <a href="{% url 'memos:memo_detail' memo.id %}" class="text-decoration-none">
+                                    <strong>{{ memo.title }}</strong>
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ memo.reference_number }}</small>
+                            </td>
+                            <td>
+                                {% if memo.sender_internal %}
+                                    <div>
+                                        <i class="fas fa-user text-primary"></i>
+                                        {{ memo.sender_internal.get_full_name|default:memo.sender_internal.username }}
+                                    </div>
+                                    <small class="text-muted">Internal</small>
+                                {% elif memo.sender_external_name %}
+                                    <div>
+                                        <i class="fas fa-building text-secondary"></i>
+                                        {{ memo.sender_external_name }}
+                                    </div>
+                                    <small class="text-muted">{{ memo.sender_external_organization|default:"External" }}</small>
                                 {% else %}
-                                <span class="badge badge-success">Approved</span>
+                                    <div>
+                                        <i class="fas fa-user-circle text-success"></i>
+                                        {{ memo.created_by.get_full_name|default:memo.created_by.username }}
+                                    </div>
+                                    <small class="text-muted">Created by</small>
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{% url 'memos:memo_detail' memo.id %}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-eye text-white"></i>
-                                </a>
-                                <a href="{% url 'memos:memo_update' memo.id %}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-edit text-white"></i>
-                                </a>
+                                {% if memo.due_date %}
+                                    <span class="badge {% if memo.due_date|date:'Y-m-d' < today|date:'Y-m-d' %}bg-danger{% elif memo.due_date|date:'Y-m-d' == today|date:'Y-m-d' %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        {{ memo.due_date|date:"M d, Y" }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-minus"></i> No due date
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ memo.created_at|date:"M d, Y" }}</small>
+                                <br>
+                                <small class="text-muted">{{ memo.created_at|time:"H:i" }}</small>
+                            </td>
+                            <td>
+                                {% if memo.status.name == 'Pending' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
+                                {% elif memo.status.name == 'Approved' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> Approved
+                                </span>
+                                {% elif memo.status.name == 'Draft' %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-edit"></i> Draft
+                                </span>
+                                {% else %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-info-circle"></i> {{ memo.status.name|title }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if memo.documents.count > 0 %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-paperclip"></i>
+                                            {{ memo.documents.count }} file{{ memo.documents.count|pluralize }}
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            {% for memo_doc in memo.documents.all %}
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ memo_doc.document.file_url }}" target="_blank">
+                                                        <i class="fas fa-download me-2"></i>
+                                                        {{ memo_doc.document.title|truncatechars:30 }}
+                                                        <small class="text-muted">({{ memo_doc.document_type|title }})</small>
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'memos:memo_detail' memo.id %}#attachments">
+                                                    <i class="fas fa-eye me-2"></i>
+                                                    View all attachments
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-minus"></i> No attachments
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'memos:memo_detail' memo.id %}" class="btn btn-sm btn-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'memos:memo_edit' memo.id %}" class="btn btn-sm btn-info" title="Edit Memo">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Pagination -->
+            {% if memos.has_other_pages %}
+            <div class="card-footer">
+                <nav aria-label="Memos pagination">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if memos.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ memos.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&laquo;</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in memos.paginator.page_range %}
+                            {% if page_num == memos.number %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% elif page_num > memos.number|add:'-3' and page_num < memos.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_num }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if memos.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ memos.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&raquo;</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Showing {{ memos.start_index }}-{{ memos.end_index }} of {{ memos.paginator.count }} memos
+                        </small>
+                    </div>
+                </nav>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<!-- Create Memo Modal -->
+<div class="modal fade" id="createMemoModal" tabindex="-1" aria-labelledby="createMemoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createMemoModalLabel">
+                    <i class="fas fa-envelope me-2"></i>Create New Memo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createMemoForm" method="post" action="{% url 'memos:memo_create' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    
+                    <!-- Alert container for messages -->
+                    <div id="modalAlerts"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="id_title" name="title" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_reference_number" class="form-label">Reference Number</label>
+                            <input type="text" class="form-control" id="id_reference_number" name="reference_number" 
+                                   placeholder="Auto-generated if empty">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_from_department" class="form-label">From Department <span class="text-danger">*</span></label>
+                            <select class="form-select" id="id_from_department" name="from_department" required>
+                                <option value="">Select Department</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_to_department" class="form-label">To Department</label>
+                            <select class="form-select" id="id_to_department" name="to_department">
+                                <option value="">Select Department (Optional)</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_subject" class="form-label">Subject <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="id_subject" name="subject" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_content" class="form-label">Content <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="id_content" name="content" rows="6" required 
+                                  placeholder="Enter the memo content..."></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_priority" class="form-label">Priority</label>
+                            <select class="form-select" id="id_priority" name="priority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_status" class="form-label">Status</label>
+                            <select class="form-select" id="id_status" name="status">
+                                <option value="draft" selected>Draft</option>
+                                <option value="pending">Pending Review</option>
+                                <option value="approved">Approved</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitMemoBtn">
+                        <i class="fas fa-save me-2"></i>Create Memo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('createMemoForm');
+    const submitBtn = document.getElementById('submitMemoBtn');
+    const modalAlertsContainer = document.getElementById('modalAlerts');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Clear previous validation states
+        const formControls = form.querySelectorAll('.form-control, .form-select');
+        formControls.forEach(control => {
+            control.classList.remove('is-invalid', 'is-valid');
+        });
+        
+        // Clear previous alerts
+        modalAlertsContainer.innerHTML = '';
+        
+        // Show loading state
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+        submitBtn.disabled = true;
+        
+        // Create FormData object
+        const formData = new FormData(form);
+        
+        // Submit form via AJAX
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Show success message
+                modalAlertsContainer.innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                // Reset form
+                form.reset();
+                
+                // Close modal after 2 seconds and refresh page
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createMemoModal'));
+                    modal.hide();
+                    window.location.reload();
+                }, 2000);
+                
+            } else {
+                // Show validation errors
+                if (data.errors) {
+                    Object.keys(data.errors).forEach(field => {
+                        const fieldElement = document.getElementById(`id_${field}`);
+                        if (fieldElement) {
+                            fieldElement.classList.add('is-invalid');
+                            const feedback = fieldElement.nextElementSibling;
+                            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                                feedback.textContent = data.errors[field][0];
+                            }
+                        }
+                    });
+                }
+                
+                // Show general error message
+                modalAlertsContainer.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Please correct the errors below and try again.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalAlertsContainer.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    An error occurred. Please try again.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        })
+        .finally(() => {
+            // Restore button state
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+        });
+    });
+});
+
+// Advanced Search and Filter Functionality
+function toggleAdvancedSearch() {
+    const advancedFields = document.querySelectorAll('#filterSection .col-md-2:nth-child(n+6)');
+    advancedFields.forEach(field => {
+        field.style.display = field.style.display === 'none' ? 'block' : 'none';
+    });
+}
+
+// Auto-submit form when filters change (optional)
+document.addEventListener('DOMContentLoaded', function() {
+    const autoSubmitElements = document.querySelectorAll('#filterSection select');
+    
+    autoSubmitElements.forEach(element => {
+        element.addEventListener('change', function() {
+            // Optional: Add a small delay before auto-submitting
+            if (this.dataset.autoSubmit !== 'false') {
+                setTimeout(() => {
+                    document.querySelector('#filterSection form').submit();
+                }, 500);
+            }
+        });
+    });
+    
+    // Real-time search with debounce
+    const searchInput = document.getElementById('search');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 3 || this.value.length === 0) {
+                    document.querySelector('#filterSection form').submit();
+                }
+            }, 1000); // Wait 1 second after user stops typing
+        });
+    }
+    
+    // Show filter section if any filters are applied
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilters = Array.from(urlParams.keys()).some(key => 
+        key !== 'page' && urlParams.get(key) !== ''
+    );
+    
+    if (hasFilters) {
+        const filterSection = document.getElementById('filterSection');
+        if (filterSection && !filterSection.classList.contains('show')) {
+            filterSection.classList.add('show');
+        }
+    }
+});
+
+// Table sorting functionality
+function sortTable(columnIndex) {
+    const table = document.querySelector('.table');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    const isAscending = table.dataset.sortOrder !== 'asc';
+    table.dataset.sortOrder = isAscending ? 'asc' : 'desc';
+    
+    rows.sort((a, b) => {
+        const aText = a.cells[columnIndex].textContent.trim();
+        const bText = b.cells[columnIndex].textContent.trim();
+        
+        // Handle dates
+        if (columnIndex === 2 || columnIndex === 3) {
+            const aDate = new Date(aText);
+            const bDate = new Date(bText);
+            return isAscending ? aDate - bDate : bDate - aDate;
+        }
+        
+        // Handle text
+        return isAscending ? 
+            aText.localeCompare(bText) : 
+            bText.localeCompare(aText);
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Update sort indicators
+    const headers = table.querySelectorAll('th');
+    headers.forEach((header, index) => {
+        header.classList.remove('sort-asc', 'sort-desc');
+        if (index === columnIndex) {
+            header.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
+        }
+    });
+}
+
+// Export functionality
+function exportToCSV() {
+    const table = document.querySelector('.table');
+    const rows = table.querySelectorAll('tr');
+    let csv = [];
+    
+    // Get headers (excluding Actions column)
+    const headers = Array.from(rows[0].querySelectorAll('th')).slice(0, -1).map(th => th.textContent.trim());
+    csv.push(headers.join(','));
+    
+    // Get data rows
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const cells = Array.from(row.querySelectorAll('td')).slice(0, -1);
+        const rowData = cells.map(cell => {
+            // Clean cell text and escape commas
+            let text = cell.textContent.trim().replace(/\s+/g, ' ');
+            if (text.includes(',')) {
+                text = `"${text}"`;
+            }
+            return text;
+        });
+        csv.push(rowData.join(','));
+    }
+    
+    // Download CSV
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `my_memos_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function exportToPDF() {
+    // Simple PDF export using browser print to PDF
+    const printWindow = window.open('', '_blank');
+    const tableClone = document.querySelector('.table').cloneNode(true);
+    
+    // Remove Actions column
+    const headers = tableClone.querySelectorAll('th');
+    const lastHeader = headers[headers.length - 1];
+    lastHeader.remove();
+    
+    const rows = tableClone.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const lastCell = cells[cells.length - 1];
+        lastCell.remove();
+    });
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>My Memos Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f8f9fa; font-weight: bold; }
+                .badge { background-color: #e9ecef; padding: 2px 6px; border-radius: 3px; }
+                h1 { color: #333; margin-bottom: 20px; }
+            </style>
+        </head>
+        <body>
+            <h1>My Memos Report - ${new Date().toLocaleDateString()}</h1>
+            ${tableClone.outerHTML}
+            <p style="margin-top: 20px; color: #666; font-size: 12px;">
+                Generated on ${new Date().toLocaleString()}
+            </p>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+    };
+}
+
+function printTable() {
+    window.print();
+}
+</script>
+
+<!-- Add CSS for sorting indicators -->
+<style>
+.table th {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.table th:hover {
+    background-color: #f8f9fa;
+}
+
+.table th.sort-asc::after {
+    content: ' ↑';
+    position: absolute;
+    right: 8px;
+    color: #007bff;
+}
+
+.table th.sort-desc::after {
+    content: ' ↓';
+    position: absolute;
+    right: 8px;
+    color: #007bff;
+}
+
+.collapse.show {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+</style>
 {% endblock %}
