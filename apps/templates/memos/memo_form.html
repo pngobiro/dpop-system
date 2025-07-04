@@ -320,25 +320,85 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-upload me-2"></i>
-                                        Upload Documents
-                                    </label>
-                                    <div class="border border-2 border-dashed border-light rounded p-4 text-center" id="dropZone">
-                                        <div class="mb-3">
-                                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                                            <h6 class="text-muted">Drop files here or click to browse</h6>
-                                            <p class="text-muted small mb-0">Supported formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG</p>
-                                            <p class="text-muted small">Maximum file size: 10MB per file</p>
+                                <!-- Existing Attachments (for edit mode) -->
+                                {% if memo and memo.documents.exists %}
+                                <div class="mb-4">
+                                    <h6 class="text-success mb-3">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Current Attachments
+                                    </h6>
+                                    <div class="list-group">
+                                        {% for memo_doc in memo.documents.all %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-file-alt fa-lg text-primary me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-0">{{ memo_doc.document.title }}</h6>
+                                                    <small class="text-muted">
+                                                        Uploaded {{ memo_doc.uploaded_at|date:"M d, Y" }} by {{ memo_doc.uploaded_by.get_full_name }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div class="btn-group btn-group-sm">
+                                                {% if memo_doc.document.drive_view_link %}
+                                                <a href="{{ memo_doc.document.drive_view_link }}" target="_blank" class="btn btn-outline-primary">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                                {% endif %}
+                                                <button type="button" class="btn btn-outline-danger" onclick="removeExistingAttachment('{{ memo_doc.id }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <input type="file" id="fileInput" name="attachments" multiple 
-                                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
-                                               class="d-none">
-                                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
-                                            <i class="fas fa-folder-open me-2"></i>
-                                            Browse Files
-                                        </button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- New Attachments - Multiple file sections like meetings -->
+                                <div class="mb-3">
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-upload me-2"></i>
+                                        {% if memo %}Add New Documents{% else %}Upload Documents{% endif %}
+                                    </h6>
+                                    
+                                    <div id="attachments-container">
+                                        <!-- Initial attachment form -->
+                                        <div class="attachment-form mb-3 p-3 border rounded bg-light">
+                                            <div class="row">
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label">Document Type</label>
+                                                    <select name="attachment_type[]" class="form-control">
+                                                        <option value="attachment">Attachment</option>
+                                                        <option value="original">Original Document</option>
+                                                        <option value="signature">Signature/Stamp</option>
+                                                        <option value="response">Response Document</option>
+                                                        <option value="version">Version</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">File</label>
+                                                    <input type="file" name="attachments" class="form-control"
+                                                           accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png">
+                                                </div>
+                                                <div class="col-md-2 mb-3">
+                                                    <label class="form-label">&nbsp;</label>
+                                                    <button type="button" class="btn btn-sm btn-danger remove-attachment d-block" style="display: none;">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-secondary" id="add-attachment">
+                                        <i class="fas fa-plus"></i> Add Another Document
+                                    </button>
+                                    
+                                    <div class="form-text mt-2">
+                                        <i class="fas fa-info-circle"></i> 
+                                        You can add multiple files by clicking "Add Another Document" or select multiple files at once.
+                                        Maximum file size: 10MB per file. Supported formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, JPG, PNG
                                     </div>
                                 </div>
                                 
@@ -393,6 +453,40 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle attachment forms - exactly like meetings
+    const container = document.getElementById('attachments-container');
+    const addButton = document.getElementById('add-attachment');
+    
+    if (addButton && container) {
+        addButton.addEventListener('click', function() {
+            // Clone the first attachment form
+            const newForm = container.querySelector('.attachment-form').cloneNode(true);
+            
+            // Clear input values
+            newForm.querySelectorAll('input, select').forEach(input => {
+                if (input.type === 'file') {
+                    input.value = '';
+                } else if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                }
+            });
+            
+            // Show remove button
+            const removeBtn = newForm.querySelector('.remove-attachment');
+            if (removeBtn) {
+                removeBtn.style.display = 'block';
+                
+                // Add event listener to remove button
+                removeBtn.addEventListener('click', function() {
+                    newForm.remove();
+                });
+            }
+            
+            // Append new form
+            container.appendChild(newForm);
+        });
+    }
+
     // Initialize Select2 for multi-select fields with Bootstrap 5 theme
     $('.select2').select2({
         theme: 'bootstrap-5',
@@ -424,7 +518,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Helper function for toast notifications (if available in your base template)
+    // File Upload Functionality
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileList = document.getElementById('fileList');
+    const fileItems = document.getElementById('fileItems');
+    let selectedFiles = [];
+    
+    // Helper function for toast notifications
     function showToast(message, type = 'info') {
         if (typeof createToast === 'function') {
             createToast(message, type);
@@ -433,17 +534,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // File Upload Functionality
-    const fileInput = document.getElementById('fileInput');
-    const dropZone = document.getElementById('dropZone');
-    const fileList = document.getElementById('fileList');
-    const fileItems = document.getElementById('fileItems');
-    let selectedFiles = [];
-    
-    // File input change handler
+    // File input change handler - simple direct approach
     fileInput.addEventListener('change', function(e) {
-        handleFiles(Array.from(e.target.files));
+        console.log('File input changed, files:', e.target.files.length);
+        displayFiles(e.target.files);
     });
+
+    // Simple function to display selected files
+    function displayFiles(files) {
+        if (files && files.length > 0) {
+            fileList.style.display = 'block';
+            fileItems.innerHTML = '';
+            
+            Array.from(files).forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                fileItem.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file fa-lg text-primary me-3"></i>
+                        <div>
+                            <h6 class="mb-0">${file.name}</h6>
+                            <small class="text-muted">${formatFileSize(file.size)} - ${file.type || 'Unknown'}</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-success">Ready to upload</span>
+                `;
+                fileItems.appendChild(fileItem);
+            });
+        } else {
+            fileList.style.display = 'none';
+        }
+    }
     
     // Drag and drop handlers
     dropZone.addEventListener('dragover', function(e) {
@@ -459,97 +580,14 @@ document.addEventListener('DOMContentLoaded', function() {
     dropZone.addEventListener('drop', function(e) {
         e.preventDefault();
         dropZone.classList.remove('border-primary', 'bg-light');
-        const files = Array.from(e.dataTransfer.files);
-        handleFiles(files);
+        const files = e.dataTransfer.files;
+        
+        // Update the file input and display
+        fileInput.files = files;
+        displayFiles(files);
     });
     
-    // Handle file selection
-    function handleFiles(files) {
-        files.forEach(file => {
-            // Validate file size (10MB limit)
-            if (file.size > 10 * 1024 * 1024) {
-                showToast(`File "${file.name}" is too large. Maximum size is 10MB.`, 'warning');
-                return;
-            }
-            
-            // Validate file type
-            const allowedTypes = [
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/vnd.ms-powerpoint',
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'image/jpeg',
-                'image/jpg',
-                'image/png'
-            ];
-            
-            if (!allowedTypes.includes(file.type)) {
-                showToast(`File "${file.name}" is not a supported format.`, 'warning');
-                return;
-            }
-            
-            // Check if file already selected
-            if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
-                showToast(`File "${file.name}" is already selected.`, 'info');
-                return;
-            }
-            
-            selectedFiles.push(file);
-            addFileToList(file);
-        });
-        
-        updateFileList();
-    }
-    
-    // Add file to display list
-    function addFileToList(file) {
-        const fileSize = formatFileSize(file.size);
-        const fileIcon = getFileIcon(file.type);
-        
-        const fileItem = document.createElement('div');
-        fileItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-        fileItem.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="${fileIcon} fa-lg text-primary me-3"></i>
-                <div>
-                    <h6 class="mb-0">${file.name}</h6>
-                    <small class="text-muted">${fileSize}</small>
-                </div>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile('${file.name}', ${file.size})">
-                <i class="fas fa-trash"></i>
-            </button>
-        `;
-        
-        fileItems.appendChild(fileItem);
-    }
-    
-    // Remove file from selection
-    window.removeFile = function(fileName, fileSize) {
-        selectedFiles = selectedFiles.filter(f => !(f.name === fileName && f.size === fileSize));
-        updateFileList();
-    };
-    
-    // Update file list display
-    function updateFileList() {
-        if (selectedFiles.length > 0) {
-            fileList.style.display = 'block';
-            fileItems.innerHTML = '';
-            selectedFiles.forEach(file => addFileToList(file));
-        } else {
-            fileList.style.display = 'none';
-        }
-        
-        // Update file input
-        const dt = new DataTransfer();
-        selectedFiles.forEach(file => dt.items.add(file));
-        fileInput.files = dt.files;
-    }
-    
-    // Format file size
+    // Format file size helper function
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -575,10 +613,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return iconMap[fileType] || 'fas fa-file';
     }
-        } else {
-            alert(message);
+    
+    // Function to remove existing attachment (for edit mode)
+    window.removeExistingAttachment = function(attachmentId) {
+        if (confirm('Are you sure you want to remove this attachment?')) {
+            // You could implement AJAX removal here
+            // For now, just hide the element (will need backend support)
+            const attachmentElement = document.querySelector(`[data-attachment-id="${attachmentId}"]`);
+            if (attachmentElement) {
+                attachmentElement.remove();
+            }
         }
-    }
+    };
 });
 </script>
 {% endblock %}

@@ -615,14 +615,8 @@ def memo_edit(request, pk):
         'memo_categories': memo_categories,
         'priority_levels': priority_levels,
         'memo': memo,
-        'action': 'Edit'
-    })
-
-    return render(request, 'memos/memo_form.html', {
-        'form': form,
-        'memo': memo,
-        'templates': templates,
-        'action': 'Edit'
+        'action': 'Edit',
+        'segment': 'memos'
     })
 
 
